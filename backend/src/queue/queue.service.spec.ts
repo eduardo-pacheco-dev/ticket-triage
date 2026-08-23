@@ -75,15 +75,15 @@ describe('QueueService', () => {
   });
 
   describe('createCheckIn', () => {
-    it('cria entrada com protocolo DOC-XXXX, dados normalizados e status waiting', async () => {
+    it('cria entrada com protocolo DOC-XXXX e status waiting', async () => {
       const { service, repo, events } = buildService(() => makeQb());
 
       const dto = await service.createCheckIn(
-        { site_id: ' SITE-100 ', technician_name: ' Ana ', request_type: ' Instalação ' },
+        { site_id: 'SITE-100', technician_name: 'Ana', request_type: 'Instalação' },
         '10.0.0.1',
       );
 
-      expect(dto.protocol).toMatch(/^DOC-\d{4}$/);
+      expect(dto.protocol).toMatch(/^DOC-[2-9A-HJ-NP-Z]{10}$/);
       expect(dto.site_id).toBe('SITE-100');
       expect(dto.technician_name).toBe('Ana');
       expect(dto.request_type).toBe('Instalação');
@@ -91,7 +91,7 @@ describe('QueueService', () => {
 
       const created = repo.create.mock.calls[0][0];
       expect(created).toMatchObject({
-        protocol: expect.stringMatching(/^DOC-\d{4}$/),
+        protocol: expect.stringMatching(/^DOC-[2-9A-HJ-NP-Z]{10}$/),
         siteId: 'SITE-100',
         technicianName: 'Ana',
         fullName: 'Ana',
@@ -128,26 +128,23 @@ describe('QueueService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it.each([
-      [{ site_id: '', technician_name: 'Ana', request_type: 'Troca' }, /SITE ID é obrigatório/],
-      [
-        { site_id: 'S1'.repeat(60), technician_name: 'Ana', request_type: 'Troca' },
-        /SITE ID muito longo/,
-      ],
-      [
-        { site_id: 'S1', technician_name: '', request_type: 'Troca' },
-        /Nome do técnico é obrigatório/,
-      ],
-      [
-        { site_id: 'S1', technician_name: 'Ana', request_type: '' },
-        /Tipo de solicitação é obrigatório/,
-      ],
-    ])('valida entrada %j', async (input, expectedMessage) => {
-      const { service } = buildService(() => makeQb());
-      const error = await service.createCheckIn(input as never, 'ip').catch((e: unknown) => e);
+    it('confia no contrato do ZodValidationPipe: usa os valores já normalizados (trim)', async () => {
+      const { service, repo } = buildService(() => makeQb());
 
-      expect(error).toBeInstanceOf(BadRequestException);
-      expect((error as BadRequestException).message).toMatch(expectedMessage);
+      await service.createCheckIn(
+        { site_id: 'SITE-400', technician_name: 'Duda', request_type: 'Troca' },
+        'ip',
+      );
+
+      expect(repo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          siteId: 'SITE-400',
+          identifier: 'SITE-400',
+          technicianName: 'Duda',
+          fullName: 'Duda',
+          requestType: 'Troca',
+        }),
+      );
     });
 
     it('repete até 5 protocolos em caso de colisão (ER_DUP_ENTRY) e persiste', async () => {

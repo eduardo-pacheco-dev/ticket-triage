@@ -1,10 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { randomInt } from 'node:crypto';
 import { Repository } from 'typeorm';
 import { QueueEntry } from './queue-entry.entity';
 import type { QueueStatus } from './queue-entry.entity';
 import { RateLimitService } from '../common/rate-limit.service';
 import { QueueEventsService } from './queue-events.service';
+import type { CreateCheckInInput } from '@ticket-triage/shared';
 
 export interface QueueEntryDto {
   id: string;
@@ -30,6 +32,19 @@ export interface PublicQueueEntryDto {
 const ACTIVE_STATUSES: QueueStatus[] = ['waiting', 'in_review'];
 const FINAL_STATUSES: QueueStatus[] = ['approved', 'rejected'];
 const VALID_STATUSES: QueueStatus[] = [...ACTIVE_STATUSES, ...FINAL_STATUSES];
+
+// Sem I, O, 1 e 0 para leitura sem ambiguidade; 32^10 combinações tornam
+// colisões desprezíveis independentemente do tamanho da tabela.
+const PROTOCOL_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+const PROTOCOL_RANDOM_LENGTH = 10;
+
+function generateProtocol(): string {
+  let suffix = '';
+  for (let i = 0; i < PROTOCOL_RANDOM_LENGTH; i++) {
+    suffix += PROTOCOL_ALPHABET[randomInt(PROTOCOL_ALPHABET.length)];
+  }
+  return `DOC-${suffix}`;
+}
 
 function toDto(e: QueueEntry): QueueEntryDto {
   return {
@@ -65,37 +80,23 @@ export class QueueService {
     private readonly queueEvents: QueueEventsService,
   ) {}
 
-  async createCheckIn(
-    input: { site_id?: string; technician_name?: string; request_type?: string },
-    ip: string,
-  ): Promise<QueueEntryDto> {
+  async createCheckIn(input: CreateCheckInInput, ip: string): Promise<QueueEntryDto> {
     if (!this.rateLimit.check(`createCheckIn:${ip}`)) {
       throw new BadRequestException('Muitas solicitações. Aguarde um minuto.');
     }
 
-    const siteId = input.site_id?.trim() ?? '';
-    const technicianName = input.technician_name?.trim() ?? '';
-    const requestType = input.request_type?.trim() ?? '';
-
-    if (!siteId) throw new BadRequestException('SITE ID é obrigatório');
-    if (siteId.length > 100) throw new BadRequestException('SITE ID muito longo');
-    if (!technicianName) throw new BadRequestException('Nome do técnico é obrigatório');
-    if (technicianName.length > 200) throw new BadRequestException('Nome do técnico muito longo');
-    if (!requestType) throw new BadRequestException('Tipo de solicitação é obrigatório');
-    if (requestType.length > 200) throw new BadRequestException('Tipo de solicitação muito longo');
-
+    // Validação e trim já garantidos pelo ZodValidationPipe com createCheckInSchema.
     let lastError: unknown = null;
     for (let attempt = 0; attempt < 5; attempt++) {
-      const n = Math.floor(1000 + Math.random() * 9000);
-      const protocol = `DOC-${n}`;
+      const protocol = generateProtocol();
       try {
         const entry = this.queueRepository.create({
           protocol,
-          siteId,
-          technicianName,
-          requestType,
-          fullName: technicianName,
-          identifier: siteId,
+          siteId: input.site_id,
+          technicianName: input.technician_name,
+          requestType: input.request_type,
+          fullName: input.technician_name,
+          identifier: input.site_id,
           status: 'waiting',
         });
         const saved = await this.queueRepository.save(entry);

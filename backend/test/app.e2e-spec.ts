@@ -120,7 +120,7 @@ describe('API e2e (check-in → status → dashboard)', () => {
       request_type: 'Instalação',
       status: 'waiting',
     });
-    expect(checkInResponse.body.protocol).toMatch(/^DOC-\d{4}$/);
+    expect(checkInResponse.body.protocol).toMatch(/^DOC-[2-9A-HJ-NP-Z]{10}$/);
     expect(checkInResponse.body.id).toEqual(expect.any(String));
     firstEntryId = checkInResponse.body.id;
     firstProtocol = checkInResponse.body.protocol;
