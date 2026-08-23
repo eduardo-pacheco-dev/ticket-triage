@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Header,
@@ -15,16 +16,53 @@ import {
   Document,
   List,
   Settings,
+  Notification as BellIcon,
 } from '@carbon/icons-react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from './ToastProvider';
+import {
+  getNotificationPermission,
+  requestNotificationPermission,
+  showDesktopNotification,
+} from '../lib/notifications';
 
 export function AppHeader({ variant = 'admin' }: { variant?: 'admin' | 'public' }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { token, logout } = useAuth();
+  const notify = useToast();
   const authed = !!token;
   const pathname = location.pathname;
   const isAdminArea = variant === 'admin';
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission | 'unsupported'>(
+    () => getNotificationPermission(),
+  );
+
+  async function handleNotifications() {
+    if (notifPermission === 'unsupported') {
+      notify({ kind: 'error', title: 'Navegador sem suporte a notificações' });
+      return;
+    }
+    if (notifPermission === 'granted') {
+      showDesktopNotification('Triagem Docs', 'As notificações estão ativas.');
+      return;
+    }
+    if (notifPermission === 'denied') {
+      notify({
+        kind: 'warning',
+        title: 'Notificações bloqueadas',
+        subtitle: 'Permita as notificações nas configurações do site no Chrome.',
+      });
+      return;
+    }
+    const result = await requestNotificationPermission();
+    setNotifPermission(result);
+    if (result === 'granted') {
+      showDesktopNotification('Triagem Docs', 'Você será avisado sobre novas solicitações.');
+    } else if (result === 'denied') {
+      notify({ kind: 'warning', title: 'Permissão de notificações negada' });
+    }
+  }
 
   return (
     <>
@@ -33,6 +71,19 @@ export function AppHeader({ variant = 'admin' }: { variant?: 'admin' | 'public' 
           Triagem Docs
         </HeaderName>
         <HeaderGlobalBar>
+          {isAdminArea && authed && (
+            <HeaderGlobalAction
+              aria-label={
+                notifPermission === 'granted'
+                  ? 'Notificações ativas'
+                  : 'Ativar notificações do navegador'
+              }
+              tooltipAlignment="start"
+              onClick={handleNotifications}
+            >
+              <BellIcon />
+            </HeaderGlobalAction>
+          )}
           {authed ? (
             <HeaderGlobalAction
               aria-label="Sair"

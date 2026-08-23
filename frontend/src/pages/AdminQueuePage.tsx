@@ -28,6 +28,7 @@ import { AppHeader } from '../components/AppHeader';
 import { fetchActiveQueue, updateStatus } from '../lib/api';
 import { useQueueEvents } from '../hooks/useQueueEvents';
 import { useToast } from '../components/ToastProvider';
+import { showDesktopNotification } from '../lib/notifications';
 import { statusLabel } from '../lib/types';
 import type { QueueEntry, QueueStatus } from '../lib/types';
 import { slaLabel } from '../lib/duration';
@@ -97,6 +98,7 @@ export default function AdminQueuePage() {
 
     if (payload.action === 'created') {
       notify({ kind: 'success', title: 'Nova solicitação recebida', subtitle: label });
+      showDesktopNotification('Nova solicitação recebida', label);
     } else if (payload.status === 'in_review') {
       notify({ kind: 'info', title: 'Solicitação em análise', subtitle: label });
     } else if (payload.status === 'approved') {
