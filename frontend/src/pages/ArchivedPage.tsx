@@ -132,7 +132,14 @@ export default function ArchivedPage() {
           </div>
         ) : (
           <DataTable rows={rows} headers={headers} isSortable>
-            {({ rows: r, headers: h, getHeaderProps, getRowProps, getTableProps, onInputChange }) => (
+            {({
+              rows: r,
+              headers: h,
+              getHeaderProps,
+              getRowProps,
+              getTableProps,
+              onInputChange,
+            }) => (
               <TableContainer
                 title="Solicitações arquivadas"
                 description={`${entries.length} solicitação(ões) concluída(s)`}
@@ -140,9 +147,7 @@ export default function ArchivedPage() {
                 <TableToolbar>
                   <TableToolbarContent>
                     <TableToolbarSearch
-                      onChange={(e) =>
-                        onInputChange(e as React.ChangeEvent<HTMLInputElement>)
-                      }
+                      onChange={(e) => onInputChange(e as React.ChangeEvent<HTMLInputElement>)}
                       placeholder="Buscar..."
                     />
                   </TableToolbarContent>
@@ -217,9 +222,7 @@ export default function ArchivedPage() {
                                 </TableCell>
                               );
                             }
-                            return (
-                              <TableCell key={cell.id}>{String(cell.value ?? '')}</TableCell>
-                            );
+                            return <TableCell key={cell.id}>{String(cell.value ?? '')}</TableCell>;
                           })}
                         </TableRow>
                       );

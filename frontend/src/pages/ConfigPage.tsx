@@ -227,7 +227,12 @@ function SlaTab() {
         />
       )}
       {success && (
-        <InlineNotification kind="success" lowContrast title="Configuração salva!" hideCloseButton />
+        <InlineNotification
+          kind="success"
+          lowContrast
+          title="Configuração salva!"
+          hideCloseButton
+        />
       )}
 
       <Tile className="checkin-card" style={{ maxWidth: '100%', marginTop: 0 }}>
@@ -333,9 +338,7 @@ function PerfilTab() {
       )}
 
       <Tile className="checkin-card" style={{ maxWidth: '100%', marginTop: 0 }}>
-        <h2 style={{ fontSize: '1.125rem', margin: '0 0 1rem', fontWeight: 500 }}>
-          Alterar senha
-        </h2>
+        <h2 style={{ fontSize: '1.125rem', margin: '0 0 1rem', fontWeight: 500 }}>Alterar senha</h2>
         <Form onSubmit={handleSubmit}>
           <Stack gap={6}>
             <TextInput

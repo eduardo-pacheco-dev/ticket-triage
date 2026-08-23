@@ -108,8 +108,8 @@ export default function HomePage() {
             <Tile className="checkin-card">
               <h1 className="checkin-title">Solicitar Avaliação</h1>
               <p className="checkin-subtitle">
-                Preencha os dados abaixo para entrar na fila de análise. Um número de
-                protocolo será gerado.
+                Preencha os dados abaixo para entrar na fila de análise. Um número de protocolo será
+                gerado.
               </p>
 
               {!entry ? (
@@ -160,12 +160,7 @@ export default function HomePage() {
                       checked={checkedIn}
                       onChange={(_, { checked }) => setCheckedIn(checked)}
                     />
-                    <Button
-                      type="submit"
-                      disabled={loading}
-                      renderIcon={ArrowRight}
-                      size="lg"
-                    >
+                    <Button type="submit" disabled={loading} renderIcon={ArrowRight} size="lg">
                       {loading ? 'Registrando...' : 'Solicitar Avaliação'}
                     </Button>
                   </Stack>
@@ -196,7 +191,10 @@ export default function HomePage() {
                     </Tag>
                   </div>
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <Button renderIcon={Search} onClick={() => navigate(`/status/${encodeURIComponent(entry.site_id)}`)}>
+                    <Button
+                      renderIcon={Search}
+                      onClick={() => navigate(`/status/${encodeURIComponent(entry.site_id)}`)}
+                    >
                       Ver acompanhamento
                     </Button>
                     <Button kind="tertiary" renderIcon={Restart} onClick={reset}>
@@ -244,12 +242,12 @@ export default function HomePage() {
         onRequestSubmit={() => setShowModal(false)}
       >
         <p style={{ marginBottom: '1rem' }}>
-          É necessário realizar o <strong>Check-in</strong> e o <strong>QCP3</strong>{' '}
-          antes de solicitar a avaliação.
+          É necessário realizar o <strong>Check-in</strong> e o <strong>QCP3</strong> antes de
+          solicitar a avaliação.
         </p>
         <p style={{ color: '#525252', fontSize: '0.875rem' }}>
-          Certifique-se de que ambos os procedimentos foram concluídos e marque a opção
-          no formulário.
+          Certifique-se de que ambos os procedimentos foram concluídos e marque a opção no
+          formulário.
         </p>
       </Modal>
     </div>

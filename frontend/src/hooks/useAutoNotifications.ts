@@ -1,8 +1,5 @@
 import { useEffect } from 'react';
-import {
-  getNotificationPermission,
-  requestNotificationPermission,
-} from '../lib/notifications';
+import { getNotificationPermission, requestNotificationPermission } from '../lib/notifications';
 
 export function useAutoNotifications() {
   useEffect(() => {

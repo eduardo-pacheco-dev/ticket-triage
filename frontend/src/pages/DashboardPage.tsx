@@ -1,14 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import {
-  Tile,
-  Grid,
-  Column,
-  Loading,
-  Tag,
-  Button,
-  InlineNotification,
-} from '@carbon/react';
+import { Tile, Grid, Column, Loading, Tag, Button, InlineNotification } from '@carbon/react';
 import { ArrowLeft } from '@carbon/icons-react';
 import { AppHeader } from '../components/AppHeader';
 import { fetchDashboard } from '../lib/api';
@@ -27,12 +19,8 @@ function StatCard({
 }) {
   return (
     <Tile style={{ textAlign: 'center', padding: '1.5rem' }}>
-      <div style={{ fontSize: '2rem', fontWeight: 300, color: color ?? '#0f62fe' }}>
-        {value}
-      </div>
-      <div style={{ fontSize: '0.875rem', color: '#525252', marginTop: '0.25rem' }}>
-        {label}
-      </div>
+      <div style={{ fontSize: '2rem', fontWeight: 300, color: color ?? '#0f62fe' }}>{value}</div>
+      <div style={{ fontSize: '0.875rem', color: '#525252', marginTop: '0.25rem' }}>{label}</div>
     </Tile>
   );
 }
@@ -141,8 +129,7 @@ export default function DashboardPage() {
                           gap: '1rem',
                           alignItems: 'center',
                           padding: '0.5rem 0',
-                          borderBottom:
-                            i < data.recent.length - 1 ? '1px solid #e0e0e0' : 'none',
+                          borderBottom: i < data.recent.length - 1 ? '1px solid #e0e0e0' : 'none',
                           flexWrap: 'wrap',
                         }}
                       >

@@ -120,20 +120,10 @@ export function AppHeader({ variant = 'admin' }: { variant?: 'admin' | 'public' 
             >
               Dashboard
             </SideNavLink>
-            <SideNavLink
-              as={Link}
-              to="/"
-              renderIcon={Document}
-              isActive={pathname === '/'}
-            >
+            <SideNavLink as={Link} to="/" renderIcon={Document} isActive={pathname === '/'}>
               Check-in
             </SideNavLink>
-            <SideNavLink
-              as={Link}
-              to="/admin"
-              renderIcon={List}
-              isActive={pathname === '/admin'}
-            >
+            <SideNavLink as={Link} to="/admin" renderIcon={List} isActive={pathname === '/admin'}>
               Fila
             </SideNavLink>
             <SideNavLink

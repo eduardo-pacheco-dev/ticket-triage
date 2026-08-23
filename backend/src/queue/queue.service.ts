@@ -218,9 +218,7 @@ export class QueueService {
     const avgWaitMin =
       slaRaw?.avgWaitSec != null ? Math.round(Math.round(Number(slaRaw.avgWaitSec)) / 60) : 0;
     const avgServiceMin =
-      slaRaw?.avgServiceSec != null
-        ? Math.round(Math.round(Number(slaRaw.avgServiceSec)) / 60)
-        : 0;
+      slaRaw?.avgServiceSec != null ? Math.round(Math.round(Number(slaRaw.avgServiceSec)) / 60) : 0;
 
     return {
       total,

@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend - lint e testes
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: mariadb:11.8
+        env:
+          MARIADB_ROOT_PASSWORD: rootsecret
+          MARIADB_DATABASE: ticket_triage
+        ports:
+          - '3306:3306'
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      DB_PASSWORD: rootsecret
+      JWT_SECRET: ci-jwt-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Instalar dependências
+        run: npm ci
+      - name: Lint
+        run: npm run lint --workspace backend
+      - name: Verificar formatação (Prettier)
+        run: npm run format:check
+      - name: Testes unitários
+        run: npm run test --workspace backend
+      - name: Testes e2e (check-in → status → dashboard)
+        run: npm run test:e2e --workspace backend
+
+  frontend:
+    name: Frontend - lint e build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Instalar dependências
+        run: npm ci
+      - name: Lint
+        run: npm run lint --workspace frontend
+      - name: Build (tsc + vite)
+        run: npm run build --workspace frontend

@@ -14,42 +14,42 @@ export default function App() {
     <>
       <Toaster />
       <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/status/:siteId" element={<StatusPage />} />
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute>
-            <AdminQueuePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/arquivados"
-        element={
-          <ProtectedRoute>
-            <ArchivedPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/configuracoes"
-        element={
-          <ProtectedRoute>
-            <ConfigPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/status/:siteId" element={<StatusPage />} />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminQueuePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/arquivados"
+          element={
+            <ProtectedRoute>
+              <ArchivedPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/configuracoes"
+          element={
+            <ProtectedRoute>
+              <ConfigPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
   );

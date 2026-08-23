@@ -138,10 +138,7 @@ export function fetchSlaConfig() {
   return request<SlaConfig>('/sla-config');
 }
 
-export function updateSlaConfig(data: {
-  expectedWaitMin: number;
-  expectedServiceMin: number;
-}) {
+export function updateSlaConfig(data: { expectedWaitMin: number; expectedServiceMin: number }) {
   return request<SlaConfig>('/sla-config', {
     method: 'PUT',
     body: JSON.stringify(data),

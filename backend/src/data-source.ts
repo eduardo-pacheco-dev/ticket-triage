@@ -15,8 +15,7 @@ if (process.env.NODE_ENV === 'production' && process.env.DB_SYNC !== 'false') {
 
 export const migrations = [InitSchema1756000000000];
 
-const dbLogging: LogLevel[] =
-  process.env.DB_SYNC === 'false' ? ['error'] : ['error', 'schema'];
+const dbLogging: LogLevel[] = process.env.DB_SYNC === 'false' ? ['error'] : ['error', 'schema'];
 
 export const appDataSourceOptions = {
   type: 'mysql' as const,

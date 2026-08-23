@@ -8,10 +8,34 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main",
+    "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" \"test/**/*.ts\" --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "migration:run": "npm run build && typeorm migration:run -d dist/data-source.js",
     "migration:revert": "npm run build && typeorm migration:revert -d dist/data-source.js",
     "db:init": "npm run migration:run && npm run db:seed",
-    "db:seed": "node scripts/seed.cjs"
+    "db:seed": "node scripts/seed.cjs",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:e2e": "jest --config test/jest-e2e.json --runInBand"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.6",
@@ -31,9 +55,19 @@
   "devDependencies": {
     "@nestjs/cli": "^11.0.10",
     "@nestjs/schematics": "^11.0.8",
+    "@nestjs/testing": "^11.2.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/express": "^5.0.3",
+    "@types/jest": "^30.0.0",
     "@types/node": "^24.3.1",
-    "typescript": "^5.9.2"
+    "@types/supertest": "^7.2.1",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "jest": "^30.4.2",
+    "prettier": "^3.9.6",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.12",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.67.0"
   }
 }

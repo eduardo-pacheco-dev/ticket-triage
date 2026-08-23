@@ -25,7 +25,9 @@ export const useToastStore = create<ToastState>((set, get) => ({
 
   notify({ kind, title, subtitle }) {
     const id = nextId++;
-    set((s) => ({ toasts: [...s.toasts.slice(-(MAX_VISIBLE - 1)), { id, kind, title, subtitle }] }));
+    set((s) => ({
+      toasts: [...s.toasts.slice(-(MAX_VISIBLE - 1)), { id, kind, title, subtitle }],
+    }));
     setTimeout(() => get().remove(id), AUTO_DISMISS_MS);
   },
 

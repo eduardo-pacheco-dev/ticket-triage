@@ -54,18 +54,16 @@ export default function StatusPage() {
       .finally(() => setLoading(false));
   }, [siteId]);
 
-  useQueueEvents(
-    (payload) => {
-      if (!payload.site_id || payload.site_id === siteId) {
-        fetchBySiteId(siteId)
-          .then((result) => {
-            setEntries(result.entries);
-            setPosition(result.position);
-          })
-          .catch(() => {});
-      }
+  useQueueEvents((payload) => {
+    if (!payload.site_id || payload.site_id === siteId) {
+      fetchBySiteId(siteId)
+        .then((result) => {
+          setEntries(result.entries);
+          setPosition(result.position);
+        })
+        .catch(() => {});
     }
-  );
+  });
 
   const latest = entries[0];
 
@@ -116,10 +114,7 @@ export default function StatusPage() {
               {position !== null && (
                 <div>
                   <div className="field-label">Posição na fila</div>
-                  <div
-                    className="mono"
-                    style={{ fontSize: '1.75rem', fontWeight: 300 }}
-                  >
+                  <div className="mono" style={{ fontSize: '1.75rem', fontWeight: 300 }}>
                     #{position}
                   </div>
                 </div>
@@ -131,9 +126,7 @@ export default function StatusPage() {
                 <ProgressStep
                   label={latest.status === 'rejected' ? 'Recusado' : 'Concluído'}
                   description={
-                    latest.status === 'rejected'
-                      ? 'Solicitação recusada'
-                      : 'Análise finalizada'
+                    latest.status === 'rejected' ? 'Solicitação recusada' : 'Análise finalizada'
                   }
                   invalid={latest.status === 'rejected'}
                 />

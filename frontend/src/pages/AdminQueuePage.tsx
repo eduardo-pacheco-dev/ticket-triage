@@ -202,7 +202,14 @@ export default function AdminQueuePage() {
           </div>
         ) : (
           <DataTable rows={rows} headers={headers} isSortable>
-            {({ rows: r, headers: h, getHeaderProps, getRowProps, getTableProps, onInputChange }) => (
+            {({
+              rows: r,
+              headers: h,
+              getHeaderProps,
+              getRowProps,
+              getTableProps,
+              onInputChange,
+            }) => (
               <TableContainer
                 title="Solicitações"
                 description={`${entries.length} solicitação(ões) no total`}
@@ -210,9 +217,7 @@ export default function AdminQueuePage() {
                 <TableToolbar>
                   <TableToolbarContent>
                     <TableToolbarSearch
-                      onChange={(e) =>
-                        onInputChange(e as React.ChangeEvent<HTMLInputElement>)
-                      }
+                      onChange={(e) => onInputChange(e as React.ChangeEvent<HTMLInputElement>)}
                       placeholder="Buscar por SITE ID, técnico ou protocolo"
                     />
                   </TableToolbarContent>
