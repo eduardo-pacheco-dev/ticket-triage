@@ -1,9 +1,12 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { User } from './user.entity';
+import { RateLimitService } from '../common/rate-limit.service';
+
+const LOGIN_MAX_ATTEMPTS_PER_MINUTE = 20;
 
 @Injectable()
 export class AuthService {
@@ -11,9 +14,13 @@ export class AuthService {
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
     private readonly jwtService: JwtService,
+    private readonly rateLimit: RateLimitService,
   ) {}
 
-  async login(username: string, password: string) {
+  async login(username: string, password: string, ip: string) {
+    if (!this.rateLimit.check(`login:${ip}`, LOGIN_MAX_ATTEMPTS_PER_MINUTE)) {
+      throw new BadRequestException('Muitas tentativas de login. Aguarde um minuto.');
+    }
     const user = await this.usersRepository.findOne({ where: { username } });
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
       throw new UnauthorizedException('Usuário ou senha inválidos.');

@@ -15,8 +15,7 @@ import { AppHeader } from '../components/AppHeader';
 import { fetchBySiteId } from '../lib/api';
 import { useQueueEvents } from '../hooks/useQueueEvents';
 import { statusLabel } from '../lib/types';
-import type { QueueEntry, QueueStatus } from '../lib/types';
-import { slaLabel } from '../lib/duration';
+import type { PublicQueueEntry, QueueStatus } from '../lib/types';
 
 const tagType: Record<QueueStatus, 'gray' | 'blue' | 'green' | 'red'> = {
   waiting: 'gray',
@@ -39,7 +38,7 @@ function currentStep(status: QueueStatus): number {
 
 export default function StatusPage() {
   const { siteId = '' } = useParams<{ siteId: string }>();
-  const [entries, setEntries] = useState<QueueEntry[]>([]);
+  const [entries, setEntries] = useState<PublicQueueEntry[]>([]);
   const [position, setPosition] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -126,37 +125,6 @@ export default function StatusPage() {
                 </div>
               )}
 
-              {latest.status !== 'waiting' &&
-                (() => {
-                  const { wait, service, total } = slaLabel(latest);
-                  return (
-                    <div className="detail-grid" style={{ marginTop: '0.5rem' }}>
-                      <div>
-                        <div className="field-label">Espera</div>
-                        <div className="mono" style={{ fontSize: '0.875rem' }}>
-                          {wait}
-                        </div>
-                      </div>
-                      {service && (
-                        <div>
-                          <div className="field-label">Atendimento</div>
-                          <div className="mono" style={{ fontSize: '0.875rem' }}>
-                            {service}
-                          </div>
-                        </div>
-                      )}
-                      {total && (
-                        <div>
-                          <div className="field-label">Total</div>
-                          <div className="mono" style={{ fontSize: '0.875rem' }}>
-                            {total}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-
               <ProgressIndicator currentIndex={currentStep(latest.status)} spaceEqually>
                 <ProgressStep label="Na Fila" description="Aguardando análise" />
                 <ProgressStep label="Em Análise" description="Sendo revisado" />
@@ -178,18 +146,6 @@ export default function StatusPage() {
                     #{latest.protocol}
                   </div>
                 </div>
-                <div>
-                  <div className="field-label">Nome do Técnico</div>
-                  <div>{latest.technician_name}</div>
-                </div>
-                <div>
-                  <div className="field-label">Tipo de Solicitação</div>
-                  <div>{latest.request_type}</div>
-                </div>
-                <div>
-                  <div className="field-label">Registrado em</div>
-                  <div>{new Date(latest.created_at).toLocaleString('pt-BR')}</div>
-                </div>
               </div>
             </Stack>
           )}
@@ -202,13 +158,9 @@ export default function StatusPage() {
             </h2>
             <Stack gap={3}>
               {entries.slice(1).map((e) => (
-                <div key={e.id} className="history-row">
+                <div key={e.protocol} className="history-row">
                   <span className="mono">#{e.protocol}</span>
-                  <span>{e.request_type}</span>
                   <Tag type={tagType[e.status]}>{statusLabel[e.status]}</Tag>
-                  <span style={{ color: '#525252', fontSize: '0.875rem' }}>
-                    {new Date(e.created_at).toLocaleString('pt-BR')}
-                  </span>
                 </div>
               ))}
             </Stack>

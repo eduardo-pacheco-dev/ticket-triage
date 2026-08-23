@@ -8,6 +8,9 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main",
+    "migration:run": "npm run build && typeorm migration:run -d dist/data-source.js",
+    "migration:revert": "npm run build && typeorm migration:revert -d dist/data-source.js",
+    "db:init": "npm run migration:run && npm run db:seed",
     "db:seed": "node scripts/seed.cjs"
   },
   "dependencies": {

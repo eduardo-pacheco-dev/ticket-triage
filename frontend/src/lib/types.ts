@@ -15,6 +15,12 @@ export interface QueueEntry {
   completed_at?: Date | string;
 }
 
+export interface PublicQueueEntry {
+  protocol: string;
+  site_id: string;
+  status: QueueStatus;
+}
+
 export interface RequestType {
   id: string;
   name: string;

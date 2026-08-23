@@ -16,6 +16,7 @@ import { QueueService } from './queue.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { QueueEventsService } from './queue-events.service';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
+import { clientIp } from '../common/client-ip';
 import {
   createCheckInSchema,
   updateStatusSchema,
@@ -42,26 +43,24 @@ export class QueueController {
     @Body(new ZodValidationPipe(createCheckInSchema)) body: CreateCheckInInput,
     @Req() request: Request,
   ) {
-    const ip =
-      (request.headers['x-forwarded-for'] as string | undefined)?.split(',')[0].trim() ||
-      request.ip ||
-      'unknown';
-    return this.queueService.createCheckIn(body, ip);
+    return this.queueService.createCheckIn(body, clientIp(request));
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('queue/active')
   findActive() {
     return this.queueService.findActive();
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('queue/archived')
   findArchived() {
     return this.queueService.findArchived();
   }
 
-  @Get('queue/site/:siteId')
-  findBySiteId(@Param('siteId') siteId: string) {
-    return this.queueService.findBySiteId(siteId);
+  @Get('public/status/:siteId')
+  findPublicBySiteId(@Param('siteId') siteId: string) {
+    return this.queueService.findPublicBySiteId(siteId);
   }
 
   @UseGuards(JwtAuthGuard)

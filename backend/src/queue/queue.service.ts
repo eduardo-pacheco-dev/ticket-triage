@@ -21,6 +21,12 @@ export interface QueueEntryDto {
   completed_at?: Date | null;
 }
 
+export interface PublicQueueEntryDto {
+  protocol: string;
+  site_id: string;
+  status: QueueStatus;
+}
+
 const ACTIVE_STATUSES: QueueStatus[] = ['waiting', 'in_review'];
 const FINAL_STATUSES: QueueStatus[] = ['approved', 'rejected'];
 const VALID_STATUSES: QueueStatus[] = [...ACTIVE_STATUSES, ...FINAL_STATUSES];
@@ -39,6 +45,14 @@ function toDto(e: QueueEntry): QueueEntryDto {
     updated_at: e.updatedAt,
     started_at: e.startedAt,
     completed_at: e.completedAt,
+  };
+}
+
+function toPublicDto(e: QueueEntry): PublicQueueEntryDto {
+  return {
+    protocol: e.protocol,
+    site_id: e.siteId,
+    status: e.status,
   };
 }
 
@@ -121,7 +135,9 @@ export class QueueService {
     return entries.map(toDto);
   }
 
-  async findBySiteId(siteId: string) {
+  async findPublicBySiteId(
+    siteId: string,
+  ): Promise<{ entries: PublicQueueEntryDto[]; position: number | null }> {
     const id = siteId.trim();
     if (!id) throw new BadRequestException('SITE ID é obrigatório');
 
@@ -147,7 +163,7 @@ export class QueueService {
       position = ahead + 1;
     }
 
-    return { entries: entries.map(toDto), position };
+    return { entries: entries.map(toPublicDto), position };
   }
 
   async updateStatus(id: string, status: string): Promise<QueueEntryDto> {

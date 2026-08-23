@@ -11,6 +11,7 @@ import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import type { JwtPayload } from './jwt-auth.guard';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
+import { clientIp } from '../common/client-ip';
 import {
   changePasswordSchema,
   loginSchema,
@@ -27,8 +28,11 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
-  login(@Body(new ZodValidationPipe(loginSchema)) body: LoginInput) {
-    return this.authService.login(body.username, body.password);
+  login(
+    @Body(new ZodValidationPipe(loginSchema)) body: LoginInput,
+    @Req() request: Request,
+  ) {
+    return this.authService.login(body.username, body.password, clientIp(request));
   }
 
   @UseGuards(JwtAuthGuard)

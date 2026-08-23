@@ -1,6 +1,7 @@
 import { clearAuth, getToken } from './auth-store';
 import type {
   DashboardData,
+  PublicQueueEntry,
   QueueEntry,
   QueueStatus,
   RequestType,
@@ -117,8 +118,8 @@ export function fetchArchivedQueue() {
 
 export function fetchBySiteId(siteId: string) {
   const encoded = encodeURIComponent(siteId.trim());
-  return request<{ entries: QueueEntry[]; position: number | null }>(
-    `/queue/site/${encoded}`,
+  return request<{ entries: PublicQueueEntry[]; position: number | null }>(
+    `/public/status/${encoded}`,
   );
 }
 

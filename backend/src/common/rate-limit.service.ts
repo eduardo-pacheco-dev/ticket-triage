@@ -12,7 +12,7 @@ const MAX_REQUESTS = 30;
 export class RateLimitService {
   private readonly buckets = new Map<string, Bucket>();
 
-  check(key: string): boolean {
+  check(key: string, maxRequests: number = MAX_REQUESTS): boolean {
     const now = Date.now();
     const entry = this.buckets.get(key);
 
@@ -21,7 +21,7 @@ export class RateLimitService {
       return true;
     }
 
-    if (entry.count >= MAX_REQUESTS) {
+    if (entry.count >= maxRequests) {
       return false;
     }
 
