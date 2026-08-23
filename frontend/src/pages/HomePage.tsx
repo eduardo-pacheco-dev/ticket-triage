@@ -17,6 +17,7 @@ import {
 import { ArrowRight, Restart, Search } from '@carbon/icons-react';
 import { AppHeader } from '../components/AppHeader';
 import { createCheckIn, fetchRequestTypes } from '../lib/api';
+import { useQueueEvents } from '../hooks/useQueueEvents';
 import { statusLabel } from '../lib/types';
 import type { QueueEntry, RequestType } from '../lib/types';
 
@@ -36,19 +37,18 @@ export default function HomePage() {
   const [searchSiteId, setSearchSiteId] = useState('');
 
   useEffect(() => {
-    let mounted = true;
-    const load = () => {
-      fetchRequestTypes()
-        .then((rows) => mounted && setTypes(rows))
-        .catch(() => {});
-    };
-    load();
-    const timer = setInterval(load, 5000);
-    return () => {
-      mounted = false;
-      clearInterval(timer);
-    };
+    fetchRequestTypes()
+      .then(setTypes)
+      .catch(() => {});
   }, []);
+
+  useQueueEvents((payload) => {
+    if (payload.type === 'request_types') {
+      fetchRequestTypes()
+        .then(setTypes)
+        .catch(() => {});
+    }
+  });
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

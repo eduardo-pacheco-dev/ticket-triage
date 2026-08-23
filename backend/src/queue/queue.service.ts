@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { QueueEntry } from './queue-entry.entity';
 import type { QueueStatus } from './queue-entry.entity';
 import { RateLimitService } from '../common/rate-limit.service';
+import { QueueEventsService } from './queue-events.service';
 
 export interface QueueEntryDto {
   id: string;
@@ -47,6 +48,7 @@ export class QueueService {
     @InjectRepository(QueueEntry)
     private readonly queueRepository: Repository<QueueEntry>,
     private readonly rateLimit: RateLimitService,
+    private readonly queueEvents: QueueEventsService,
   ) {}
 
   async createCheckIn(
@@ -82,7 +84,10 @@ export class QueueService {
           identifier: siteId,
           status: 'waiting',
         });
-        return toDto(await this.queueRepository.save(entry));
+        const saved = await this.queueRepository.save(entry);
+        const dto = toDto(saved);
+        this.emitQueueEvent('created', dto.site_id);
+        return dto;
       } catch (error) {
         lastError = error;
         const code = (error as { code?: string }).code;
@@ -91,6 +96,10 @@ export class QueueService {
     }
     console.error('[createCheckIn]', lastError);
     throw new BadRequestException('Erro ao registrar solicitação.');
+  }
+
+  private emitQueueEvent(action: string, siteId: string): void {
+    this.queueEvents.emit({ type: 'queue', action, site_id: siteId });
   }
 
   async findActive(): Promise<QueueEntryDto[]> {
@@ -163,7 +172,9 @@ export class QueueService {
     }
     entry.status = next;
 
-    return toDto(await this.queueRepository.save(entry));
+    const dto = toDto(await this.queueRepository.save(entry));
+    this.emitQueueEvent('updated', dto.site_id);
+    return dto;
   }
 
   async getDashboard() {

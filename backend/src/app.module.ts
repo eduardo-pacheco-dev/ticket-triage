@@ -9,6 +9,7 @@ import { RateLimitService } from './common/rate-limit.service';
 import { QueueController } from './queue/queue.controller';
 import { AdminController } from './queue/admin.controller';
 import { QueueService } from './queue/queue.service';
+import { QueueEventsService } from './queue/queue-events.service';
 import { RequestTypesController } from './request-types/request-types.controller';
 import { RequestTypesService } from './request-types/request-types.service';
 import { SlaController } from './sla/sla.controller';
@@ -36,6 +37,6 @@ import { SlaService } from './sla/sla.service';
     AuthModule,
   ],
   controllers: [QueueController, AdminController, RequestTypesController, SlaController],
-  providers: [QueueService, RequestTypesService, SlaService, RateLimitService],
+  providers: [QueueService, RequestTypesService, SlaService, RateLimitService, QueueEventsService],
 })
 export class AppModule {}

@@ -20,6 +20,7 @@ import {
 import { Restart, ArrowLeft } from '@carbon/icons-react';
 import { AppHeader } from '../components/AppHeader';
 import { fetchArchivedQueue, updateStatus } from '../lib/api';
+import { useQueueEvents } from '../hooks/useQueueEvents';
 import { statusLabel } from '../lib/types';
 import type { QueueEntry } from '../lib/types';
 import { slaLabel } from '../lib/duration';
@@ -58,26 +59,17 @@ export default function ArchivedPage() {
   const [pending, setPending] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    let mounted = true;
-    let firstLoad = true;
-    const load = () => {
-      fetchArchivedQueue()
-        .then((rows) => mounted && setEntries(rows))
-        .catch(() => mounted && setError('Erro ao carregar arquivados.'))
-        .finally(() => {
-          if (mounted && firstLoad) {
-            firstLoad = false;
-            setLoading(false);
-          }
-        });
-    };
-    load();
-    const timer = setInterval(load, 5000);
-    return () => {
-      mounted = false;
-      clearInterval(timer);
-    };
+    fetchArchivedQueue()
+      .then(setEntries)
+      .catch(() => setError('Erro ao carregar arquivados.'))
+      .finally(() => setLoading(false));
   }, []);
+
+  useQueueEvents(() => {
+    fetchArchivedQueue()
+      .then(setEntries)
+      .catch(() => {});
+  });
 
   async function handleReopen(id: string) {
     setPending((p) => ({ ...p, [id]: true }));

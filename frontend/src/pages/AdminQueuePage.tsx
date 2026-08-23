@@ -26,6 +26,7 @@ import {
 } from '@carbon/icons-react';
 import { AppHeader } from '../components/AppHeader';
 import { fetchActiveQueue, updateStatus } from '../lib/api';
+import { useQueueEvents } from '../hooks/useQueueEvents';
 import { statusLabel } from '../lib/types';
 import type { QueueEntry, QueueStatus } from '../lib/types';
 import { slaLabel } from '../lib/duration';
@@ -76,26 +77,17 @@ export default function AdminQueuePage() {
   const [pending, setPending] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    let mounted = true;
-    let firstLoad = true;
-    const load = () => {
-      fetchActiveQueue()
-        .then((rows) => mounted && setEntries(rows))
-        .catch(() => mounted && setError('Erro ao carregar fila.'))
-        .finally(() => {
-          if (mounted && firstLoad) {
-            firstLoad = false;
-            setLoading(false);
-          }
-        });
-    };
-    load();
-    const timer = setInterval(load, 5000);
-    return () => {
-      mounted = false;
-      clearInterval(timer);
-    };
+    fetchActiveQueue()
+      .then(setEntries)
+      .catch(() => setError('Erro ao carregar fila.'))
+      .finally(() => setLoading(false));
   }, []);
+
+  useQueueEvents(() => {
+    fetchActiveQueue()
+      .then(setEntries)
+      .catch(() => {});
+  });
 
   async function handleUpdate(id: string, status: QueueStatus) {
     setPending((p) => ({ ...p, [id]: true }));

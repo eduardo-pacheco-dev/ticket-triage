@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RequestType } from './request-type.entity';
 import { RateLimitService } from '../common/rate-limit.service';
+import { QueueEventsService } from '../queue/queue-events.service';
 
 @Injectable()
 export class RequestTypesService {
@@ -10,6 +11,7 @@ export class RequestTypesService {
     @InjectRepository(RequestType)
     private readonly typesRepository: Repository<RequestType>,
     private readonly rateLimit: RateLimitService,
+    private readonly queueEvents: QueueEventsService,
   ) {}
 
   findAll() {
@@ -26,7 +28,9 @@ export class RequestTypesService {
 
     try {
       const type = this.typesRepository.create({ name: trimmed });
-      return await this.typesRepository.save(type);
+      const saved = await this.typesRepository.save(type);
+      this.queueEvents.emit({ type: 'request_types', action: 'created' });
+      return saved;
     } catch (error) {
       const code = (error as { code?: string }).code;
       if (code === 'ER_DUP_ENTRY') throw new BadRequestException('Este tipo já existe.');
@@ -37,5 +41,6 @@ export class RequestTypesService {
 
   async remove(id: string): Promise<void> {
     await this.typesRepository.delete(id);
+    this.queueEvents.emit({ type: 'request_types', action: 'deleted' });
   }
 }

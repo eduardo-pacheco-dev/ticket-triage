@@ -13,6 +13,7 @@ import {
 import { ArrowLeft } from '@carbon/icons-react';
 import { AppHeader } from '../components/AppHeader';
 import { fetchBySiteId } from '../lib/api';
+import { useQueueEvents } from '../hooks/useQueueEvents';
 import { statusLabel } from '../lib/types';
 import type { QueueEntry, QueueStatus } from '../lib/types';
 import { slaLabel } from '../lib/duration';
@@ -44,30 +45,28 @@ export default function StatusPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let mounted = true;
-    let firstLoad = true;
-    const load = () => {
-      fetchBySiteId(siteId)
-        .then((result) => {
-          if (!mounted) return;
-          setEntries(result.entries);
-          setPosition(result.position);
-        })
-        .catch(() => mounted && setError('Erro ao buscar status.'))
-        .finally(() => {
-          if (mounted && firstLoad) {
-            firstLoad = false;
-            setLoading(false);
-          }
-        });
-    };
-    load();
-    const timer = setInterval(load, 5000);
-    return () => {
-      mounted = false;
-      clearInterval(timer);
-    };
+    setLoading(true);
+    fetchBySiteId(siteId)
+      .then((result) => {
+        setEntries(result.entries);
+        setPosition(result.position);
+      })
+      .catch(() => setError('Erro ao buscar status.'))
+      .finally(() => setLoading(false));
   }, [siteId]);
+
+  useQueueEvents(
+    (payload) => {
+      if (!payload.site_id || payload.site_id === siteId) {
+        fetchBySiteId(siteId)
+          .then((result) => {
+            setEntries(result.entries);
+            setPosition(result.position);
+          })
+          .catch(() => {});
+      }
+    }
+  );
 
   const latest = entries[0];
 

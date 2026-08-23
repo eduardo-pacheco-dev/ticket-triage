@@ -25,6 +25,7 @@ import {
   fetchSlaConfig,
   updateSlaConfig,
 } from '../lib/api';
+import { useQueueEvents } from '../hooks/useQueueEvents';
 import type { RequestType } from '../lib/types';
 
 function GeralTab() {
@@ -35,26 +36,19 @@ function GeralTab() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let mounted = true;
-    let firstLoad = true;
-    const load = () => {
-      fetchRequestTypes()
-        .then((rows) => mounted && setTypes(rows))
-        .catch(() => mounted && setError('Erro ao carregar tipos.'))
-        .finally(() => {
-          if (mounted && firstLoad) {
-            firstLoad = false;
-            setLoading(false);
-          }
-        });
-    };
-    load();
-    const timer = setInterval(load, 5000);
-    return () => {
-      mounted = false;
-      clearInterval(timer);
-    };
+    fetchRequestTypes()
+      .then(setTypes)
+      .catch(() => setError('Erro ao carregar tipos.'))
+      .finally(() => setLoading(false));
   }, []);
+
+  useQueueEvents((payload) => {
+    if (payload.type === 'request_types') {
+      fetchRequestTypes()
+        .then(setTypes)
+        .catch(() => {});
+    }
+  });
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();

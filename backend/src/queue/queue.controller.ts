@@ -2,19 +2,34 @@ import {
   Body,
   Controller,
   Get,
+  MessageEvent,
   Param,
   Patch,
   Post,
   Req,
+  Sse,
   UseGuards,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import { Observable, map, merge, interval } from 'rxjs';
 import { QueueService } from './queue.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { QueueEventsService } from './queue-events.service';
 
 @Controller()
 export class QueueController {
-  constructor(private readonly queueService: QueueService) {}
+  constructor(
+    private readonly queueService: QueueService,
+    private readonly queueEvents: QueueEventsService,
+  ) {}
+
+  @Sse('queue/events')
+  events(): Observable<MessageEvent> {
+    return merge(
+      this.queueEvents.stream.pipe(map((data): MessageEvent => ({ data }))),
+      interval(25_000).pipe(map((): MessageEvent => ({ data: { type: 'ping' } }))),
+    );
+  }
 
   @Post('checkin')
   createCheckIn(
