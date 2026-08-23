@@ -9,8 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@carbon/icons-react": "^11.83.0",
+    "@carbon/react": "^1.111.0",
+    "@carbon/styles": "^1.110.0",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "react-router-dom": "^7.9.0"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",

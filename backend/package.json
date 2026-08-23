@@ -7,15 +7,18 @@
     "build": "nest build",
     "start": "nest start",
     "start:dev": "nest start --watch",
-    "start:prod": "node dist/main"
+    "start:prod": "node dist/main",
+    "db:seed": "node scripts/seed.cjs"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.6",
     "@nestjs/core": "^11.1.6",
+    "@nestjs/jwt": "^11.0.0",
     "@nestjs/platform-express": "^11.1.6",
     "@nestjs/typeorm": "^11.0.0",
+    "bcryptjs": "^3.0.2",
     "dotenv": "^17.2.2",
-    "mysql2": "^3.23.4",
+    "mysql2": "^3.15.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "typeorm": "^0.3.27"
@@ -23,6 +26,7 @@
   "devDependencies": {
     "@nestjs/cli": "^11.0.10",
     "@nestjs/schematics": "^11.0.8",
+    "@types/bcryptjs": "^2.4.6",
     "@types/express": "^5.0.3",
     "@types/node": "^24.3.1",
     "typescript": "^5.9.2"
