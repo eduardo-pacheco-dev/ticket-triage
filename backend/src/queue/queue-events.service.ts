@@ -5,6 +5,8 @@ export interface QueueEventPayload {
   type: 'queue' | 'request_types';
   action?: string;
   site_id?: string;
+  protocol?: string;
+  status?: string;
 }
 
 @Injectable()

@@ -12,6 +12,7 @@ import {
 import { ArrowLeft } from '@carbon/icons-react';
 import { AppHeader } from '../components/AppHeader';
 import { fetchDashboard } from '../lib/api';
+import { useQueueEvents } from '../hooks/useQueueEvents';
 import { slaLabel } from '../lib/duration';
 import type { QueueEntry } from '../lib/types';
 
@@ -55,15 +56,17 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let mounted = true;
     fetchDashboard()
-      .then((d) => mounted && setData(d))
-      .catch(() => mounted && setError('Erro ao carregar dashboard.'))
-      .finally(() => mounted && setLoading(false));
-    return () => {
-      mounted = false;
-    };
+      .then((d) => setData(d))
+      .catch(() => setError('Erro ao carregar dashboard.'))
+      .finally(() => setLoading(false));
   }, []);
+
+  useQueueEvents(() => {
+    fetchDashboard()
+      .then((d) => setData(d))
+      .catch(() => {});
+  });
 
   return (
     <div className="app-shell">

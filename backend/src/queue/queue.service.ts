@@ -86,7 +86,7 @@ export class QueueService {
         });
         const saved = await this.queueRepository.save(entry);
         const dto = toDto(saved);
-        this.emitQueueEvent('created', dto.site_id);
+        this.emitQueueEvent('created', dto.site_id, dto.protocol, dto.status);
         return dto;
       } catch (error) {
         lastError = error;
@@ -98,8 +98,8 @@ export class QueueService {
     throw new BadRequestException('Erro ao registrar solicitação.');
   }
 
-  private emitQueueEvent(action: string, siteId: string): void {
-    this.queueEvents.emit({ type: 'queue', action, site_id: siteId });
+  private emitQueueEvent(action: string, siteId: string, protocol?: string, status?: string): void {
+    this.queueEvents.emit({ type: 'queue', action, site_id: siteId, protocol, status });
   }
 
   async findActive(): Promise<QueueEntryDto[]> {
@@ -173,7 +173,7 @@ export class QueueService {
     entry.status = next;
 
     const dto = toDto(await this.queueRepository.save(entry));
-    this.emitQueueEvent('updated', dto.site_id);
+    this.emitQueueEvent('updated', dto.site_id, dto.protocol, dto.status);
     return dto;
   }
 

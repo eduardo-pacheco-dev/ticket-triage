@@ -4,6 +4,8 @@ export interface QueueEventPayload {
   type?: string;
   action?: string;
   site_id?: string;
+  protocol?: string;
+  status?: string;
 }
 
 export function useQueueEvents(handler: (payload: QueueEventPayload) => void) {

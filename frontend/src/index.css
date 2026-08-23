@@ -165,3 +165,14 @@ code,
   gap: 1rem;
   flex-wrap: wrap;
 }
+
+.toast-stack {
+  position: fixed;
+  top: 3.5rem;
+  right: 1rem;
+  z-index: 9000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: min(380px, calc(100vw - 2rem));
+}

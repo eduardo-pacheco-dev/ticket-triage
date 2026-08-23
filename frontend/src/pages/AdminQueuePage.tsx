@@ -27,6 +27,7 @@ import {
 import { AppHeader } from '../components/AppHeader';
 import { fetchActiveQueue, updateStatus } from '../lib/api';
 import { useQueueEvents } from '../hooks/useQueueEvents';
+import { useToast } from '../components/ToastProvider';
 import { statusLabel } from '../lib/types';
 import type { QueueEntry, QueueStatus } from '../lib/types';
 import { slaLabel } from '../lib/duration';
@@ -83,10 +84,26 @@ export default function AdminQueuePage() {
       .finally(() => setLoading(false));
   }, []);
 
-  useQueueEvents(() => {
+  const notify = useToast();
+
+  useQueueEvents((payload) => {
     fetchActiveQueue()
       .then(setEntries)
       .catch(() => {});
+
+    const label = [payload.protocol ? `#${payload.protocol}` : '', payload.site_id ?? '']
+      .filter(Boolean)
+      .join(' · ');
+
+    if (payload.action === 'created') {
+      notify({ kind: 'success', title: 'Nova solicitação recebida', subtitle: label });
+    } else if (payload.status === 'in_review') {
+      notify({ kind: 'info', title: 'Solicitação em análise', subtitle: label });
+    } else if (payload.status === 'approved') {
+      notify({ kind: 'success', title: 'Solicitação aprovada', subtitle: label });
+    } else if (payload.status === 'rejected') {
+      notify({ kind: 'error', title: 'Solicitação recusada', subtitle: label });
+    }
   });
 
   async function handleUpdate(id: string, status: QueueStatus) {
