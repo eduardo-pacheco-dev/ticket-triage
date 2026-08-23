@@ -31,7 +31,8 @@ export default function LoginPage() {
 
     try {
       await login(parsed.data.username, parsed.data.password);
-      navigate('/admin', { replace: true });
+      const mustChange = useAuthStore.getState().mustChangePassword;
+      navigate(mustChange ? '/admin/configuracoes' : '/admin', { replace: true });
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         setError('Usuário ou senha inválidos.');

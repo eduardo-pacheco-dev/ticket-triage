@@ -30,11 +30,13 @@ async function main() {
 
     const hash = await bcrypt.hash(ADMIN_PASS, 10);
     await connection.query(
-      `INSERT INTO users (id, username, password_hash) VALUES (UUID(), ?, ?)
-       ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash)`,
+      `INSERT INTO users (id, username, password_hash, must_change_password) VALUES (UUID(), ?, ?, TRUE)
+       ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), must_change_password = TRUE`,
       [ADMIN_USER, hash],
     );
-    console.log(`Seed: usuário "${ADMIN_USER}" criado/atualizado.`);
+    console.log(
+      `Seed: usuário "${ADMIN_USER}" criado/atualizado (troca de senha obrigatória no primeiro login).`,
+    );
   } finally {
     await connection.end();
   }

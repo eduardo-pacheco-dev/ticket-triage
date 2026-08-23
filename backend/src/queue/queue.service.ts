@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomInt } from 'node:crypto';
 import { Repository } from 'typeorm';
@@ -80,6 +80,8 @@ function toPublicDto(e: QueueEntry): PublicQueueEntryDto {
 
 @Injectable()
 export class QueueService {
+  private readonly logger = new Logger(QueueService.name);
+
   constructor(
     @InjectRepository(QueueEntry)
     private readonly queueRepository: Repository<QueueEntry>,
@@ -116,7 +118,7 @@ export class QueueService {
         if (code !== 'ER_DUP_ENTRY') break;
       }
     }
-    console.error('[createCheckIn]', lastError);
+    this.logger.error(`Falha ao registrar check-in: ${String(lastError)}`);
     throw new BadRequestException('Erro ao registrar solicitação.');
   }
 

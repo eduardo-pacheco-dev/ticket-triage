@@ -89,7 +89,7 @@ export function AppHeader({ variant = 'admin' }: { variant?: 'admin' | 'public' 
             <HeaderGlobalAction
               aria-label="Sair"
               onClick={() => {
-                logout();
+                void logout();
                 navigate('/login', { replace: true });
               }}
               tooltipAlignment="end"

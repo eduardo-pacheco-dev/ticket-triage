@@ -15,6 +15,7 @@ import { RequestTypesController } from './request-types/request-types.controller
 import { RequestTypesService } from './request-types/request-types.service';
 import { SlaController } from './sla/sla.controller';
 import { SlaService } from './sla/sla.service';
+import { HealthController } from './health/health.controller';
 
 @Module({
   imports: [
@@ -26,7 +27,13 @@ import { SlaService } from './sla/sla.service';
     CommonModule,
     AuthModule,
   ],
-  controllers: [QueueController, AdminController, RequestTypesController, SlaController],
+  controllers: [
+    QueueController,
+    AdminController,
+    RequestTypesController,
+    SlaController,
+    HealthController,
+  ],
   providers: [QueueService, RequestTypesService, SlaService, QueueEventsService],
 })
 export class AppModule {}

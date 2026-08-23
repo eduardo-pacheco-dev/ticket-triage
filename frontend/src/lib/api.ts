@@ -65,6 +65,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 export interface LoginResponse {
   access_token: string;
   user: { id: string; username: string };
+  mustChangePassword?: boolean;
 }
 
 export function login(username: string, password: string) {
@@ -75,10 +76,14 @@ export function login(username: string, password: string) {
 }
 
 export function changePassword(data: { currentPassword: string; newPassword: string }) {
-  return request<void>('/auth/change-password', {
+  return request<{ ok: boolean; access_token: string }>('/auth/change-password', {
     method: 'POST',
     body: JSON.stringify(data),
   });
+}
+
+export function logout() {
+  return request<{ ok: boolean }>('/auth/logout', { method: 'POST' });
 }
 
 export interface CheckInInput {

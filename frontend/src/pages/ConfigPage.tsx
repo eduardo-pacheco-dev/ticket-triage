@@ -28,6 +28,7 @@ import {
 import { useQueueEvents } from '../hooks/useQueueEvents';
 import { createRequestTypeSchema } from '@ticket-triage/shared';
 import { changePasswordFormSchema, slaConfigSchema, zodFieldErrors } from '../lib/schemas';
+import { useAuthStore } from '../stores/auth';
 import type { RequestType } from '../lib/types';
 
 function GeralTab() {
@@ -272,6 +273,8 @@ function SlaTab() {
 }
 
 function PerfilTab() {
+  const applyAccessToken = useAuthStore((s) => s.applyAccessToken);
+  const clearMustChangePassword = useAuthStore((s) => s.clearMustChangePassword);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -298,10 +301,12 @@ function PerfilTab() {
 
     setBusy(true);
     try {
-      await changePassword({
+      const result = await changePassword({
         currentPassword: parsed.data.currentPassword,
         newPassword: parsed.data.newPassword,
       });
+      applyAccessToken(result.access_token);
+      clearMustChangePassword();
       setSuccess(true);
       setCurrentPassword('');
       setNewPassword('');

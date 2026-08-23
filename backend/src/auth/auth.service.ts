@@ -25,9 +25,9 @@ export class AuthService {
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
       throw new UnauthorizedException('Usuário ou senha inválidos.');
     }
-    const payload = { sub: user.id, username: user.username };
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: this.signToken(user),
+      mustChangePassword: user.mustChangePassword,
       user: { id: user.id, username: user.username },
     };
   }
@@ -40,7 +40,26 @@ export class AuthService {
     if (!user) throw new UnauthorizedException('Usuário não encontrado.');
     const valid = await bcrypt.compare(currentPassword, user.passwordHash);
     if (!valid) throw new UnauthorizedException('Senha atual incorreta.');
-    const hash = await bcrypt.hash(newPassword, 10);
-    await this.usersRepository.update({ id: user.id }, { passwordHash: hash });
+
+    const nextVersion = user.tokenVersion + 1;
+    await this.usersRepository.update(
+      { id: user.id },
+      {
+        passwordHash: await bcrypt.hash(newPassword, 10),
+        tokenVersion: nextVersion,
+        mustChangePassword: false,
+      },
+    );
+    return { access_token: this.signToken({ ...user, tokenVersion: nextVersion }) };
+  }
+
+  // Invalida todos os tokens emitidos até agora para o usuário.
+  async logout(userId: string): Promise<void> {
+    await this.usersRepository.increment({ id: userId }, 'tokenVersion', 1);
+  }
+
+  private signToken(user: User) {
+    const payload = { sub: user.id, username: user.username, tv: user.tokenVersion };
+    return this.jwtService.sign(payload);
   }
 }

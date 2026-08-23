@@ -6,6 +6,20 @@ export default defineConfig({
   optimizeDeps: {
     include: ['@ticket-triage/shared'],
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id: string) {
+          if (!id.includes('node_modules')) return undefined;
+          if (id.includes('@carbon')) return 'carbon';
+          if (id.match(/[\\/]node_modules[\\/](react|react-dom|react-router|scheduler)[\\/]/)) {
+            return 'react';
+          }
+          return 'vendor';
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     proxy: {

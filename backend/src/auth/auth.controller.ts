@@ -13,7 +13,7 @@ import {
 } from '@ticket-triage/shared';
 
 function payloadOf(request: Request): JwtPayload {
-  return request.user ?? { sub: '', username: '' };
+  return request.user ?? { sub: '', username: '', tv: 0 };
 }
 
 @Controller('auth')
@@ -31,11 +31,18 @@ export class AuthController {
     @Req() request: Request,
     @Body(new ZodValidationPipe(changePasswordSchema)) body: ChangePasswordInput,
   ) {
-    await this.authService.changePassword(
+    const result = await this.authService.changePassword(
       payloadOf(request).sub,
       body.currentPassword,
       body.newPassword,
     );
+    return { ok: true, access_token: result.access_token };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  async logout(@Req() request: Request) {
+    await this.authService.logout(payloadOf(request).sub);
     return { ok: true };
   }
 

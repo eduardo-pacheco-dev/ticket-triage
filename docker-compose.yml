@@ -3,11 +3,13 @@ services:
     image: mariadb:11.8
     container_name: ticket-triage-db
     restart: unless-stopped
+    command: --default-time-zone=+00:00
     environment:
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-rootsecret}
       MARIADB_DATABASE: ${MARIADB_DATABASE:-ticket_triage}
       MARIADB_USER: ${MARIADB_USER:-app}
       MARIADB_PASSWORD: ${MARIADB_PASSWORD:-appsecret}
+      TZ: UTC
     ports:
       - '3306:3306'
     volumes:
@@ -17,6 +19,43 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: ticket-triage-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: '3306'
+      DB_NAME: ${MARIADB_DATABASE:-ticket_triage}
+      DB_USER: ${MARIADB_USER:-app}
+      DB_PASSWORD: ${MARIADB_PASSWORD:-appsecret}
+      DB_SYNC: 'false'
+      JWT_SECRET: ${JWT_SECRET:?Defina JWT_SECRET no .env (ver .env.example)}
+      CORS_ORIGIN: ${CORS_ORIGIN:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3000/api/health']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: ticket-triage-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - '8080:80'
 
 volumes:
   db_data:

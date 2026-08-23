@@ -3,6 +3,7 @@ const KEY = 'triagem_auth';
 export interface StoredAuth {
   token: string;
   username: string;
+  mustChangePassword?: boolean;
 }
 
 export function getStoredAuth(): StoredAuth | null {

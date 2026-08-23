@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RequestType } from './request-type.entity';
@@ -7,6 +7,8 @@ import { QueueEventsService } from '../queue/queue-events.service';
 
 @Injectable()
 export class RequestTypesService {
+  private readonly logger = new Logger(RequestTypesService.name);
+
   constructor(
     @InjectRepository(RequestType)
     private readonly typesRepository: Repository<RequestType>,
@@ -34,7 +36,7 @@ export class RequestTypesService {
     } catch (error) {
       const code = (error as { code?: string }).code;
       if (code === 'ER_DUP_ENTRY') throw new BadRequestException('Este tipo já existe.');
-      console.error('[addRequestType]', error);
+      this.logger.error(`Falha ao adicionar tipo: ${String(error)}`);
       throw new BadRequestException('Erro ao adicionar tipo.');
     }
   }

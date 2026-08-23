@@ -11,6 +11,12 @@ export class User {
   @Column({ name: 'password_hash', type: 'varchar', length: 100 })
   passwordHash: string;
 
+  @Column({ name: 'token_version', type: 'int', default: 0 })
+  tokenVersion: number;
+
+  @Column({ name: 'must_change_password', type: 'boolean', default: true })
+  mustChangePassword: boolean;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

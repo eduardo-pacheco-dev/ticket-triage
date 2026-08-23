@@ -76,6 +76,10 @@ describe('API e2e (check-in → status → dashboard)', () => {
 
   let app: INestApplication;
   let token: string;
+  let usersRepository: {
+    save: (entity: unknown) => Promise<unknown>;
+    create: (data: unknown) => unknown;
+  };
   let firstEntryId: string;
   let secondEntryId: string;
   let firstProtocol: string;
@@ -90,7 +94,7 @@ describe('API e2e (check-in → status → dashboard)', () => {
     app.setGlobalPrefix('api');
     await app.init();
 
-    const usersRepository = moduleRef.get(getRepositoryToken(User), { strict: false }) as {
+    usersRepository = moduleRef.get(getRepositoryToken(User), { strict: false }) as {
       save: (entity: unknown) => Promise<unknown>;
       create: (data: unknown) => unknown;
     };
@@ -98,6 +102,8 @@ describe('API e2e (check-in → status → dashboard)', () => {
       usersRepository.create({
         username: ADMIN_USERNAME,
         passwordHash: await bcrypt.hash(ADMIN_PASSWORD, 4),
+        // O fluxo principal não deve ser bloqueado pela troca obrigatória de senha.
+        mustChangePassword: false,
       }),
     );
   });
@@ -291,6 +297,70 @@ describe('API e2e (check-in → status → dashboard)', () => {
     await request(app.getHttpServer())
       .get('/api/admin/dashboard')
       .set('Authorization', 'Bearer nao-e-um-token')
+      .expect(401);
+  });
+
+  it('força a troca de senha no primeiro login e invalida tokens após logout', async () => {
+    const NEWBIE_USERNAME = 'e2e-newbie';
+    const NEWBIE_INITIAL = 'primeira-senha-123';
+    // Sem mustChangePassword explícito: deve nascer com a troca obrigatória.
+    await usersRepository.save(
+      usersRepository.create({
+        username: NEWBIE_USERNAME,
+        passwordHash: await bcrypt.hash(NEWBIE_INITIAL, 4),
+      }),
+    );
+
+    // 1. Login sinaliza a troca obrigatória
+    const loginResponse = await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({ username: NEWBIE_USERNAME, password: NEWBIE_INITIAL })
+      .expect(201);
+    expect(loginResponse.body.mustChangePassword).toBe(true);
+    const oldToken = loginResponse.body.access_token;
+
+    // 2. Endpoints protegidos ficam bloqueados até a troca
+    await request(app.getHttpServer())
+      .get('/api/queue/active')
+      .set('Authorization', `Bearer ${oldToken}`)
+      .expect(403);
+
+    // 3. Trocar a senha emite um novo token
+    const changeResponse = await request(app.getHttpServer())
+      .post('/api/auth/change-password')
+      .set('Authorization', `Bearer ${oldToken}`)
+      .send({ currentPassword: NEWBIE_INITIAL, newPassword: 'senha-nova-segura-456' })
+      .expect(201);
+    expect(changeResponse.body.ok).toBe(true);
+    expect(changeResponse.body.access_token).toEqual(expect.any(String));
+    const newToken = changeResponse.body.access_token;
+    expect(newToken).not.toBe(oldToken);
+
+    // 4. Token antigo deixa de valer (nova versão de sessão)
+    await request(app.getHttpServer())
+      .get('/api/queue/active')
+      .set('Authorization', `Bearer ${oldToken}`)
+      .expect(401);
+
+    // 5. Novo token funciona e a flag foi limpa
+    await request(app.getHttpServer())
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${newToken}`)
+      .expect(200);
+    const reLogin = await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({ username: NEWBIE_USERNAME, password: 'senha-nova-segura-456' })
+      .expect(201);
+    expect(reLogin.body.mustChangePassword).toBe(false);
+
+    // 6. Logout incrementa a versão e invalida o token atual
+    await request(app.getHttpServer())
+      .post('/api/auth/logout')
+      .set('Authorization', `Bearer ${newToken}`)
+      .expect(201);
+    await request(app.getHttpServer())
+      .get('/api/queue/active')
+      .set('Authorization', `Bearer ${newToken}`)
       .expect(401);
   });
 });
