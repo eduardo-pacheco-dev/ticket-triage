@@ -10,12 +10,12 @@ import {
 } from '@carbon/react';
 import { Login as LoginIcon } from '@carbon/icons-react';
 import { AppHeader } from '../components/AppHeader';
-import { useAuth } from '../context/AuthContext';
+import { useAuthStore } from '../stores/auth';
 import { ApiError } from '../lib/api';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const login = useAuthStore((s) => s.login);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);

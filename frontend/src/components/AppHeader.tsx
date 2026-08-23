@@ -18,8 +18,8 @@ import {
   Settings,
   Notification as BellIcon,
 } from '@carbon/icons-react';
-import { useAuth } from '../context/AuthContext';
-import { useToast } from './ToastProvider';
+import { useAuthStore } from '../stores/auth';
+import { useToastStore } from '../stores/toast';
 import {
   getNotificationPermission,
   requestNotificationPermission,
@@ -29,8 +29,9 @@ import {
 export function AppHeader({ variant = 'admin' }: { variant?: 'admin' | 'public' }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { token, logout } = useAuth();
-  const notify = useToast();
+  const token = useAuthStore((s) => s.token);
+  const logout = useAuthStore((s) => s.logout);
+  const notify = useToastStore((s) => s.notify);
   const authed = !!token;
   const pathname = location.pathname;
   const isAdminArea = variant === 'admin';

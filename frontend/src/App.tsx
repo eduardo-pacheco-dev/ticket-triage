@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { Toaster } from './components/Toaster';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import StatusPage from './pages/StatusPage';
@@ -10,7 +11,9 @@ import ConfigPage from './pages/ConfigPage';
 
 export default function App() {
   return (
-    <Routes>
+    <>
+      <Toaster />
+      <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/status/:siteId" element={<StatusPage />} />
@@ -47,6 +50,7 @@ export default function App() {
         }
       />
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      </Routes>
+    </>
   );
 }

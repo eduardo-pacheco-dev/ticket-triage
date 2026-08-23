@@ -27,7 +27,7 @@ import {
 import { AppHeader } from '../components/AppHeader';
 import { fetchActiveQueue, updateStatus } from '../lib/api';
 import { useQueueEvents } from '../hooks/useQueueEvents';
-import { useToast } from '../components/ToastProvider';
+import { useToastStore } from '../stores/toast';
 import { showDesktopNotification } from '../lib/notifications';
 import { statusLabel } from '../lib/types';
 import type { QueueEntry, QueueStatus } from '../lib/types';
@@ -85,7 +85,7 @@ export default function AdminQueuePage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const notify = useToast();
+  const notify = useToastStore((s) => s.notify);
 
   useQueueEvents((payload) => {
     fetchActiveQueue()
