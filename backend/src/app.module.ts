@@ -1,23 +1,39 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { QueueEntry } from './queue/queue-entry.entity';
+import { RequestType } from './request-types/request-type.entity';
+import { SlaConfig } from './sla/sla-config.entity';
+import { User } from './auth/user.entity';
+import { AuthModule } from './auth/auth.module';
+import { CommonModule } from './common/common.module';
+import { appDataSourceOptions } from './data-source';
+import { QueueController } from './queue/queue.controller';
+import { AdminController } from './queue/admin.controller';
+import { QueueService } from './queue/queue.service';
+import { QueueEventsService } from './queue/queue-events.service';
+import { RequestTypesController } from './request-types/request-types.controller';
+import { RequestTypesService } from './request-types/request-types.service';
+import { SlaController } from './sla/sla.controller';
+import { SlaService } from './sla/sla.service';
+import { HealthController } from './health/health.controller';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: process.env.DB_HOST ?? 'localhost',
-      port: Number(process.env.DB_PORT ?? 3306),
-      username: process.env.DB_USER ?? 'app',
-      password: process.env.DB_PASSWORD ?? 'appsecret',
-      database: process.env.DB_NAME ?? 'ticket_triage',
-      autoLoadEntities: true,
-      retryAttempts: 20,
-      retryDelay: 3000,
-    }),
+    TypeOrmModule.forRoot(appDataSourceOptions),
+    TypeOrmModule.forFeature([QueueEntry]),
+    TypeOrmModule.forFeature([RequestType]),
+    TypeOrmModule.forFeature([SlaConfig]),
+    TypeOrmModule.forFeature([User]),
+    CommonModule,
+    AuthModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [
+    QueueController,
+    AdminController,
+    RequestTypesController,
+    SlaController,
+    HealthController,
+  ],
+  providers: [QueueService, RequestTypesService, SlaService, QueueEventsService],
 })
 export class AppModule {}

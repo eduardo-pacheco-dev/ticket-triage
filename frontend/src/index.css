@@ -1,30 +1,177 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  color-scheme: light dark;
+  --ibm-blue: #0f62fe;
+  --ibm-blue-hover: #0353e9;
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', 'JetBrains Mono', Consolas, 'Courier New', monospace;
 }
 
+html,
 body {
+  font-family: var(--font-sans);
+  background: var(--cds-background, #f4f4f4);
+  color: var(--cds-text-primary, #161616);
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-height: 100vh;
-  background-color: #f6f6f6;
-  color: #1a1a1a;
+  padding: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  body {
-    background-color: #1a1a2e;
-    color: #f0f0f0;
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+code,
+.mono {
+  font-family: var(--font-mono);
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-main {
+  flex: 1;
+  padding: 3rem 1rem;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.login-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+.login-container {
+  width: 100%;
+  max-width: 28rem;
+}
+.login-card {
+  padding: 2.5rem 2rem !important;
+  margin: 0 !important;
+}
+.login-title {
+  font-size: 1.75rem;
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.5rem;
+}
+.login-subtitle {
+  color: var(--cds-text-secondary, #525252);
+  margin: 0 0 2rem;
+  font-size: 0.875rem;
+}
+
+.app-shell:has(.cds--side-nav) .app-main {
+  margin-left: 16rem;
+}
+@media (max-width: 659px) {
+  .app-shell:has(.cds--side-nav) .app-main {
+    margin-left: 0;
   }
 }
 
-main {
-  text-align: center;
-  width: 100%;
+.checkin-card {
+  background: var(--cds-layer, #ffffff);
+  padding: 2.5rem 2rem;
+  max-width: 560px;
+  margin: 2rem auto;
+}
+.checkin-title {
+  font-size: 2rem;
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.5rem;
+}
+.checkin-subtitle {
+  color: var(--cds-text-secondary, #525252);
+  margin: 0 0 2rem;
+}
+.protocol-code {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--ibm-blue);
+  letter-spacing: 0.02em;
+}
+.admin-header-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.admin-title {
+  font-size: 1.75rem;
+  font-weight: 300;
+  margin: 0;
+}
+.admin-subtitle {
+  color: var(--cds-text-secondary, #525252);
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+}
+.status-tag-waiting {
+  color: #6f6f6f;
+}
+.status-tag-review {
+  color: var(--ibm-blue);
+}
+.status-tag-approved {
+  color: #24a148;
+}
+.status-tag-rejected {
+  color: #da1e28;
+}
+.row-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.field-label {
+  font-size: 0.75rem;
+  color: #525252;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+}
+.history-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+.type-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e0e0e0;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
-h1 {
-  font-size: 3.2rem;
+.toast-stack {
+  position: fixed;
+  top: 3.5rem;
+  right: 1rem;
+  z-index: 9000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: min(380px, calc(100vw - 2rem));
 }
