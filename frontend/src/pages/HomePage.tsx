@@ -18,7 +18,8 @@ import { ArrowRight, Restart, Search } from '@carbon/icons-react';
 import { AppHeader } from '../components/AppHeader';
 import { createCheckIn, fetchRequestTypes } from '../lib/api';
 import { useQueueEvents } from '../hooks/useQueueEvents';
-import { checkInSchema, zodFieldErrors } from '../lib/schemas';
+import { createCheckInSchema } from '@ticket-triage/shared';
+import { zodFieldErrors } from '../lib/schemas';
 import { statusLabel } from '../lib/types';
 import type { QueueEntry, RequestType } from '../lib/types';
 
@@ -57,7 +58,7 @@ export default function HomePage() {
     setError(null);
     setFieldErrors({});
 
-    const parsed = checkInSchema.safeParse({
+    const parsed = createCheckInSchema.safeParse({
       site_id: siteId,
       technician_name: technicianName,
       request_type: requestType?.name ?? '',

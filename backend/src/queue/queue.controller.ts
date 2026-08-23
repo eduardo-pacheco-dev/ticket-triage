@@ -21,7 +21,7 @@ import {
   createCheckInSchema,
   updateStatusSchema,
   type CreateCheckInInput,
-} from '../common/schemas';
+} from '@ticket-triage/shared';
 
 @Controller()
 export class QueueController {

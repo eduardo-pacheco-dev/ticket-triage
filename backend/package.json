@@ -43,6 +43,7 @@
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/platform-express": "^11.1.6",
     "@nestjs/typeorm": "^11.0.0",
+    "@ticket-triage/shared": "*",
     "bcryptjs": "^3.0.2",
     "dotenv": "^17.2.2",
     "helmet": "^8.3.0",

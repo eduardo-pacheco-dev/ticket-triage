@@ -5,7 +5,8 @@ import { Login as LoginIcon } from '@carbon/icons-react';
 import { AppHeader } from '../components/AppHeader';
 import { useAuthStore } from '../stores/auth';
 import { ApiError } from '../lib/api';
-import { loginSchema, zodFieldErrors } from '../lib/schemas';
+import { loginSchema } from '@ticket-triage/shared';
+import { zodFieldErrors } from '../lib/schemas';
 
 export default function LoginPage() {
   const navigate = useNavigate();

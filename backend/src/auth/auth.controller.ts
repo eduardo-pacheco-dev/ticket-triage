@@ -10,7 +10,7 @@ import {
   loginSchema,
   type ChangePasswordInput,
   type LoginInput,
-} from '../common/schemas';
+} from '@ticket-triage/shared';
 
 function payloadOf(request: Request): JwtPayload {
   return request.user ?? { sub: '', username: '' };

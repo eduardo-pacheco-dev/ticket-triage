@@ -14,7 +14,7 @@ import { RequestTypesService } from './request-types.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { clientIp } from '../common/client-ip';
-import { createRequestTypeSchema, type CreateRequestTypeInput } from '../common/schemas';
+import { createRequestTypeSchema, type CreateRequestTypeInput } from '@ticket-triage/shared';
 
 @Controller('request-types')
 export class RequestTypesController {

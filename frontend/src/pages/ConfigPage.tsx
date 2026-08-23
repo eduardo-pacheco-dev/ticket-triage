@@ -26,12 +26,8 @@ import {
   updateSlaConfig,
 } from '../lib/api';
 import { useQueueEvents } from '../hooks/useQueueEvents';
-import {
-  changePasswordFormSchema,
-  requestTypeSchema,
-  slaConfigSchema,
-  zodFieldErrors,
-} from '../lib/schemas';
+import { createRequestTypeSchema } from '@ticket-triage/shared';
+import { changePasswordFormSchema, slaConfigSchema, zodFieldErrors } from '../lib/schemas';
 import type { RequestType } from '../lib/types';
 
 function GeralTab() {
@@ -62,7 +58,7 @@ function GeralTab() {
     setError(null);
     setFieldErrors({});
 
-    const parsed = requestTypeSchema.safeParse({ name });
+    const parsed = createRequestTypeSchema.safeParse({ name });
     if (!parsed.success) {
       setFieldErrors(zodFieldErrors(parsed.error));
       return;
