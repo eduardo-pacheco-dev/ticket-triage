@@ -6,7 +6,7 @@ COPY package.json package-lock.json ./
 COPY shared/package.json shared/
 COPY backend/package.json backend/
 COPY frontend/package.json frontend/
-RUN npm ci
+RUN npm ci --ignore-scripts
 COPY shared/ shared/
 COPY frontend/ frontend/
 RUN npm run build --workspace shared && npm run build --workspace frontend
