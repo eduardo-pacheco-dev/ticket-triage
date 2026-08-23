@@ -92,7 +92,7 @@ export default function HomePage() {
 
   return (
     <div className="app-shell">
-      <AppHeader />
+      <AppHeader variant="public" />
       <main className="app-main">
         <Grid narrow>
           <Column sm={4} md={8} lg={8}>

@@ -73,7 +73,7 @@ export default function StatusPage() {
 
   return (
     <div className="app-shell">
-      <AppHeader />
+      <AppHeader variant="public" />
       <main className="app-main" style={{ maxWidth: 900 }}>
         <div style={{ marginBottom: '1rem' }}>
           <Link to="/">

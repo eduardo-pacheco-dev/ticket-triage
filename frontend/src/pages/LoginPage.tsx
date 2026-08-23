@@ -42,7 +42,7 @@ export default function LoginPage() {
 
   return (
     <div className="app-shell">
-      <AppHeader />
+      <AppHeader variant="public" />
       <main className="login-main">
         <div className="login-container">
           <Tile className="login-card">

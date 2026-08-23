@@ -18,12 +18,13 @@ import {
 } from '@carbon/icons-react';
 import { useAuth } from '../context/AuthContext';
 
-export function AppHeader() {
+export function AppHeader({ variant = 'admin' }: { variant?: 'admin' | 'public' }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { token, logout } = useAuth();
   const authed = !!token;
   const pathname = location.pathname;
+  const isAdminArea = variant === 'admin';
 
   return (
     <>
@@ -56,7 +57,7 @@ export function AppHeader() {
           )}
         </HeaderGlobalBar>
       </Header>
-      {authed && (
+      {isAdminArea && authed && (
         <SideNav isFixedNav aria-label="Navegação principal" expanded>
           <SideNavItems>
             <SideNavLink
