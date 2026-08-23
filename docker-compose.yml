@@ -1,0 +1,22 @@
+services:
+  db:
+    image: mariadb:11.8
+    container_name: ticket-triage-db
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-rootsecret}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-ticket_triage}
+      MARIADB_USER: ${MARIADB_USER:-app}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-appsecret}
+    ports:
+      - '3306:3306'
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'healthcheck.sh', '--connect', '--innodb_initialized']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db_data:
