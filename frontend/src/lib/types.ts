@@ -44,6 +44,13 @@ export interface DashboardData {
   recent: QueueEntry[];
 }
 
+export interface PaginatedQueue {
+  items: QueueEntry[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 export const statusLabel: Record<QueueStatus, string> = {
   waiting: 'Aguardando Análise',
   in_review: 'Em Análise',

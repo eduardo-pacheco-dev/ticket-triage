@@ -58,9 +58,15 @@ export const updateSlaSchema = z
   })
   .partial();
 
+export const paginationSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+});
+
 export type CreateCheckInInput = z.infer<typeof createCheckInSchema>;
 export type UpdateStatusInput = z.infer<typeof updateStatusSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export type CreateRequestTypeInput = z.infer<typeof createRequestTypeSchema>;
 export type UpdateSlaInput = z.infer<typeof updateSlaSchema>;
+export type PaginationInput = z.infer<typeof paginationSchema>;

@@ -9,6 +9,7 @@ type QbOverrides = {
   getMany?: QueueEntry[];
   getCount?: number;
   getRawOne?: Record<string, unknown> | null;
+  total?: number;
 };
 
 function makeQb(overrides: QbOverrides = {}) {
@@ -19,9 +20,11 @@ function makeQb(overrides: QbOverrides = {}) {
     addOrderBy: jest.fn().mockReturnThis(),
     select: jest.fn().mockReturnThis(),
     addSelect: jest.fn().mockReturnThis(),
+    skip: jest.fn().mockReturnThis(),
     take: jest.fn().mockReturnThis(),
     getMany: jest.fn().mockResolvedValue(overrides.getMany ?? []),
     getCount: jest.fn().mockResolvedValue(overrides.getCount ?? 0),
+    getManyAndCount: jest.fn().mockResolvedValue([overrides.getMany ?? [], overrides.total ?? 0]),
     getRawOne: jest.fn().mockResolvedValue('getRawOne' in overrides ? overrides.getRawOne : null),
   };
 }
@@ -214,12 +217,20 @@ describe('QueueService', () => {
   });
 
   describe('findArchived', () => {
-    it('retorna apenas entradas finalizadas ordenadas por atualização DESC', async () => {
-      const qb = makeQb({ getMany: [makeEntry({ status: 'approved' })] });
+    it('pagina com skip/take, filtra finalizadas e retorna envelope com total', async () => {
+      const rows = [makeEntry({ status: 'approved' })];
+      const qb = makeQb({ getMany: rows, total: 37 });
       const { service } = buildService(() => qb);
 
-      await service.findArchived();
+      const result = await service.findArchived({ page: 2, pageSize: 10 });
 
+      expect(result.total).toBe(37);
+      expect(result.page).toBe(2);
+      expect(result.pageSize).toBe(10);
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0]).toMatchObject({ protocol: 'DOC-1234', status: 'approved' });
+      expect(qb.skip).toHaveBeenCalledWith(10);
+      expect(qb.take).toHaveBeenCalledWith(10);
       expect(qb.where).toHaveBeenCalledWith('e.status IN (:...statuses)', {
         statuses: ['approved', 'rejected'],
       });

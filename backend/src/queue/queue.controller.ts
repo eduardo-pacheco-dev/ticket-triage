@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   Sse,
   UseGuards,
@@ -19,8 +20,10 @@ import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { clientIp } from '../common/client-ip';
 import {
   createCheckInSchema,
+  paginationSchema,
   updateStatusSchema,
   type CreateCheckInInput,
+  type PaginationInput,
 } from '@ticket-triage/shared';
 
 @Controller()
@@ -54,8 +57,8 @@ export class QueueController {
 
   @UseGuards(JwtAuthGuard)
   @Get('queue/archived')
-  findArchived() {
-    return this.queueService.findArchived();
+  findArchived(@Query(new ZodValidationPipe(paginationSchema)) query: PaginationInput) {
+    return this.queueService.findArchived(query);
   }
 
   @Get('public/status/:siteId')

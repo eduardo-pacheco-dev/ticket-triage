@@ -252,6 +252,41 @@ describe('API e2e (check-in → status → dashboard)', () => {
       .expect(404);
   });
 
+  it('pagina solicitações arquivadas com skip/take e valida parâmetros', async () => {
+    // Estado do fluxo anterior: apenas a primeira solicitação está aprovada.
+    const page1 = await request(app.getHttpServer())
+      .get('/api/queue/archived?page=1&pageSize=1')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+    expect(page1.body).toMatchObject({ total: 1, page: 1, pageSize: 1 });
+    expect(page1.body.items).toHaveLength(1);
+    expect(page1.body.items[0].id).toBe(firstEntryId);
+
+    const page2 = await request(app.getHttpServer())
+      .get('/api/queue/archived?page=2&pageSize=1')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+    expect(page2.body).toMatchObject({ total: 1, page: 2, pageSize: 1 });
+    expect(page2.body.items).toHaveLength(0);
+
+    const defaults = await request(app.getHttpServer())
+      .get('/api/queue/archived')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+    expect(defaults.body).toMatchObject({ total: 1, page: 1, pageSize: 20 });
+    expect(defaults.body.items).toHaveLength(1);
+
+    await request(app.getHttpServer())
+      .get('/api/queue/archived?page=0')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(400);
+
+    await request(app.getHttpServer())
+      .get('/api/queue/archived?pageSize=101')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(400);
+  });
+
   it('rejeita token JWT malformado', async () => {
     await request(app.getHttpServer())
       .get('/api/admin/dashboard')

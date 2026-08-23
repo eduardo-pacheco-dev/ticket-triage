@@ -6,7 +6,7 @@ import { QueueEntry } from './queue-entry.entity';
 import type { QueueStatus } from './queue-entry.entity';
 import { RateLimitService } from '../common/rate-limit.service';
 import { QueueEventsService } from './queue-events.service';
-import type { CreateCheckInInput } from '@ticket-triage/shared';
+import type { CreateCheckInInput, PaginationInput } from '@ticket-triage/shared';
 
 export interface QueueEntryDto {
   id: string;
@@ -27,6 +27,13 @@ export interface PublicQueueEntryDto {
   protocol: string;
   site_id: string;
   status: QueueStatus;
+}
+
+export interface PaginatedQueueEntries {
+  items: QueueEntryDto[];
+  total: number;
+  page: number;
+  pageSize: number;
 }
 
 const ACTIVE_STATUSES: QueueStatus[] = ['waiting', 'in_review'];
@@ -127,13 +134,15 @@ export class QueueService {
     return entries.map(toDto);
   }
 
-  async findArchived(): Promise<QueueEntryDto[]> {
-    const entries = await this.queueRepository
+  async findArchived({ page, pageSize }: PaginationInput): Promise<PaginatedQueueEntries> {
+    const [entries, total] = await this.queueRepository
       .createQueryBuilder('e')
       .where('e.status IN (:...statuses)', { statuses: FINAL_STATUSES })
       .orderBy('e.updatedAt', 'DESC')
-      .getMany();
-    return entries.map(toDto);
+      .skip((page - 1) * pageSize)
+      .take(pageSize)
+      .getManyAndCount();
+    return { items: entries.map(toDto), total, page, pageSize };
   }
 
   async findPublicBySiteId(

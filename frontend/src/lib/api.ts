@@ -1,6 +1,7 @@
 import { clearAuth, getToken } from './auth-store';
 import type {
   DashboardData,
+  PaginatedQueue,
   PublicQueueEntry,
   QueueEntry,
   QueueStatus,
@@ -112,8 +113,8 @@ export function fetchActiveQueue() {
   return request<QueueEntry[]>('/queue/active');
 }
 
-export function fetchArchivedQueue() {
-  return request<QueueEntry[]>('/queue/archived');
+export function fetchArchivedQueue(page = 1, pageSize = 20): Promise<PaginatedQueue> {
+  return request<PaginatedQueue>(`/queue/archived?page=${page}&pageSize=${pageSize}`);
 }
 
 export function fetchBySiteId(siteId: string) {
