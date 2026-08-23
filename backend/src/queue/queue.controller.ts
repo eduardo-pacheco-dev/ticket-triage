@@ -15,6 +15,12 @@ import { Observable, map, merge, interval } from 'rxjs';
 import { QueueService } from './queue.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { QueueEventsService } from './queue-events.service';
+import { ZodValidationPipe } from '../common/zod-validation.pipe';
+import {
+  createCheckInSchema,
+  updateStatusSchema,
+  type CreateCheckInInput,
+} from '../common/schemas';
 
 @Controller()
 export class QueueController {
@@ -33,14 +39,14 @@ export class QueueController {
 
   @Post('checkin')
   createCheckIn(
-    @Body() body: { site_id?: string; technician_name?: string; request_type?: string },
+    @Body(new ZodValidationPipe(createCheckInSchema)) body: CreateCheckInInput,
     @Req() request: Request,
   ) {
     const ip =
       (request.headers['x-forwarded-for'] as string | undefined)?.split(',')[0].trim() ||
       request.ip ||
       'unknown';
-    return this.queueService.createCheckIn(body ?? {}, ip);
+    return this.queueService.createCheckIn(body, ip);
   }
 
   @Get('queue/active')
@@ -60,7 +66,10 @@ export class QueueController {
 
   @UseGuards(JwtAuthGuard)
   @Patch('queue/:id/status')
-  updateStatus(@Param('id') id: string, @Body() body: { status?: string }) {
-    return this.queueService.updateStatus(id, body?.status ?? '');
+  updateStatus(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateStatusSchema)) body: { status: string },
+  ) {
+    return this.queueService.updateStatus(id, body.status);
   }
 }

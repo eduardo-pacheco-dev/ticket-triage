@@ -26,6 +26,12 @@ import {
   updateSlaConfig,
 } from '../lib/api';
 import { useQueueEvents } from '../hooks/useQueueEvents';
+import {
+  changePasswordFormSchema,
+  requestTypeSchema,
+  slaConfigSchema,
+  zodFieldErrors,
+} from '../lib/schemas';
 import type { RequestType } from '../lib/types';
 
 function GeralTab() {
@@ -34,6 +40,7 @@ function GeralTab() {
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchRequestTypes()
@@ -53,10 +60,16 @@ function GeralTab() {
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!name.trim()) return;
+    setFieldErrors({});
+
+    const parsed = requestTypeSchema.safeParse({ name });
+    if (!parsed.success) {
+      setFieldErrors(zodFieldErrors(parsed.error));
+      return;
+    }
     setBusy(true);
     try {
-      await addRequestType(name);
+      await addRequestType(parsed.data.name);
       setName('');
       const rows = await fetchRequestTypes();
       setTypes(rows);
@@ -102,6 +115,8 @@ function GeralTab() {
               placeholder="Ex.: Vistoria Técnica"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              invalid={!!fieldErrors.name}
+              invalidText={fieldErrors.name}
             />
             <div style={{ alignSelf: 'end' }}>
               <Button type="submit" renderIcon={Add} disabled={busy}>
@@ -156,6 +171,7 @@ function SlaTab() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     let mounted = true;
@@ -176,12 +192,19 @@ function SlaTab() {
     e.preventDefault();
     setError(null);
     setSuccess(false);
+    setFieldErrors({});
+
+    const parsed = slaConfigSchema.safeParse({
+      expectedWaitMin: waitMin,
+      expectedServiceMin: serviceMin,
+    });
+    if (!parsed.success) {
+      setFieldErrors(zodFieldErrors(parsed.error));
+      return;
+    }
     setBusy(true);
     try {
-      await updateSlaConfig({
-        expectedWaitMin: Number(waitMin),
-        expectedServiceMin: Number(serviceMin),
-      });
+      await updateSlaConfig(parsed.data);
       setSuccess(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao salvar.');
@@ -219,6 +242,8 @@ function SlaTab() {
               type="number"
               value={waitMin}
               onChange={(e) => setWaitMin(e.target.value)}
+              invalid={!!fieldErrors.expectedWaitMin}
+              invalidText={fieldErrors.expectedWaitMin}
               required
               min={1}
               max={1440}
@@ -229,6 +254,8 @@ function SlaTab() {
               type="number"
               value={serviceMin}
               onChange={(e) => setServiceMin(e.target.value)}
+              invalid={!!fieldErrors.expectedServiceMin}
+              invalidText={fieldErrors.expectedServiceMin}
               required
               min={1}
               max={1440}
@@ -250,20 +277,30 @@ function PerfilTab() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setSuccess(false);
+    setFieldErrors({});
 
-    if (newPassword !== confirmPassword) {
-      setError('As senhas não conferem.');
+    const parsed = changePasswordFormSchema.safeParse({
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    });
+    if (!parsed.success) {
+      setFieldErrors(zodFieldErrors(parsed.error));
       return;
     }
 
     setBusy(true);
     try {
-      await changePassword({ currentPassword, newPassword });
+      await changePassword({
+        currentPassword: parsed.data.currentPassword,
+        newPassword: parsed.data.newPassword,
+      });
       setSuccess(true);
       setCurrentPassword('');
       setNewPassword('');
@@ -307,6 +344,8 @@ function PerfilTab() {
               type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
+              invalid={!!fieldErrors.currentPassword}
+              invalidText={fieldErrors.currentPassword}
               required
               autoComplete="current-password"
             />
@@ -316,6 +355,8 @@ function PerfilTab() {
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
+              invalid={!!fieldErrors.newPassword}
+              invalidText={fieldErrors.newPassword}
               required
               minLength={6}
               autoComplete="new-password"
@@ -326,6 +367,8 @@ function PerfilTab() {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              invalid={!!fieldErrors.confirmPassword}
+              invalidText={fieldErrors.confirmPassword}
               required
               autoComplete="new-password"
             />

@@ -4,13 +4,19 @@ import {
   Get,
   Post,
   Req,
-  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import type { JwtPayload } from './jwt-auth.guard';
+import { ZodValidationPipe } from '../common/zod-validation.pipe';
+import {
+  changePasswordSchema,
+  loginSchema,
+  type ChangePasswordInput,
+  type LoginInput,
+} from '../common/schemas';
 
 function payloadOf(request: Request): JwtPayload {
   return request.user ?? { sub: '', username: '' };
@@ -21,10 +27,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
-  login(@Body() body: { username?: string; password?: string }) {
-    if (!body.username || !body.password) {
-      throw new UnauthorizedException('Credenciais obrigatórias.');
-    }
+  login(@Body(new ZodValidationPipe(loginSchema)) body: LoginInput) {
     return this.authService.login(body.username, body.password);
   }
 
@@ -32,12 +35,12 @@ export class AuthController {
   @Post('change-password')
   async changePassword(
     @Req() request: Request,
-    @Body() body: { currentPassword?: string; newPassword?: string },
+    @Body(new ZodValidationPipe(changePasswordSchema)) body: ChangePasswordInput,
   ) {
     await this.authService.changePassword(
       payloadOf(request).sub,
-      body.currentPassword ?? '',
-      body.newPassword ?? '',
+      body.currentPassword,
+      body.newPassword,
     );
     return { ok: true };
   }

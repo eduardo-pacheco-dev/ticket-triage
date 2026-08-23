@@ -12,6 +12,8 @@ import {
 import type { Request } from 'express';
 import { RequestTypesService } from './request-types.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { ZodValidationPipe } from '../common/zod-validation.pipe';
+import { createRequestTypeSchema, type CreateRequestTypeInput } from '../common/schemas';
 
 @Controller('request-types')
 export class RequestTypesController {
@@ -24,12 +26,15 @@ export class RequestTypesController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() body: { name?: string }, @Req() request: Request) {
+  create(
+    @Body(new ZodValidationPipe(createRequestTypeSchema)) body: CreateRequestTypeInput,
+    @Req() request: Request,
+  ) {
     const ip =
       (request.headers['x-forwarded-for'] as string | undefined)?.split(',')[0].trim() ||
       request.ip ||
       'unknown';
-    return this.typesService.create(body?.name ?? '', ip);
+    return this.typesService.create(body.name, ip);
   }
 
   @UseGuards(JwtAuthGuard)

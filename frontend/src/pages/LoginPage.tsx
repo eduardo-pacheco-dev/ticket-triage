@@ -12,6 +12,7 @@ import { Login as LoginIcon } from '@carbon/icons-react';
 import { AppHeader } from '../components/AppHeader';
 import { useAuthStore } from '../stores/auth';
 import { ApiError } from '../lib/api';
+import { loginSchema, zodFieldErrors } from '../lib/schemas';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -19,15 +20,23 @@ export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setFieldErrors({});
+
+    const parsed = loginSchema.safeParse({ username, password });
+    if (!parsed.success) {
+      setFieldErrors(zodFieldErrors(parsed.error));
+      return;
+    }
     setLoading(true);
 
     try {
-      await login(username, password);
+      await login(parsed.data.username, parsed.data.password);
       navigate('/admin', { replace: true });
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
@@ -66,6 +75,8 @@ export default function LoginPage() {
                   labelText="Usuário"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
+                  invalid={!!fieldErrors.username}
+                  invalidText={fieldErrors.username}
                   required
                   autoComplete="username"
                 />
@@ -75,6 +86,8 @@ export default function LoginPage() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  invalid={!!fieldErrors.password}
+                  invalidText={fieldErrors.password}
                   required
                   autoComplete="current-password"
                 />

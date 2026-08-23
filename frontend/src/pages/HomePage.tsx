@@ -18,6 +18,7 @@ import { ArrowRight, Restart, Search } from '@carbon/icons-react';
 import { AppHeader } from '../components/AppHeader';
 import { createCheckIn, fetchRequestTypes } from '../lib/api';
 import { useQueueEvents } from '../hooks/useQueueEvents';
+import { checkInSchema, zodFieldErrors } from '../lib/schemas';
 import { statusLabel } from '../lib/types';
 import type { QueueEntry, RequestType } from '../lib/types';
 
@@ -31,6 +32,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [entry, setEntry] = useState<QueueEntry | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [checkedIn, setCheckedIn] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -53,8 +55,15 @@ export default function HomePage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!siteId.trim() || !technicianName.trim() || !requestType) {
-      setError('Preencha o SITE ID, o nome do técnico e escolha um tipo de solicitação.');
+    setFieldErrors({});
+
+    const parsed = checkInSchema.safeParse({
+      site_id: siteId,
+      technician_name: technicianName,
+      request_type: requestType?.name ?? '',
+    });
+    if (!parsed.success) {
+      setFieldErrors(zodFieldErrors(parsed.error));
       return;
     }
     if (!checkedIn) {
@@ -64,9 +73,9 @@ export default function HomePage() {
     setLoading(true);
     try {
       const created = await createCheckIn({
-        site_id: siteId,
-        technician_name: technicianName,
-        request_type: requestType.name,
+        site_id: parsed.data.site_id,
+        technician_name: parsed.data.technician_name,
+        request_type: parsed.data.request_type,
       });
       setEntry(created);
     } catch (err) {
@@ -121,6 +130,8 @@ export default function HomePage() {
                       placeholder="Ex.: SITE-0421"
                       value={siteId}
                       onChange={(e) => setSiteId(e.target.value)}
+                      invalid={!!fieldErrors.site_id}
+                      invalidText={fieldErrors.site_id}
                       required
                     />
                     <TextInput
@@ -129,6 +140,8 @@ export default function HomePage() {
                       placeholder="Ex.: Maria Silva"
                       value={technicianName}
                       onChange={(e) => setTechnicianName(e.target.value)}
+                      invalid={!!fieldErrors.technician_name}
+                      invalidText={fieldErrors.technician_name}
                       required
                     />
                     <ComboBox
@@ -139,6 +152,7 @@ export default function HomePage() {
                       itemToString={(item: RequestType | null) => (item ? item.name : '')}
                       selectedItem={requestType}
                       onChange={({ selectedItem }) => setRequestType(selectedItem ?? null)}
+                      invalid={!!fieldErrors.request_type}
                     />
                     <Checkbox
                       id="checkin_confirm"
