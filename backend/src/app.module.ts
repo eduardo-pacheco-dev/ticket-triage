@@ -13,7 +13,6 @@ import { appDataSourceOptions } from './data-source';
 import { QueueController } from './queue/queue.controller';
 import { AdminController } from './queue/admin.controller';
 import { QueueService } from './queue/queue.service';
-import { QueueEventsService } from './queue/queue-events.service';
 import { RequestTypesController } from './request-types/request-types.controller';
 import { RequestTypesService } from './request-types/request-types.service';
 import { SlaController } from './sla/sla.controller';
@@ -21,6 +20,7 @@ import { SlaService } from './sla/sla.service';
 import { HealthController } from './health/health.controller';
 import { NotificationsController } from './notifications/notifications.controller';
 import { NotificationsService } from './notifications/notifications.service';
+import { TelegramModule } from './telegram/telegram.module';
 
 @Module({
   imports: [
@@ -34,6 +34,7 @@ import { NotificationsService } from './notifications/notifications.service';
     CommonModule,
     AuthModule,
     UsersModule,
+    TelegramModule,
   ],
   controllers: [
     QueueController,
@@ -47,7 +48,6 @@ import { NotificationsService } from './notifications/notifications.service';
     QueueService,
     RequestTypesService,
     SlaService,
-    QueueEventsService,
     NotificationsService,
   ],
 })

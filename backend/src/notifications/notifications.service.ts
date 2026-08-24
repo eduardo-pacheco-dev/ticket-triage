@@ -58,6 +58,8 @@ export class NotificationsService {
         site_id: notification.siteId ?? undefined,
         protocol: notification.protocol ?? undefined,
         status: notification.status ?? undefined,
+        title: notification.title,
+        body: notification.body,
       });
     } catch (error) {
       this.logger.warn(`Falha ao publicar notificação: ${String(error)}`);
