@@ -33,6 +33,13 @@ export interface SlaConfig {
   expectedServiceMin: number;
 }
 
+export interface SafeUser {
+  id: string;
+  username: string;
+  mustChangePassword: boolean;
+  createdAt: Date | string;
+}
+
 export interface DashboardData {
   total: number;
   waiting: number;

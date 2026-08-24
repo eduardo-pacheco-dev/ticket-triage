@@ -12,6 +12,7 @@ const AdminQueuePage = lazy(() => import('./pages/AdminQueuePage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const ArchivedPage = lazy(() => import('./pages/ArchivedPage'));
 const ConfigPage = lazy(() => import('./pages/ConfigPage'));
+const UsersPage = lazy(() => import('./pages/UsersPage'));
 
 function RouteFallback() {
   return (
@@ -60,6 +61,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <ConfigPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/usuarios"
+              element={
+                <ProtectedRoute>
+                  <UsersPage />
                 </ProtectedRoute>
               }
             />

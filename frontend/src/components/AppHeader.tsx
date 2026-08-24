@@ -17,6 +17,7 @@ import {
   List,
   Settings,
   Notification as BellIcon,
+  UserFollow,
 } from '@carbon/icons-react';
 import { useAuthStore } from '../stores/auth';
 import { useToastStore } from '../stores/toast';
@@ -133,6 +134,14 @@ export function AppHeader({ variant = 'admin' }: { variant?: 'admin' | 'public' 
               isActive={pathname.startsWith('/admin/arquivados')}
             >
               Arquivados
+            </SideNavLink>
+            <SideNavLink
+              as={Link}
+              to="/admin/usuarios"
+              renderIcon={UserFollow}
+              isActive={pathname.startsWith('/admin/usuarios')}
+            >
+              Usuários
             </SideNavLink>
             <SideNavLink
               as={Link}
