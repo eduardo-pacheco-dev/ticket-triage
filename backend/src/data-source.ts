@@ -10,6 +10,7 @@ import { UserSecurityColumns1756100000000 } from './migrations/1756100000000-Use
 import { UserRoleAndStatus1756200000000 } from './migrations/1756200000000-UserRoleAndStatus';
 import { FixMixedTimezoneDates1756300000000 } from './migrations/1756300000000-FixMixedTimezoneDates';
 import { TelegramConfig1756400000000 } from './migrations/1756400000000-TelegramConfig';
+import { Notifications1756500000000 } from './migrations/1756500000000-Notifications';
 
 if (process.env.NODE_ENV === 'production' && process.env.DB_SYNC !== 'false') {
   throw new Error(
@@ -23,6 +24,7 @@ export const migrations = [
   UserRoleAndStatus1756200000000,
   FixMixedTimezoneDates1756300000000,
   TelegramConfig1756400000000,
+  Notifications1756500000000,
 ];
 
 const dbLogging: LogLevel[] = process.env.DB_SYNC === 'false' ? ['error'] : ['error', 'schema'];
