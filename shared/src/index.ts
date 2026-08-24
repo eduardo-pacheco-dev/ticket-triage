@@ -16,12 +16,18 @@ export function slaMinutesSchema(coerce = false): z.ZodType<number> {
 }
 
 export const createCheckInSchema = z.object({
-  site_id: z.string().trim().min(1, 'SITE ID é obrigatório.').max(100, 'Máximo de 100 caracteres.'),
+  site_id: z
+    .string()
+    .trim()
+    .min(1, 'SITE ID é obrigatório.')
+    .max(100, 'Máximo de 100 caracteres.')
+    .transform((v) => v.toUpperCase()),
   technician_name: z
     .string()
     .trim()
     .min(1, 'Nome do técnico é obrigatório.')
-    .max(200, 'Máximo de 200 caracteres.'),
+    .max(200, 'Máximo de 200 caracteres.')
+    .transform((v) => v.toUpperCase()),
   request_type: z
     .string()
     .trim()
