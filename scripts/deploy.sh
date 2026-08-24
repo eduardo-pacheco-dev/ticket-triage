@@ -71,6 +71,11 @@ echo "HEAD agora em: $(git rev-parse --short HEAD) — $(git log -1 --format=%s)
 step_done
 
 step "Instalando dependências (npm ci)"
+# Pacotes pesados (@ibm/plex) em redes instáveis: timeouts e retries generosos.
+export npm_config_fetch_timeout=900000
+export npm_config_fetch_retries=7
+export npm_config_fetch_retry_mintimeout=15000
+export npm_config_fetch_retry_maxtimeout=180000
 NPM_OK=0
 for attempt in 1 2 3; do
   echo "    tentativa $attempt/3"
@@ -78,8 +83,8 @@ for attempt in 1 2 3; do
     NPM_OK=1
     break
   fi
-  echo "    falhou; aguardando 5s antes de repetir"
-  sleep 5
+  echo "    falhou; aguardando 10s antes de repetir"
+  sleep 10
 done
 if [ "$NPM_OK" -ne 1 ]; then
   echo "::error::npm ci falhou após 3 tentativas (verifique rede/registry na VPS)."
