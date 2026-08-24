@@ -70,41 +70,39 @@ git reset --hard "$SHA"
 echo "HEAD agora em: $(git rev-parse --short HEAD) — $(git log -1 --format=%s)"
 step_done
 
-step "Semeando cache de pacotes grandes"
-# A rede da VPS estagna em payloads grandes (@ibm/plex ~dezenas de MB). O curl
-# com retry/resume é mais resistente que o fetch interno do npm; se o download
-# falhar, seguimos mesmo assim e o npm ci tenta por conta própria.
-PLEX_TGZ=/tmp/plex-6.4.1.tgz
-if curl -fsSL --retry 5 --retry-all-errors -C - -o "$PLEX_TGZ" \
-     "https://registry.npmjs.org/@ibm/plex/-/plex-6.4.1.tgz"; then
-  npm cache add "$PLEX_TGZ" > /dev/null 2>&1 && echo "    @ibm/plex disponível no cache local"
+step "Instalando dependências"
+# Pula o npm ci quando o package-lock.json não mudou desde o deploy anterior:
+# reinstallar tudo pela rede da VPS é o passo mais lento do deploy. Para forçar
+# a reinstalação, use FORCE_NPM_CI=1 bash scripts/deploy.sh <sha>.
+LOCK_HASH_FILE="$APP_DIR/.package-lock.sha256"
+CURRENT_LOCK_HASH=$(sha256sum package-lock.json | cut -d' ' -f1)
+if [ "${FORCE_NPM_CI:-0}" != "1" ] && [ -d node_modules ] && [ -f "$LOCK_HASH_FILE" ] \
+  && [ "$(cat "$LOCK_HASH_FILE")" = "$CURRENT_LOCK_HASH" ]; then
+  echo "    package-lock.json inalterado; node_modules reaproveitado"
+  step_done
 else
-  echo "    aviso: semente do @ibm/plex falhou; npm ci fará o download direto"
-fi
-rm -f "$PLEX_TGZ"
-step_done
-
-step "Instalando dependências (npm ci)"
-# Pacotes pesados (@ibm/plex) em redes instáveis: timeouts e retries generosos.
-export npm_config_fetch_timeout=900000
-export npm_config_fetch_retries=7
-export npm_config_fetch_retry_mintimeout=15000
-export npm_config_fetch_retry_maxtimeout=180000
-NPM_OK=0
-for attempt in 1 2 3; do
-  echo "    tentativa $attempt/3"
-  if npm ci --no-audit --no-fund; then
-    NPM_OK=1
-    break
+  # Redes instáveis: timeouts e retries generosos.
+  export npm_config_fetch_timeout=900000
+  export npm_config_fetch_retries=7
+  export npm_config_fetch_retry_mintimeout=15000
+  export npm_config_fetch_retry_maxtimeout=180000
+  NPM_OK=0
+  for attempt in 1 2 3; do
+    echo "    tentativa $attempt/3"
+    if npm ci --no-audit --no-fund --prefer-offline; then
+      NPM_OK=1
+      break
+    fi
+    echo "    falhou; aguardando 10s antes de repetir"
+    sleep 10
+  done
+  if [ "$NPM_OK" -ne 1 ]; then
+    echo "::error::npm ci falhou após 3 tentativas (verifique rede/registry na VPS)."
+    exit 1
   fi
-  echo "    falhou; aguardando 10s antes de repetir"
-  sleep 10
-done
-if [ "$NPM_OK" -ne 1 ]; then
-  echo "::error::npm ci falhou após 3 tentativas (verifique rede/registry na VPS)."
-  exit 1
+  printf '%s\n' "$CURRENT_LOCK_HASH" > "$LOCK_HASH_FILE"
+  step_done
 fi
-step_done
 
 step "Build do backend"
 npm run build --workspace backend
