@@ -1,6 +1,7 @@
 import { clearAuth, getToken } from './auth-store';
 import type {
   DashboardData,
+  NotificationsList,
   PaginatedQueue,
   PublicQueueEntry,
   QueueEntry,
@@ -63,11 +64,15 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
 
   if (!res.ok) {
+    const message = extractMessage(body) ?? `Erro ${res.status}`;
     if (res.status === 401) {
       clearAuth();
       window.dispatchEvent(new CustomEvent('triagem:unauthorized'));
     }
-    throw new ApiError(res.status, extractMessage(body) ?? `Erro ${res.status}`);
+    if (res.status === 403 && message.includes('Troque a senha')) {
+      window.dispatchEvent(new CustomEvent('triagem:must-change-password'));
+    }
+    throw new ApiError(res.status, message);
   }
 
   return body as T;
@@ -152,6 +157,18 @@ export function updateStatus(id: string, status: QueueStatus) {
 
 export function fetchDashboard() {
   return request<DashboardData>('/admin/dashboard');
+}
+
+export function fetchNotifications() {
+  return request<NotificationsList>('/notifications');
+}
+
+export function markNotificationRead(id: string) {
+  return request<{ ok: boolean }>(`/notifications/${id}/read`, { method: 'POST' });
+}
+
+export function markAllNotificationsRead() {
+  return request<{ ok: boolean }>('/notifications/read-all', { method: 'POST' });
 }
 
 export function fetchSlaConfig() {

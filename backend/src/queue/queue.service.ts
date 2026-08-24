@@ -6,6 +6,7 @@ import { QueueEntry } from './queue-entry.entity';
 import type { QueueStatus } from './queue-entry.entity';
 import { RateLimitService } from '../common/rate-limit.service';
 import { QueueEventsService } from './queue-events.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import type { CreateCheckInInput, PaginationInput } from '@ticket-triage/shared';
 
 export interface QueueEntryDto {
@@ -87,6 +88,7 @@ export class QueueService {
     private readonly queueRepository: Repository<QueueEntry>,
     private readonly rateLimit: RateLimitService,
     private readonly queueEvents: QueueEventsService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async createCheckIn(input: CreateCheckInInput, ip: string): Promise<QueueEntryDto> {
@@ -111,6 +113,13 @@ export class QueueService {
         const saved = await this.queueRepository.save(entry);
         const dto = toDto(saved);
         this.emitQueueEvent('created', dto.site_id, dto.protocol, dto.status);
+        void this.notifications.publish({
+          title: 'Nova solicitação',
+          body: `${dto.site_id} • ${dto.request_type} • ${dto.technician_name}`,
+          protocol: dto.protocol,
+          siteId: dto.site_id,
+          status: dto.status,
+        });
         return dto;
       } catch (error) {
         lastError = error;
@@ -202,6 +211,19 @@ export class QueueService {
 
     const dto = toDto(await this.queueRepository.save(entry));
     this.emitQueueEvent('updated', dto.site_id, dto.protocol, dto.status);
+    const titles: Record<QueueStatus, string> = {
+      waiting: 'Solicitação reaberta',
+      in_review: 'Análise iniciada',
+      approved: 'Solicitação aprovada',
+      rejected: 'Solicitação recusada',
+    };
+    void this.notifications.publish({
+      title: titles[next],
+      body: `${dto.site_id} • ${dto.request_type}`,
+      protocol: dto.protocol,
+      siteId: dto.site_id,
+      status: dto.status,
+    });
     return dto;
   }
 

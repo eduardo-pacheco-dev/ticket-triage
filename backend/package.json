@@ -15,6 +15,7 @@
     "migration:revert": "npm run build && typeorm migration:revert -d dist/data-source.js",
     "db:init": "npm run migration:run && npm run db:seed",
     "db:seed": "node scripts/seed.cjs",
+    "create-admin": "node scripts/create-admin.cjs",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
