@@ -5,7 +5,6 @@ import {
   HeaderName,
   HeaderMenuButton,
   HeaderGlobalBar,
-  HeaderGlobalAction,
   SideNav,
   SideNavItems,
   SideNavLink,
@@ -15,20 +14,14 @@ import {
   Archive,
   List,
   Settings,
-  Logout,
   ChevronLeft,
   ChevronRight,
-  Notification as BellIcon,
   UserFollow,
 } from '@carbon/icons-react';
 import { useAuthStore } from '../stores/auth';
-import { useToastStore } from '../stores/toast';
 import { useIsDesktop } from '../hooks/useIsDesktop';
-import {
-  getNotificationPermission,
-  requestNotificationPermission,
-  showDesktopNotification,
-} from '../lib/notifications';
+import { NotificationsMenu } from './NotificationsMenu';
+import { UserMenu } from './UserMenu';
 
 const SIDENAV_PREF_KEY = 'triagem_sidenav_expanded';
 
@@ -36,10 +29,7 @@ export function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const isDesktop = useIsDesktop();
-  const username = useAuthStore((s) => s.username);
-  const logout = useAuthStore((s) => s.logout);
   const mustChangePassword = useAuthStore((s) => s.mustChangePassword);
-  const notify = useToastStore((s) => s.notify);
   const pathname = location.pathname;
 
   useEffect(() => {
@@ -52,9 +42,6 @@ export function AdminLayout() {
     () => typeof window !== 'undefined' && localStorage.getItem(SIDENAV_PREF_KEY) === 'false',
   );
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [notifPermission, setNotifPermission] = useState<NotificationPermission | 'unsupported'>(
-    () => getNotificationPermission(),
-  );
 
   useEffect(() => {
     setMobileOpen(false);
@@ -65,30 +52,6 @@ export function AdminLayout() {
       localStorage.setItem(SIDENAV_PREF_KEY, String(prev));
       return !prev;
     });
-  }
-
-  async function handleNotifications() {
-    if (notifPermission === 'unsupported') {
-      notify({ kind: 'error', title: 'Navegador sem suporte a notificações' });
-      return;
-    }
-    if (notifPermission === 'granted') {
-      showDesktopNotification('Triagem Docs', 'As notificações estão ativas.');
-      return;
-    }
-    if (notifPermission === 'denied') {
-      notify({
-        kind: 'warning',
-        title: 'Notificações bloqueadas',
-        subtitle: 'Permita as notificações nas configurações do site no navegador.',
-      });
-      return;
-    }
-    const result = await requestNotificationPermission();
-    setNotifPermission(result);
-    if (result === 'granted') {
-      showDesktopNotification('Triagem Docs', 'Você será avisado sobre novas solicitações.');
-    }
   }
 
   const navLinks = (
@@ -146,26 +109,8 @@ export function AdminLayout() {
           Triagem Docs
         </HeaderName>
         <HeaderGlobalBar>
-          <span className="topbar-user">{username}</span>
-          <HeaderGlobalAction
-            aria-label={
-              notifPermission === 'granted' ? 'Notificações ativas' : 'Ativar notificações'
-            }
-            tooltipAlignment="start"
-            onClick={() => void handleNotifications()}
-          >
-            <BellIcon size={20} />
-          </HeaderGlobalAction>
-          <HeaderGlobalAction
-            aria-label="Sair"
-            tooltipAlignment="end"
-            onClick={() => {
-              logout();
-              navigate('/login', { replace: true });
-            }}
-          >
-            <Logout size={20} />
-          </HeaderGlobalAction>
+          <NotificationsMenu />
+          <UserMenu />
         </HeaderGlobalBar>
       </Header>
 

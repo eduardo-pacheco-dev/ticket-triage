@@ -4,6 +4,7 @@ import type { QueueEntry } from './queue-entry.entity';
 import type { QueueStatus } from './queue-entry.entity';
 import { RateLimitService } from '../common/rate-limit.service';
 import { QueueEventsService } from './queue-events.service';
+import type { NotificationsService } from '../notifications/notifications.service';
 
 type QbOverrides = {
   getMany?: QueueEntry[];
@@ -58,12 +59,14 @@ function buildService(qbFactory: (...args: unknown[]) => QbMock) {
     createQueryBuilder: jest.fn(() => qbFactory()),
   };
   const events = { emit: jest.fn() };
+  const notifications = { publish: jest.fn(async () => {}) };
   const service = new QueueService(
     repo as never,
     new RateLimitService(),
     events as unknown as QueueEventsService,
+    notifications as unknown as NotificationsService,
   );
-  return { service, repo, events };
+  return { service, repo, events, notifications };
 }
 
 describe('QueueService', () => {
@@ -165,7 +168,9 @@ describe('QueueService', () => {
       };
       const service = new QueueService(repo as never, new RateLimitService(), {
         emit: jest.fn(),
-      } as unknown as QueueEventsService);
+      } as unknown as QueueEventsService, {
+        publish: jest.fn(async () => {}),
+      } as unknown as NotificationsService);
 
       const dto = await service.createCheckIn(
         { site_id: 'SITE-200', technician_name: 'Bruno', request_type: 'Manutenção' },
@@ -186,7 +191,9 @@ describe('QueueService', () => {
       };
       const service = new QueueService(repo as never, new RateLimitService(), {
         emit: jest.fn(),
-      } as unknown as QueueEventsService);
+      } as unknown as QueueEventsService, {
+        publish: jest.fn(async () => {}),
+      } as unknown as NotificationsService);
 
       await expect(
         service.createCheckIn(
@@ -365,7 +372,9 @@ describe('QueueService', () => {
       };
       const service = new QueueService(repo as never, new RateLimitService(), {
         emit: jest.fn(),
-      } as unknown as QueueEventsService);
+      } as unknown as QueueEventsService, {
+        publish: jest.fn(async () => {}),
+      } as unknown as NotificationsService);
 
       const dashboard = await service.getDashboard();
 
@@ -390,7 +399,9 @@ describe('QueueService', () => {
       };
       const service = new QueueService(repo as never, new RateLimitService(), {
         emit: jest.fn(),
-      } as unknown as QueueEventsService);
+      } as unknown as QueueEventsService, {
+        publish: jest.fn(async () => {}),
+      } as unknown as NotificationsService);
 
       const dashboard = await service.getDashboard();
 
