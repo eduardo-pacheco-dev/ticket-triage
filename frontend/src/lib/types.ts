@@ -60,6 +60,22 @@ export interface PaginatedQueue {
   pageSize: number;
 }
 
+export interface AppNotification {
+  id: string;
+  title: string;
+  body: string;
+  protocol: string | null;
+  site_id: string | null;
+  status: QueueStatus | null;
+  read: boolean;
+  created_at: Date | string;
+}
+
+export interface NotificationsList {
+  items: AppNotification[];
+  unreadCount: number;
+}
+
 export const statusLabel: Record<QueueStatus, string> = {
   waiting: 'Aguardando Análise',
   in_review: 'Em Análise',

@@ -1,6 +1,7 @@
 import { clearAuth, getToken } from './auth-store';
 import type {
   DashboardData,
+  NotificationsList,
   PaginatedQueue,
   PublicQueueEntry,
   QueueEntry,
@@ -156,6 +157,18 @@ export function updateStatus(id: string, status: QueueStatus) {
 
 export function fetchDashboard() {
   return request<DashboardData>('/admin/dashboard');
+}
+
+export function fetchNotifications() {
+  return request<NotificationsList>('/notifications');
+}
+
+export function markNotificationRead(id: string) {
+  return request<{ ok: boolean }>(`/notifications/${id}/read`, { method: 'POST' });
+}
+
+export function markAllNotificationsRead() {
+  return request<{ ok: boolean }>('/notifications/read-all', { method: 'POST' });
 }
 
 export function fetchSlaConfig() {
