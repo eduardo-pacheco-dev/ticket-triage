@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM node:22-alpine AS build
+FROM node:20.19.2-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY shared/package.json shared/
@@ -11,7 +11,7 @@ COPY shared/ shared/
 COPY backend/ backend/
 RUN npm run build --workspace shared && npm run build --workspace backend
 
-FROM node:22-alpine
+FROM node:20.19.2-alpine
 ENV NODE_ENV=production
 WORKDIR /app
 COPY package.json package-lock.json ./

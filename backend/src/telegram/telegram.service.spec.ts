@@ -39,14 +39,22 @@ describe('TelegramService', () => {
 
   it('formata a mensagem com título, corpo e protocolo', () => {
     expect(
-      formatQueueMessage({ title: 'Nova solicitação', body: 'SITE-01 • Elétrica • Fulano', protocol: 'DOC-ABC1234' }),
+      formatQueueMessage({
+        title: 'Nova solicitação',
+        body: 'SITE-01 • Elétrica • Fulano',
+        protocol: 'DOC-ABC1234',
+      }),
     ).toBe('Nova solicitação\nSITE-01 • Elétrica • Fulano\nProtocolo: DOC-ABC1234');
   });
 
   it('formata sem linha de protocolo quando ausente', () => {
-    expect(formatQueueMessage({ title: 'Análise iniciada', body: 'SITE-02 • Hidráulica', protocol: null })).toBe(
-      'Análise iniciada\nSITE-02 • Hidráulica',
-    );
+    expect(
+      formatQueueMessage({
+        title: 'Análise iniciada',
+        body: 'SITE-02 • Hidráulica',
+        protocol: null,
+      }),
+    ).toBe('Análise iniciada\nSITE-02 • Hidráulica');
   });
 
   it('fica desativado sem token/chat e não envia nada', async () => {
@@ -78,8 +86,8 @@ describe('TelegramService', () => {
   it('envia sendMessage quando configurado', async () => {
     process.env.TELEGRAM_BOT_TOKEN = 'token-teste';
     process.env.TELEGRAM_CHAT_ID = '-100123';
-    const fetchMock = jest.fn(async () =>
-      ({ ok: true, json: async () => ({ ok: true }) }) as unknown as Response,
+    const fetchMock = jest.fn(
+      async () => ({ ok: true, json: async () => ({ ok: true }) }) as unknown as Response,
     );
     globalThis.fetch = fetchMock as unknown as typeof fetch;
 
@@ -101,8 +109,8 @@ describe('TelegramService', () => {
       { id: 1, chatId: '-100', title: null, createdAt: new Date() },
       { id: 2, chatId: '-200', title: null, createdAt: new Date() },
     ]) as never;
-    const fetchMock = jest.fn(async () =>
-      ({ ok: true, json: async () => ({ ok: true }) }) as unknown as Response,
+    const fetchMock = jest.fn(
+      async () => ({ ok: true, json: async () => ({ ok: true }) }) as unknown as Response,
     );
     globalThis.fetch = fetchMock as unknown as typeof fetch;
 

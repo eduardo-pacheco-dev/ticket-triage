@@ -161,9 +161,7 @@ export default function HomePage() {
                           label="Tipo de Solicitação"
                           placeholder="Selecione um tipo"
                           error={!!fieldErrors.request_type}
-                          helperText={
-                            fieldErrors.request_type ?? 'Selecione um tipo da lista'
-                          }
+                          helperText={fieldErrors.request_type ?? 'Selecione um tipo da lista'}
                         />
                       )}
                     />

@@ -101,7 +101,12 @@ export function AdminLayout() {
       <nav aria-label="Navegação principal">
         <List disablePadding>
           {navItems.map((item) => (
-            <Tooltip key={item.to} title={rail ? item.label : ''} placement="right" disableHoverListener={!rail}>
+            <Tooltip
+              key={item.to}
+              title={rail ? item.label : ''}
+              placement="right"
+              disableHoverListener={!rail}
+            >
               <ListItemButton
                 component={Link}
                 to={item.to}
@@ -194,7 +199,11 @@ export function AdminLayout() {
 
       {isDesktop ? (
         <>
-          <Drawer variant="permanent" open sx={drawerSx(collapsed ? DRAWER_RAIL_WIDTH : DRAWER_FULL_WIDTH, true)}>
+          <Drawer
+            variant="permanent"
+            open
+            sx={drawerSx(collapsed ? DRAWER_RAIL_WIDTH : DRAWER_FULL_WIDTH, true)}
+          >
             {renderNavLinks(collapsed)}
           </Drawer>
           <button
@@ -204,7 +213,11 @@ export function AdminLayout() {
             title={collapsed ? 'Expandir menu' : 'Recolher menu'}
             onClick={toggleCollapsed}
           >
-            {collapsed ? <ChevronRightIcon sx={{ fontSize: 16 }} /> : <ChevronLeftIcon sx={{ fontSize: 16 }} />}
+            {collapsed ? (
+              <ChevronRightIcon sx={{ fontSize: 16 }} />
+            ) : (
+              <ChevronLeftIcon sx={{ fontSize: 16 }} />
+            )}
           </button>
         </>
       ) : (

@@ -15,8 +15,8 @@ Nginx :80 ──▶ frontend/dist (estático) + proxy /api → 127.0.0.1:3000
 ## 1. Preparar a VPS (uma vez)
 
 ```bash
-# Node 22
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+# Node 20.19.2
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs git nginx mariadb-server
 sudo npm install -g pm2
 
@@ -63,12 +63,12 @@ HTTPS opcional: `sudo apt install certbot python3-certbot-nginx && sudo certbot 
 
 ## 5. Secrets do GitHub (Settings → Environments → production)
 
-| Secret | Descrição |
-| --- | --- |
-| `SSH_HOST` | IP ou host da VPS |
-| `SSH_PORT` | Porta SSH (opcional; padrão 22) |
-| `SSH_USER` | Usuário SSH com acesso ao repositório em `/var/www/app/ticket-triage` |
-| `SSH_PRIVATE_KEY` | Chave privada (ed25519) cadastrada no `authorized_keys` da VPS |
+| Secret            | Descrição                                                             |
+| ----------------- | --------------------------------------------------------------------- |
+| `SSH_HOST`        | IP ou host da VPS                                                     |
+| `SSH_PORT`        | Porta SSH (opcional; padrão 22)                                       |
+| `SSH_USER`        | Usuário SSH com acesso ao repositório em `/var/www/app/ticket-triage` |
+| `SSH_PRIVATE_KEY` | Chave privada (ed25519) cadastrada no `authorized_keys` da VPS        |
 
 A partir daí, todo push em `main` publica automaticamente. Deploys manuais: aba **Actions → Deploy → Run workflow**.
 

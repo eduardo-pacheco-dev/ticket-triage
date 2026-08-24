@@ -122,7 +122,7 @@ describe('API e2e (check-in → status → dashboard)', () => {
 
     expect(checkInResponse.body).toMatchObject({
       site_id: SITE_ID,
-      technician_name: 'Ana Souza',
+      technician_name: 'ANA SOUZA',
       request_type: 'Instalação',
       status: 'waiting',
     });

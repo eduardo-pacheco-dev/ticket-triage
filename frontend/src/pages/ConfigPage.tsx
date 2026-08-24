@@ -369,8 +369,7 @@ function BotTab() {
       : status.configured
         ? 'Ativo'
         : 'Aguardando inscrição';
-  const chipColor =
-    tagText === 'Ativo' ? 'success' : tagText === 'Pausado' ? 'warning' : 'default';
+  const chipColor = tagText === 'Ativo' ? 'success' : tagText === 'Pausado' ? 'warning' : 'default';
 
   return (
     <div>
@@ -386,7 +385,15 @@ function BotTab() {
       )}
 
       <Paper variant="outlined" className="checkin-card" sx={{ maxWidth: '100%', mt: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            flexWrap: 'wrap',
+            marginBottom: '1rem',
+          }}
+        >
           <h2 style={{ fontSize: '1.125rem', margin: 0, fontWeight: 500 }}>Bot do Telegram</h2>
           <Chip size="small" color={chipColor} label={tagText} />
           {status?.tokenMasked && (
@@ -436,8 +443,9 @@ function BotTab() {
               fullWidth
             />
             <p className="muted" style={{ fontSize: '0.8125rem', margin: 0 }}>
-              Como inscrever chats: adicione o bot ao grupo ou mande <strong>/start</strong> no privado —
-              qualquer chat que enviar mensagem ao bot passa a receber as notificações automaticamente.
+              Como inscrever chats: adicione o bot ao grupo ou mande <strong>/start</strong> no
+              privado — qualquer chat que enviar mensagem ao bot passa a receber as notificações
+              automaticamente.
             </p>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <Button type="submit" disabled={busy}>
@@ -457,10 +465,13 @@ function BotTab() {
       </Paper>
 
       <Paper variant="outlined" className="checkin-card" sx={{ maxWidth: '100%', mt: 2 }}>
-        <h2 style={{ fontSize: '1.125rem', margin: '0 0 0.5rem', fontWeight: 500 }}>O que o bot envia</h2>
+        <h2 style={{ fontSize: '1.125rem', margin: '0 0 0.5rem', fontWeight: 500 }}>
+          O que o bot envia
+        </h2>
         <p className="muted" style={{ margin: 0 }}>
-          Novos check-ins e mudanças de status das solicitações (análise iniciada, aprovada, recusada,
-          reaberta), com protocolo e dados da unidade — entregues a todos os chats inscritos.
+          Novos check-ins e mudanças de status das solicitações (análise iniciada, aprovada,
+          recusada, reaberta), com protocolo e dados da unidade — entregues a todos os chats
+          inscritos.
         </p>
       </Paper>
     </div>
@@ -597,7 +608,8 @@ export default function ConfigPage() {
 
       {mustChangePassword && tab !== 'perfil' && (
         <Alert severity="warning" variant="outlined" sx={{ mb: 2 }}>
-          <strong>Troca de senha obrigatória.</strong> Abra a aba Perfil para definir uma nova senha.
+          <strong>Troca de senha obrigatória.</strong> Abra a aba Perfil para definir uma nova
+          senha.
           <Box sx={{ mt: 1 }}>
             <Button size="small" onClick={() => setTab('perfil')}>
               Ir para o perfil

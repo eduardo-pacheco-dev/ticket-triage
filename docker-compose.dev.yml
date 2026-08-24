@@ -1,6 +1,6 @@
 services:
   web:
-    image: node:22-alpine
+    image: node:20.19.2-alpine
     working_dir: /app
     command: >
       sh -c "npm install --no-audit --no-fund --loglevel=error &&

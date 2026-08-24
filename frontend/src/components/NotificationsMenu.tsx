@@ -78,7 +78,12 @@ export function NotificationsMenu() {
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
-        <Badge badgeContent={unreadCount > 9 ? '9+' : unreadCount} color="error" max={Infinity} invisible={unreadCount === 0}>
+        <Badge
+          badgeContent={unreadCount > 9 ? '9+' : unreadCount}
+          color="error"
+          max={Infinity}
+          invisible={unreadCount === 0}
+        >
           <BellIcon />
         </Badge>
       </IconButton>

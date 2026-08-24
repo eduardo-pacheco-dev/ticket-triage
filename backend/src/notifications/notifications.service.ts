@@ -106,9 +106,7 @@ export class NotificationsService {
       where: { id: notificationId },
     });
     if (!notification) throw new NotFoundException('Notificação não encontrada.');
-    await this.readsRepository.save(
-      this.readsRepository.create({ notificationId, userId }),
-    );
+    await this.readsRepository.save(this.readsRepository.create({ notificationId, userId }));
   }
 
   async markAllRead(userId: string): Promise<void> {

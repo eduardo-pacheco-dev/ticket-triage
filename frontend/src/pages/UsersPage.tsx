@@ -289,7 +289,10 @@ export default function UsersPage() {
                     ['createdAt', 'Criado em'],
                   ] as [SortKey, string][]
                 ).map(([key, label]) => (
-                  <TableCell key={key} sortDirection={sortKey === key ? (sortAsc ? 'asc' : 'desc') : false}>
+                  <TableCell
+                    key={key}
+                    sortDirection={sortKey === key ? (sortAsc ? 'asc' : 'desc') : false}
+                  >
                     <TableSortLabel
                       active={sortKey === key}
                       direction={sortKey === key && !sortAsc ? 'desc' : 'asc'}
@@ -307,9 +310,7 @@ export default function UsersPage() {
                 <TableRow key={row.id} hover>
                   <TableCell>
                     <span className="mono">{row.username}</span>
-                    {row.isSelf && (
-                      <Chip size="small" sx={{ ml: 1 }} label="você" />
-                    )}
+                    {row.isSelf && <Chip size="small" sx={{ ml: 1 }} label="você" />}
                   </TableCell>
                   <TableCell>
                     {row.role === 'admin' ? (
@@ -326,7 +327,12 @@ export default function UsersPage() {
                         <Chip size="small" color="error" label="Inativo" />
                       )}
                       {row.user.mustChangePassword && (
-                        <Chip size="small" color="secondary" variant="outlined" label="Troca de senha pendente" />
+                        <Chip
+                          size="small"
+                          color="secondary"
+                          variant="outlined"
+                          label="Troca de senha pendente"
+                        />
                       )}
                     </Box>
                   </TableCell>
@@ -390,7 +396,9 @@ export default function UsersPage() {
               <TextField
                 id="new_user_password"
                 label="Senha provisória"
-                helperText={createErrors.password ?? 'O usuário deverá trocá-la no primeiro acesso.'}
+                helperText={
+                  createErrors.password ?? 'O usuário deverá trocá-la no primeiro acesso.'
+                }
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
@@ -472,7 +480,9 @@ export default function UsersPage() {
                 <TextField
                   id="edit_password"
                   label="Nova senha (opcional)"
-                  helperText={editErrors.password ?? 'Se preenchida, as sessões ativas serão encerradas.'}
+                  helperText={
+                    editErrors.password ?? 'Se preenchida, as sessões ativas serão encerradas.'
+                  }
                   type="password"
                   value={editForm.password}
                   onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
@@ -516,8 +526,8 @@ export default function UsersPage() {
         <DialogTitle>Remover usuário</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Tem certeza que deseja remover o usuário <strong>{pendingDelete?.username}</strong>? Esta
-            ação não pode ser desfeita.
+            Tem certeza que deseja remover o usuário <strong>{pendingDelete?.username}</strong>?
+            Esta ação não pode ser desfeita.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
