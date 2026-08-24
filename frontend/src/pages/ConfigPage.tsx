@@ -275,6 +275,7 @@ function SlaTab() {
 function PerfilTab() {
   const applyAccessToken = useAuthStore((s) => s.applyAccessToken);
   const clearMustChangePassword = useAuthStore((s) => s.clearMustChangePassword);
+  const mustChangePassword = useAuthStore((s) => s.mustChangePassword);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -320,6 +321,16 @@ function PerfilTab() {
 
   return (
     <div>
+      {mustChangePassword && (
+        <InlineNotification
+          kind="warning"
+          lowContrast
+          hideCloseButton
+          title="Troca de senha obrigatória"
+          subtitle="Por segurança, defina uma nova senha antes de usar o painel."
+          style={{ marginBottom: '1rem' }}
+        />
+      )}
       {error && (
         <InlineNotification
           kind="error"

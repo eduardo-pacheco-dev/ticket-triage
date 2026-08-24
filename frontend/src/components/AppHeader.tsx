@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Header,
+  HeaderContainer,
+  HeaderMenuButton,
   HeaderName,
   HeaderGlobalBar,
   HeaderGlobalAction,
@@ -13,6 +15,7 @@ import {
   Logout,
   Login,
   Dashboard,
+  Archive,
   Document,
   List,
   Settings,
@@ -26,6 +29,23 @@ import {
   showDesktopNotification,
 } from '../lib/notifications';
 
+const DESKTOP_QUERY = '(min-width: 1056px)';
+
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window === 'undefined' || window.matchMedia(DESKTOP_QUERY).matches,
+  );
+
+  useEffect(() => {
+    const query = window.matchMedia(DESKTOP_QUERY);
+    const onChange = (event: MediaQueryListEvent) => setIsDesktop(event.matches);
+    query.addEventListener('change', onChange);
+    return () => query.removeEventListener('change', onChange);
+  }, []);
+
+  return isDesktop;
+}
+
 export function AppHeader({ variant = 'admin' }: { variant?: 'admin' | 'public' }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -35,9 +55,16 @@ export function AppHeader({ variant = 'admin' }: { variant?: 'admin' | 'public' 
   const authed = !!token;
   const pathname = location.pathname;
   const isAdminArea = variant === 'admin';
+  const showNav = isAdminArea && authed;
+  const isDesktop = useIsDesktop();
   const [notifPermission, setNotifPermission] = useState<NotificationPermission | 'unsupported'>(
     () => getNotificationPermission(),
   );
+
+  useEffect(() => {
+    document.body.classList.toggle('has-admin-sidenav', showNav && isDesktop);
+    return () => document.body.classList.remove('has-admin-sidenav');
+  }, [showNav, isDesktop]);
 
   async function handleNotifications() {
     if (notifPermission === 'unsupported') {
@@ -65,86 +92,113 @@ export function AppHeader({ variant = 'admin' }: { variant?: 'admin' | 'public' 
     }
   }
 
+  const navLinks = (
+    <SideNavItems>
+      <SideNavLink
+        as={Link}
+        to="/admin/dashboard"
+        renderIcon={Dashboard}
+        isActive={pathname.startsWith('/admin/dashboard')}
+      >
+        Dashboard
+      </SideNavLink>
+      <SideNavLink as={Link} to="/" renderIcon={Document} isActive={pathname === '/'}>
+        Check-in
+      </SideNavLink>
+      <SideNavLink as={Link} to="/admin" renderIcon={List} isActive={pathname === '/admin'}>
+        Fila
+      </SideNavLink>
+      <SideNavLink
+        as={Link}
+        to="/admin/arquivados"
+        renderIcon={Archive}
+        isActive={pathname.startsWith('/admin/arquivados')}
+      >
+        Arquivados
+      </SideNavLink>
+      <SideNavLink
+        as={Link}
+        to="/admin/configuracoes"
+        renderIcon={Settings}
+        isActive={pathname.startsWith('/admin/configuracoes')}
+      >
+        Configurações
+      </SideNavLink>
+    </SideNavItems>
+  );
+
   return (
-    <>
-      <Header aria-label="AFL Engenharia">
-        <HeaderName as={Link} to="/" prefix="AFL">
-          Triagem Docs
-        </HeaderName>
-        <HeaderGlobalBar>
-          {isAdminArea && authed && (
-            <HeaderGlobalAction
-              aria-label={
-                notifPermission === 'granted'
-                  ? 'Notificações ativas'
-                  : 'Ativar notificações do navegador'
-              }
-              tooltipAlignment="start"
-              onClick={handleNotifications}
-            >
-              <BellIcon />
-            </HeaderGlobalAction>
-          )}
-          {authed ? (
-            <HeaderGlobalAction
-              aria-label="Sair"
-              onClick={() => {
-                void logout();
-                navigate('/login', { replace: true });
-              }}
-              tooltipAlignment="end"
-            >
-              <Logout />
-            </HeaderGlobalAction>
-          ) : (
-            pathname !== '/login' && (
-              <HeaderGlobalAction
-                aria-label="Entrar"
-                tooltipAlignment="end"
-                onClick={() => navigate('/login')}
+    <HeaderContainer
+      render={({ isSideNavExpanded, onClickSideNavExpand }) => (
+        <>
+          <Header aria-label="AFL Engenharia">
+            {showNav && !isDesktop && (
+              <HeaderMenuButton
+                aria-label={isSideNavExpanded ? 'Fechar menu' : 'Abrir menu'}
+                aria-expanded={isSideNavExpanded}
+                isActive={isSideNavExpanded}
+                onClick={onClickSideNavExpand}
+              />
+            )}
+            <HeaderName as={Link} to="/" prefix="AFL">
+              Triagem Docs
+            </HeaderName>
+            <HeaderGlobalBar>
+              {isAdminArea && authed && (
+                <HeaderGlobalAction
+                  aria-label={
+                    notifPermission === 'granted'
+                      ? 'Notificações ativas'
+                      : 'Ativar notificações do navegador'
+                  }
+                  tooltipAlignment="start"
+                  onClick={handleNotifications}
+                >
+                  <BellIcon />
+                </HeaderGlobalAction>
+              )}
+              {authed ? (
+                <HeaderGlobalAction
+                  aria-label="Sair"
+                  onClick={() => {
+                    logout();
+                    navigate('/login', { replace: true });
+                  }}
+                  tooltipAlignment="end"
+                >
+                  <Logout />
+                </HeaderGlobalAction>
+              ) : (
+                pathname !== '/login' && (
+                  <HeaderGlobalAction
+                    aria-label="Entrar"
+                    tooltipAlignment="end"
+                    onClick={() => navigate('/login')}
+                  >
+                    <Login />
+                  </HeaderGlobalAction>
+                )
+              )}
+            </HeaderGlobalBar>
+          </Header>
+          {showNav &&
+            (isDesktop ? (
+              <SideNav isFixedNav aria-label="Navegação principal" expanded>
+                {navLinks}
+              </SideNav>
+            ) : (
+              <SideNav
+                aria-label="Navegação principal"
+                expanded={isSideNavExpanded}
+                isPersistent={false}
+                addFocusListeners={false}
+                onOverlayClick={onClickSideNavExpand}
               >
-                <Login />
-              </HeaderGlobalAction>
-            )
-          )}
-        </HeaderGlobalBar>
-      </Header>
-      {isAdminArea && authed && (
-        <SideNav isFixedNav aria-label="Navegação principal" expanded>
-          <SideNavItems>
-            <SideNavLink
-              as={Link}
-              to="/admin/dashboard"
-              renderIcon={Dashboard}
-              isActive={pathname.startsWith('/admin/dashboard')}
-            >
-              Dashboard
-            </SideNavLink>
-            <SideNavLink as={Link} to="/" renderIcon={Document} isActive={pathname === '/'}>
-              Check-in
-            </SideNavLink>
-            <SideNavLink as={Link} to="/admin" renderIcon={List} isActive={pathname === '/admin'}>
-              Fila
-            </SideNavLink>
-            <SideNavLink
-              as={Link}
-              to="/admin/arquivados"
-              renderIcon={Document}
-              isActive={pathname.startsWith('/admin/arquivados')}
-            >
-              Arquivados
-            </SideNavLink>
-            <SideNavLink
-              as={Link}
-              to="/admin/configuracoes"
-              renderIcon={Settings}
-              isActive={pathname.startsWith('/admin/configuracoes')}
-            >
-              Configurações
-            </SideNavLink>
-          </SideNavItems>
-        </SideNav>
+                {navLinks}
+              </SideNav>
+            ))}
+        </>
       )}
-    </>
+    />
   );
 }

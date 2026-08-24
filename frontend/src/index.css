@@ -52,9 +52,9 @@ code,
   width: 100%;
   max-width: 28rem;
 }
-.login-card {
-  padding: 2.5rem 2rem !important;
-  margin: 0 !important;
+.cds--tile.login-card {
+  padding: 2.5rem 2rem;
+  margin: 0;
 }
 .login-title {
   font-size: 1.75rem;
@@ -68,11 +68,11 @@ code,
   font-size: 0.875rem;
 }
 
-.app-shell:has(.cds--side-nav) .app-main {
+body.has-admin-sidenav .app-main {
   margin-left: 16rem;
 }
-@media (max-width: 659px) {
-  .app-shell:has(.cds--side-nav) .app-main {
+@media (max-width: 1055px) {
+  body.has-admin-sidenav .app-main {
     margin-left: 0;
   }
 }
@@ -118,18 +118,6 @@ code,
   margin: 0.25rem 0 0;
   font-size: 0.875rem;
 }
-.status-tag-waiting {
-  color: #6f6f6f;
-}
-.status-tag-review {
-  color: var(--ibm-blue);
-}
-.status-tag-approved {
-  color: #24a148;
-}
-.status-tag-rejected {
-  color: #da1e28;
-}
 .row-actions {
   display: flex;
   gap: 0.5rem;
@@ -153,14 +141,14 @@ code,
   align-items: center;
   flex-wrap: wrap;
   padding: 0.5rem 0;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--cds-border-subtle, #e0e0e0);
 }
 .type-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0.5rem 0;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--cds-border-subtle, #e0e0e0);
   gap: 1rem;
   flex-wrap: wrap;
 }

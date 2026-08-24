@@ -59,5 +59,7 @@ jobs:
         run: npm ci
       - name: Lint
         run: npm run lint --workspace frontend
+      - name: Testes unitários (Vitest)
+        run: npm run test --workspace frontend
       - name: Build (tsc + vite)
         run: npm run build --workspace frontend

@@ -154,6 +154,7 @@ export default function HomePage() {
                       selectedItem={requestType}
                       onChange={({ selectedItem }) => setRequestType(selectedItem ?? null)}
                       invalid={!!fieldErrors.request_type}
+                      invalidText={fieldErrors.request_type ?? 'Selecione um tipo da lista'}
                     />
                     <Checkbox
                       id="checkin_confirm"

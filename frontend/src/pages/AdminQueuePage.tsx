@@ -16,6 +16,7 @@ import {
   Tag,
   InlineNotification,
   Loading,
+  Modal,
 } from '@carbon/react';
 import {
   PlayFilledAlt,
@@ -32,20 +33,8 @@ import { showDesktopNotification } from '../lib/notifications';
 import { statusLabel } from '../lib/types';
 import type { QueueEntry, QueueStatus } from '../lib/types';
 import { slaLabel } from '../lib/duration';
-
-const statusTagType: Record<QueueStatus, 'gray' | 'blue' | 'green' | 'red'> = {
-  waiting: 'gray',
-  in_review: 'blue',
-  approved: 'green',
-  rejected: 'red',
-};
-
-function formatTime(iso: string | Date) {
-  return new Date(iso).toLocaleTimeString('pt-BR', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
+import { formatEntryTime } from '../lib/duration';
+import { statusTagType } from '../lib/status';
 
 interface Row {
   id: string;
@@ -56,7 +45,6 @@ interface Row {
   protocol: string;
   time: string;
   sla: string;
-  statusRaw: QueueStatus;
   entry: QueueEntry;
 }
 
@@ -72,11 +60,14 @@ const headers = [
   { key: 'actions', header: 'Ações' },
 ];
 
+const SORTABLE_COLUMNS = new Set(['site_id', 'technician_name', 'request_type', 'protocol']);
+
 export default function AdminQueuePage() {
   const [entries, setEntries] = useState<QueueEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<Record<string, boolean>>({});
+  const [rejectTarget, setRejectTarget] = useState<QueueEntry | null>(null);
 
   useEffect(() => {
     fetchActiveQueue()
@@ -136,9 +127,8 @@ export default function AdminQueuePage() {
       technician_name: e.technician_name,
       request_type: e.request_type,
       protocol: e.protocol,
-      time: formatTime(e.created_at),
+      time: formatEntryTime(e.created_at),
       sla: wait,
-      statusRaw: e.status,
       entry: e,
     };
   });
@@ -146,8 +136,6 @@ export default function AdminQueuePage() {
   const stats = {
     waiting: entries.filter((e) => e.status === 'waiting').length,
     in_review: entries.filter((e) => e.status === 'in_review').length,
-    approved: entries.filter((e) => e.status === 'approved').length,
-    rejected: entries.filter((e) => e.status === 'rejected').length,
   };
 
   return (
@@ -171,8 +159,6 @@ export default function AdminQueuePage() {
           >
             <Tag type="gray">Aguardando: {stats.waiting}</Tag>
             <Tag type="blue">Em análise: {stats.in_review}</Tag>
-            <Tag type="green">Aprovados: {stats.approved}</Tag>
-            <Tag type="red">Recusados: {stats.rejected}</Tag>
             <Link to="/admin/arquivados">
               <Button kind="ghost" size="sm" renderIcon={Document}>
                 Arquivados
@@ -212,7 +198,7 @@ export default function AdminQueuePage() {
             }) => (
               <TableContainer
                 title="Solicitações"
-                description={`${entries.length} solicitação(ões) no total`}
+                description={`${entries.length} solicitação(ões) na fila ativa`}
               >
                 <TableToolbar>
                   <TableToolbarContent>
@@ -226,7 +212,10 @@ export default function AdminQueuePage() {
                   <TableHead>
                     <TableRow>
                       {h.map((header) => {
-                        const { key: hk, ...hp } = getHeaderProps({ header });
+                        const { key: hk, ...hp } = getHeaderProps({
+                          header,
+                          isSortable: SORTABLE_COLUMNS.has(header.key),
+                        });
                         return (
                           <TableHeader key={hk} {...hp}>
                             {header.header}
@@ -262,7 +251,12 @@ export default function AdminQueuePage() {
                             if (cell.info.header === 'sla') {
                               return (
                                 <TableCell key={cell.id}>
-                                  <span style={{ color: '#525252', fontSize: '0.875rem' }}>
+                                  <span
+                                    style={{
+                                      color: 'var(--cds-text-secondary, #525252)',
+                                      fontSize: '0.875rem',
+                                    }}
+                                  >
                                     {cell.value as string}
                                   </span>
                                 </TableCell>
@@ -272,19 +266,7 @@ export default function AdminQueuePage() {
                               return (
                                 <TableCell key={cell.id}>
                                   <Tag type={statusTagType[entry.status]}>
-                                    <span
-                                      className={
-                                        entry.status === 'waiting'
-                                          ? 'status-tag-waiting'
-                                          : entry.status === 'in_review'
-                                            ? 'status-tag-review'
-                                            : entry.status === 'approved'
-                                              ? 'status-tag-approved'
-                                              : 'status-tag-rejected'
-                                      }
-                                    >
-                                      {statusLabel[entry.status]}
-                                    </span>
+                                    {statusLabel[entry.status]}
                                   </Tag>
                                 </TableCell>
                               );
@@ -320,7 +302,7 @@ export default function AdminQueuePage() {
                                           kind="danger--tertiary"
                                           renderIcon={CloseFilled}
                                           disabled={busy}
-                                          onClick={() => handleUpdate(entry.id, 'rejected')}
+                                          onClick={() => setRejectTarget(entry)}
                                         >
                                           Recusar
                                         </Button>
@@ -335,11 +317,21 @@ export default function AdminQueuePage() {
                         </TableRow>
                       );
                     })}
-                    {r.length === 0 && (
+                    {r.length === 0 && rows.length > 0 && (
                       <TableRow>
                         <TableCell
                           colSpan={headers.length}
-                          style={{ textAlign: 'center', color: '#525252', padding: '2rem' }}
+                          style={{ textAlign: 'center', padding: '2rem' }}
+                        >
+                          Nenhum resultado para a busca.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {r.length === 0 && rows.length === 0 && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={headers.length}
+                          style={{ textAlign: 'center', padding: '2rem' }}
                         >
                           Nenhuma solicitação na fila ainda.
                         </TableCell>
@@ -352,6 +344,28 @@ export default function AdminQueuePage() {
           </DataTable>
         )}
       </main>
+
+      <Modal
+        open={!!rejectTarget}
+        danger
+        modalHeading="Recusar solicitação"
+        primaryButtonText="Recusar"
+        secondaryButtonText="Cancelar"
+        onRequestClose={() => setRejectTarget(null)}
+        onRequestSubmit={() => {
+          if (rejectTarget) void handleUpdate(rejectTarget.id, 'rejected');
+          setRejectTarget(null);
+        }}
+      >
+        <p style={{ marginBottom: '0.5rem' }}>
+          Confirma recusar a solicitação <strong className="mono">#{rejectTarget?.protocol}</strong>
+          ?
+        </p>
+        <p style={{ color: 'var(--cds-text-secondary, #525252)', fontSize: '0.875rem' }}>
+          SITE ID {rejectTarget?.site_id} · técnico {rejectTarget?.technician_name}. A solicitação
+          será arquivada como recusada e poderá ser reaberta em "Arquivados".
+        </p>
+      </Modal>
     </div>
   );
 }
