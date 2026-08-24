@@ -22,9 +22,11 @@ sudo npm install -g pm2
 
 # MariaDB
 sudo mysql_secure_installation
-sudo mysql -e "CREATE DATABASE ticket_triage CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-sudo mysql -e "CREATE USER 'app'@'localhost' IDENTIFIED BY 'SENHA_FORTE';"
-sudo mysql -e "GRANT ALL PRIVILEGES ON ticket_triage.* TO 'app'@'localhost'; FLUSH PRIVILEGES;"
+# O banco e o usuário são criados automaticamente pelo scripts/deploy.sh
+# (usa sudo mysql + as credenciais de backend/.env). Comando manual, se preferir:
+#   sudo mysql -e "CREATE DATABASE ticket_triage CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+#   sudo mysql -e "CREATE USER 'app'@'localhost' IDENTIFIED BY 'SENHA_FORTE';"
+#   sudo mysql -e "GRANT ALL PRIVILEGES ON ticket_triage.* TO 'app'@'localhost'; FLUSH PRIVILEGES;"
 ```
 
 ## 2. Configurar o `.env` na VPS
