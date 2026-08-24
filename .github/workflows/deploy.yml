@@ -1,0 +1,69 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Lint
+        run: |
+          npm run lint --workspace backend
+          npm run lint --workspace frontend
+
+      - name: Testes
+        run: |
+          npm test --workspace backend
+          npm test --workspace frontend
+
+      - name: Build
+        run: |
+          npm run build --workspace backend
+          npm run build --workspace frontend
+
+  deploy:
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Deploy na VPS
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 30m
+          script: |
+            echo "Deploy do commit ${{ github.sha }} iniciado em $(date '+%Y-%m-%d %H:%M:%S %Z') (VPS)"
+            set -e
+            APP_DIR=/var/www/app/ticket-triage
+            REPO_URL=https://github.com/eduardo-pacheco-dev/ticket-triage.git
+            BRANCH=main
+
+            # Bootstrap: no primeiro deploy o script ainda não existe na VPS.
+            if [ ! -d "$APP_DIR/.git" ]; then
+              echo "==> Primeiro deploy: clonando repositório"
+              mkdir -p "$(dirname "$APP_DIR")"
+              git clone -b "$BRANCH" "$REPO_URL" "$APP_DIR"
+            fi
+
+            cd "$APP_DIR"
+            bash scripts/deploy.sh ${{ github.sha }}
+
+      - name: Notificar falha
+        if: failure()
+        run: echo "Deploy falhou. Verifique os logs do job e do PM2 na VPS."
