@@ -185,15 +185,17 @@ export function updateSlaConfig(data: { expectedWaitMin: number; expectedService
 export interface TelegramStatus {
   configured: boolean;
   receiving: boolean;
+  polling: boolean;
   chatId: string | null;
   tokenMasked: string | null;
+  chatsCount: number;
 }
 
 export function fetchTelegramConfig() {
   return request<TelegramStatus>('/admin/telegram');
 }
 
-export function updateTelegramConfig(data: { token?: string; chatId?: string }) {
+export function updateTelegramConfig(data: { token?: string; chatId?: string; polling?: boolean }) {
   return request<TelegramStatus>('/admin/telegram', {
     method: 'PUT',
     body: JSON.stringify(data),

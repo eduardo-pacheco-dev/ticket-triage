@@ -11,6 +11,9 @@ export class TelegramConfig {
   @Column({ name: 'chat_id', type: 'varchar', length: 64, nullable: true })
   chatId: string | null;
 
+  @Column({ name: 'polling_enabled', type: 'boolean', default: true })
+  pollingEnabled: boolean;
+
   @CreateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

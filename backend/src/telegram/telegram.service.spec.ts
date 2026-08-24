@@ -1,6 +1,7 @@
 import { Repository } from 'typeorm';
 import { maskToken, formatQueueMessage, TelegramService } from './telegram.service';
 import { TelegramConfig } from './telegram-config.entity';
+import { TelegramChat } from './telegram-chat.entity';
 
 function makeRepo(): Repository<TelegramConfig> {
   return {
@@ -8,6 +9,16 @@ function makeRepo(): Repository<TelegramConfig> {
     save: jest.fn(async (row: unknown) => row),
     create: jest.fn((input: unknown) => input),
   } as unknown as Repository<TelegramConfig>;
+}
+
+function makeChatsRepo(chats = 0): Repository<TelegramChat> {
+  return {
+    count: jest.fn(async () => chats),
+    find: jest.fn(async () => []),
+    findOne: jest.fn(async () => null),
+    save: jest.fn(async (row: unknown) => row),
+    create: jest.fn((input: unknown) => input),
+  } as unknown as Repository<TelegramChat>;
 }
 
 describe('TelegramService', () => {
@@ -22,8 +33,8 @@ describe('TelegramService', () => {
     jest.restoreAllMocks();
   });
 
-  function createService(): TelegramService {
-    return new TelegramService(makeRepo());
+  function createService(chats = 0): TelegramService {
+    return new TelegramService(makeRepo(), makeChatsRepo(chats));
   }
 
   it('formata a mensagem com título, corpo e protocolo', () => {
@@ -79,6 +90,25 @@ describe('TelegramService', () => {
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toContain('/bottoken-teste/sendMessage');
     expect(JSON.parse(String(init.body))).toEqual({ chat_id: '-100123', text: 'olá' });
+  });
+
+  it('transmite para todos os chats inscritos mesmo sem chat fixo', async () => {
+    process.env.TELEGRAM_BOT_TOKEN = 'token-teste';
+    delete process.env.TELEGRAM_CHAT_ID;
+    const repo = makeRepo();
+    const chatsRepo = makeChatsRepo(2);
+    chatsRepo.find = jest.fn(async () => [
+      { id: 1, chatId: '-100', title: null, createdAt: new Date() },
+      { id: 2, chatId: '-200', title: null, createdAt: new Date() },
+    ]) as never;
+    const fetchMock = jest.fn(async () =>
+      ({ ok: true, json: async () => ({ ok: true }) }) as unknown as Response,
+    );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const service = new TelegramService(repo, chatsRepo);
+    await service.sendMessage('evento');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it('não propaga erro de rede ao enviar', async () => {

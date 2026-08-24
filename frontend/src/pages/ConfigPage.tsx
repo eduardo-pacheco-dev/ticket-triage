@@ -13,6 +13,7 @@ import {
   Tag,
   TextInput,
   Tile,
+  Toggle,
 } from '@carbon/react';
 import { Add, Bot, Settings, TrashCan, UserAvatar, Time } from '@carbon/icons-react';
 import {
@@ -329,7 +330,31 @@ function BotTab() {
     }
   }
 
+  async function handleTogglePolling(next: boolean) {
+    setError(null);
+    setSuccess(null);
+    setBusy(true);
+    try {
+      const updated = await updateTelegramConfig({ polling: next });
+      setStatus(updated);
+      setSuccess(next ? 'Polling ligado.' : 'Polling desligado.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao alterar polling.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (loading) return <Loading withOverlay={false} />;
+
+  const tagText = !status?.tokenMasked
+    ? 'Inativo'
+    : !status.polling
+      ? 'Pausado'
+      : status.configured
+        ? 'Ativo'
+        : 'Aguardando inscrição';
+  const tagKind = tagText === 'Ativo' ? 'green' : tagText === 'Pausado' ? 'teal' : 'gray';
 
   return (
     <div>
@@ -353,17 +378,32 @@ function BotTab() {
       )}
 
       <Tile className="checkin-card" style={{ maxWidth: '100%', marginTop: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
           <h2 style={{ fontSize: '1.125rem', margin: 0, fontWeight: 500 }}>Bot do Telegram</h2>
-          <Tag type={status?.configured ? 'green' : 'gray'} size="sm">
-            {status?.configured ? 'Ativo' : status?.receiving ? 'Aguardando chat' : 'Inativo'}
+          <Tag type={tagKind} size="sm">
+            {tagText}
           </Tag>
           {status?.tokenMasked && (
             <span className="muted" style={{ fontSize: '0.75rem' }}>
               Token: {status.tokenMasked}
             </span>
           )}
+          {status && (
+            <span className="muted" style={{ fontSize: '0.75rem' }}>
+              Chats inscritos: <strong>{status.chatsCount}</strong>
+            </span>
+          )}
         </div>
+        <Toggle
+          id="bot_polling"
+          labelText="Receber eventos (long polling)"
+          labelA="Desligado"
+          labelB="Ligado"
+          toggled={status?.polling ?? false}
+          disabled={busy || !status?.tokenMasked}
+          onToggle={(next) => void handleTogglePolling(next)}
+          style={{ marginBottom: '1.5rem' }}
+        />
         <Form onSubmit={handleSave}>
           <Stack gap={6}>
             <TextInput
@@ -377,15 +417,15 @@ function BotTab() {
             />
             <TextInput
               id="bot_chat"
-              labelText="Chat ID de destino"
+              labelText="Chat ID fixo adicional (opcional)"
               placeholder="Ex.: -1001234567890"
               value={chatId}
               onChange={(e) => setChatId(e.target.value)}
               autoComplete="off"
             />
             <p className="muted" style={{ fontSize: '0.8125rem', margin: 0 }}>
-              Como descobrir o Chat ID: salve o token, adicione o bot ao grupo (ou mande /start no privado)
-              e envie o comando <strong>/id</strong> para ele.
+              Como inscrever chats: adicione o bot ao grupo ou mande <strong>/start</strong> no privado —
+              qualquer chat que enviar mensagem ao bot passa a receber as notificações automaticamente.
             </p>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <Button type="submit" disabled={busy}>
@@ -408,7 +448,7 @@ function BotTab() {
         <h2 style={{ fontSize: '1.125rem', margin: '0 0 0.5rem', fontWeight: 500 }}>O que o bot envia</h2>
         <p className="muted" style={{ margin: 0 }}>
           Novos check-ins e mudanças de status das solicitações (análise iniciada, aprovada, recusada,
-          reaberta), com protocolo e dados da unidade.
+          reaberta), com protocolo e dados da unidade — entregues a todos os chats inscritos.
         </p>
       </Tile>
     </div>

@@ -13,10 +13,11 @@ export class TelegramController {
   }
 
   @Put()
-  updateConfig(@Body() body: { token?: string; chatId?: string }) {
-    const input: { token?: string; chatId?: string } = {};
+  updateConfig(@Body() body: { token?: string; chatId?: string; polling?: boolean }) {
+    const input: { token?: string; chatId?: string; polling?: boolean } = {};
     if (typeof body.token === 'string') input.token = body.token;
     if (typeof body.chatId === 'string') input.chatId = body.chatId;
+    if (typeof body.polling === 'boolean') input.polling = body.polling;
     return this.telegram.updateConfig(input);
   }
 
