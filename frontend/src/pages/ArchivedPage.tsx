@@ -25,6 +25,7 @@ import { useQueueEvents } from '../hooks/useQueueEvents';
 import { statusLabel } from '../lib/types';
 import type { QueueEntry } from '../lib/types';
 import { slaLabel } from '../lib/duration';
+import { statusTagType } from '../lib/status';
 
 interface Row {
   id: string;
@@ -48,6 +49,8 @@ const headers = [
   { key: 'updated_at', header: 'Concluído em' },
   { key: 'actions', header: 'Ações' },
 ];
+
+const SORTABLE_COLUMNS = new Set(['protocol', 'site_id', 'technician_name', 'request_type']);
 
 function formatDate(iso: string | Date) {
   return new Date(iso).toLocaleString('pt-BR');
@@ -167,7 +170,10 @@ export default function ArchivedPage() {
                     <TableHead>
                       <TableRow>
                         {h.map((header) => {
-                          const { key: hk, ...hp } = getHeaderProps({ header });
+                          const { key: hk, ...hp } = getHeaderProps({
+                            header,
+                            isSortable: SORTABLE_COLUMNS.has(header.key),
+                          });
                           return (
                             <TableHeader key={hk} {...hp}>
                               {header.header}
@@ -203,7 +209,12 @@ export default function ArchivedPage() {
                               if (cell.info.header === 'sla') {
                                 return (
                                   <TableCell key={cell.id}>
-                                    <span style={{ color: '#525252', fontSize: '0.875rem' }}>
+                                    <span
+                                      style={{
+                                        color: 'var(--cds-text-secondary, #525252)',
+                                        fontSize: '0.875rem',
+                                      }}
+                                    >
                                       {cell.value as string}
                                     </span>
                                   </TableCell>
@@ -212,7 +223,7 @@ export default function ArchivedPage() {
                               if (cell.info.header === 'statusRaw') {
                                 return (
                                   <TableCell key={cell.id}>
-                                    <Tag type={entry.status === 'approved' ? 'green' : 'red'}>
+                                    <Tag type={statusTagType[entry.status]}>
                                       {statusLabel[entry.status]}
                                     </Tag>
                                   </TableCell>
@@ -240,11 +251,21 @@ export default function ArchivedPage() {
                           </TableRow>
                         );
                       })}
-                      {r.length === 0 && (
+                      {r.length === 0 && rows.length > 0 && (
                         <TableRow>
                           <TableCell
                             colSpan={headers.length}
-                            style={{ textAlign: 'center', color: '#525252', padding: '2rem' }}
+                            style={{ textAlign: 'center', padding: '2rem' }}
+                          >
+                            Nenhum resultado para a busca.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                      {r.length === 0 && rows.length === 0 && (
+                        <TableRow>
+                          <TableCell
+                            colSpan={headers.length}
+                            style={{ textAlign: 'center', padding: '2rem' }}
                           >
                             Nenhuma solicitação arquivada.
                           </TableCell>

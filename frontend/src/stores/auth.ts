@@ -9,7 +9,7 @@ interface AuthState {
   login: (username: string, password: string) => Promise<void>;
   applyAccessToken: (token: string) => void;
   clearMustChangePassword: () => void;
-  logout: () => Promise<void>;
+  logout: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -44,11 +44,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ mustChangePassword: false });
   },
 
-  async logout() {
-    // Invalida o token no servidor; a limpeza local acontece de qualquer forma.
-    await api.logout().catch(() => {});
+  logout() {
+    const current = getStoredAuth();
     clearAuth();
     set({ token: null, username: null, mustChangePassword: false });
+    if (current?.token) void api.logout(current.token).catch(() => {});
   },
 }));
 

@@ -6,6 +6,8 @@ import { AppHeader } from '../components/AppHeader';
 import { fetchDashboard } from '../lib/api';
 import { useQueueEvents } from '../hooks/useQueueEvents';
 import { slaLabel } from '../lib/duration';
+import { statusTagType } from '../lib/status';
+import { statusLabel } from '../lib/types';
 import type { QueueEntry } from '../lib/types';
 
 function StatCard({
@@ -19,23 +21,18 @@ function StatCard({
 }) {
   return (
     <Tile style={{ textAlign: 'center', padding: '1.5rem' }}>
-      <div style={{ fontSize: '2rem', fontWeight: 300, color: color ?? '#0f62fe' }}>{value}</div>
-      <div style={{ fontSize: '0.875rem', color: '#525252', marginTop: '0.25rem' }}>{label}</div>
+      <div style={{ fontSize: '2rem', fontWeight: 300, color: color ?? undefined }}>{value}</div>
+      <div
+        style={{
+          fontSize: '0.875rem',
+          color: 'var(--cds-text-secondary, #525252)',
+          marginTop: '0.25rem',
+        }}
+      >
+        {label}
+      </div>
     </Tile>
   );
-}
-
-function statusText(status: string): string {
-  switch (status) {
-    case 'waiting':
-      return 'Aguardando';
-    case 'in_review':
-      return 'Em análise';
-    case 'approved':
-      return 'Aprovado';
-    default:
-      return 'Recusado';
-  }
 }
 
 export default function DashboardPage() {
@@ -82,31 +79,53 @@ export default function DashboardPage() {
         ) : data ? (
           <>
             <Grid narrow style={{ marginBottom: '1.5rem' }}>
-              <Column sm={2} md={2} lg={2}>
-                <StatCard label="Total" value={data.total} color="#161616" />
+              <Column sm={2} md={4} lg={4}>
+                <StatCard
+                  label="Total"
+                  value={data.total}
+                  color="var(--cds-text-primary, #161616)"
+                />
               </Column>
-              <Column sm={2} md={2} lg={2}>
-                <StatCard label="Aguardando" value={data.waiting} color="#6f6f6f" />
+              <Column sm={2} md={4} lg={4}>
+                <StatCard
+                  label="Aguardando"
+                  value={data.waiting}
+                  color="var(--cds-text-secondary, #6f6f6f)"
+                />
               </Column>
-              <Column sm={2} md={2} lg={2}>
-                <StatCard label="Em análise" value={data.inReview} />
+              <Column sm={2} md={4} lg={4}>
+                <StatCard
+                  label="Em análise"
+                  value={data.inReview}
+                  color="var(--cds-support-info, #0f62fe)"
+                />
               </Column>
-              <Column sm={2} md={2} lg={2}>
-                <StatCard label="Aprovados" value={data.approved} color="#24a148" />
+              <Column sm={2} md={4} lg={4}>
+                <StatCard
+                  label="Aprovados"
+                  value={data.approved}
+                  color="var(--cds-support-success, #24a148)"
+                />
               </Column>
-              <Column sm={2} md={2} lg={2}>
-                <StatCard label="Recusados" value={data.rejected} color="#da1e28" />
+              <Column sm={2} md={4} lg={4}>
+                <StatCard
+                  label="Recusados"
+                  value={data.rejected}
+                  color="var(--cds-support-error, #da1e28)"
+                />
               </Column>
-              <Column sm={2} md={2} lg={2}>
+              <Column sm={2} md={4} lg={4}>
                 <StatCard
                   label="Espera média"
                   value={data.avgWaitMin > 0 ? `${data.avgWaitMin} min` : '-'}
+                  color="var(--cds-text-primary, #161616)"
                 />
               </Column>
-              <Column sm={2} md={2} lg={2}>
+              <Column sm={2} md={4} lg={4}>
                 <StatCard
                   label="Atendimento médio"
                   value={data.avgServiceMin > 0 ? `${data.avgServiceMin} min` : '-'}
+                  color="var(--cds-text-primary, #161616)"
                 />
               </Column>
             </Grid>
@@ -116,7 +135,9 @@ export default function DashboardPage() {
                 Últimas solicitações
               </h2>
               {data.recent.length === 0 ? (
-                <p style={{ color: '#525252' }}>Nenhuma solicitação recente.</p>
+                <p style={{ color: 'var(--cds-text-secondary, #525252)' }}>
+                  Nenhuma solicitação recente.
+                </p>
               ) : (
                 <div>
                   {data.recent.map((entry: QueueEntry, i: number) => {
@@ -140,23 +161,12 @@ export default function DashboardPage() {
                           {entry.site_id}
                         </span>
                         <span style={{ minWidth: 100 }}>{entry.technician_name}</span>
-                        <Tag
-                          type={
-                            entry.status === 'approved'
-                              ? 'green'
-                              : entry.status === 'rejected'
-                                ? 'red'
-                                : entry.status === 'in_review'
-                                  ? 'blue'
-                                  : 'gray'
-                          }
-                          size="sm"
-                        >
-                          {statusText(entry.status)}
+                        <Tag type={statusTagType[entry.status]} size="sm">
+                          {statusLabel[entry.status]}
                         </Tag>
                         <span
                           style={{
-                            color: '#525252',
+                            color: 'var(--cds-text-secondary, #525252)',
                             fontSize: '0.875rem',
                             marginLeft: 'auto',
                           }}

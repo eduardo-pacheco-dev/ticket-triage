@@ -3,8 +3,6 @@ export type QueueStatus = 'waiting' | 'in_review' | 'approved' | 'rejected';
 export interface QueueEntry {
   id: string;
   protocol: string;
-  full_name: string;
-  identifier: string;
   site_id: string;
   technician_name: string;
   request_type: string;
