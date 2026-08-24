@@ -22,7 +22,6 @@ import {
   TextInput,
 } from '@carbon/react';
 import { Add, ArrowLeft, Edit, TrashCan } from '@carbon/icons-react';
-import { AppHeader } from '../components/AppHeader';
 import { createUser, deleteUser, fetchUsers, updateUser, ApiError } from '../lib/api';
 import { createUserFormSchema, updateUserFormSchema, zodFieldErrors } from '../lib/schemas';
 import { useAuthStore } from '../stores/auth';
@@ -215,295 +214,287 @@ export default function UsersPage() {
   }));
 
   return (
-    <div className="app-shell">
-      <AppHeader />
-      <main className="app-main" style={{ maxWidth: 1200 }}>
-        <div style={{ marginBottom: '1rem' }}>
-          <Link to="/admin">
-            <Button kind="ghost" renderIcon={ArrowLeft} size="sm">
-              Voltar para a fila
-            </Button>
-          </Link>
-        </div>
-
-        <h1 className="admin-title">Usuários</h1>
-        <p className="admin-subtitle" style={{ marginBottom: '1.5rem' }}>
-          Gerencie os acessos ao painel administrativo.
-        </p>
-
-        {error && (
-          <InlineNotification
-            kind="error"
-            lowContrast
-            title="Erro"
-            subtitle={error}
-            onCloseButtonClick={() => setError(null)}
-          />
-        )}
-
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-          <Button kind="primary" renderIcon={Add} onClick={openCreate}>
-            Novo usuário
+    <div className="admin-page">
+      <div style={{ marginBottom: '1rem' }}>
+        <Link to="/admin">
+          <Button kind="ghost" renderIcon={ArrowLeft} size="sm">
+            Voltar para a fila
           </Button>
-        </div>
+        </Link>
+      </div>
 
-        {loading ? (
-          <div style={{ position: 'relative', minHeight: 200 }}>
-            <Loading withOverlay={false} />
-          </div>
-        ) : (
-          <DataTable rows={rows} headers={headers} isSortable>
-            {({ rows: r, headers: h, getHeaderProps, getRowProps, getTableProps }) => (
-              <TableContainer
-                title="Usuários cadastrados"
-                description={`${users.length} acesso(s)`}
-              >
-                <Table {...getTableProps()}>
-                  <TableHead>
-                    <TableRow>
-                      {h.map((header) => {
-                        const { key: hk, ...hp } = getHeaderProps({ header });
-                        return (
-                          <TableHeader key={hk} {...hp}>
-                            {header.header}
-                          </TableHeader>
-                        );
-                      })}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {r.map((row) => {
-                      const found = rows.find((x) => x.id === row.id);
-                      if (!found) return null;
-                      const { key: rk, ...rp } = getRowProps({ row });
+      <h1 className="admin-title">Usuários</h1>
+      <p className="admin-subtitle" style={{ marginBottom: '1.5rem' }}>
+        Gerencie os acessos ao painel administrativo.
+      </p>
+
+      {error && (
+        <InlineNotification
+          kind="error"
+          lowContrast
+          title="Erro"
+          subtitle={error}
+          onCloseButtonClick={() => setError(null)}
+        />
+      )}
+
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+        <Button kind="primary" renderIcon={Add} onClick={openCreate}>
+          Novo usuário
+        </Button>
+      </div>
+
+      {loading ? (
+        <div style={{ position: 'relative', minHeight: 200 }}>
+          <Loading withOverlay={false} />
+        </div>
+      ) : (
+        <DataTable rows={rows} headers={headers} isSortable>
+          {({ rows: r, headers: h, getHeaderProps, getRowProps, getTableProps }) => (
+            <TableContainer title="Usuários cadastrados" description={`${users.length} acesso(s)`}>
+              <Table {...getTableProps()}>
+                <TableHead>
+                  <TableRow>
+                    {h.map((header) => {
+                      const { key: hk, ...hp } = getHeaderProps({ header });
                       return (
-                        <TableRow key={rk} {...rp}>
-                          <TableCell>
-                            <span className="mono">{found.username}</span>
-                            {found.isSelf && (
-                              <Tag type="cool-gray" size="sm" style={{ marginLeft: '0.5rem' }}>
-                                você
-                              </Tag>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {found.role === 'admin' ? (
-                              <Tag type="blue" size="sm">
-                                Administrador
-                              </Tag>
-                            ) : (
-                              <Tag type="cool-gray" size="sm">
-                                Usuário
-                              </Tag>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Stack orientation="horizontal" gap={2}>
-                              {found.status === 'active' ? (
-                                <Tag type="green" size="sm">
-                                  Ativo
-                                </Tag>
-                              ) : (
-                                <Tag type="red" size="sm">
-                                  Inativo
-                                </Tag>
-                              )}
-                              {found.user.mustChangePassword && (
-                                <Tag type="purple" size="sm">
-                                  Troca de senha pendente
-                                </Tag>
-                              )}
-                            </Stack>
-                          </TableCell>
-                          <TableCell>{found.createdAt}</TableCell>
-                          <TableCell>
-                            <div style={{ display: 'flex', gap: '0.25rem' }}>
-                              <Button
-                                kind="ghost"
-                                size="sm"
-                                hasIconOnly
-                                renderIcon={Edit}
-                                iconDescription={`Editar ${found.username}`}
-                                tooltipPosition="left"
-                                onClick={() => openEdit(found.user)}
-                              />
-                              {!found.isSelf && (
-                                <Button
-                                  kind="danger--ghost"
-                                  size="sm"
-                                  hasIconOnly
-                                  renderIcon={TrashCan}
-                                  iconDescription={`Remover ${found.username}`}
-                                  tooltipPosition="left"
-                                  onClick={() => setPendingDelete(found.user)}
-                                />
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
+                        <TableHeader key={hk} {...hp}>
+                          {header.header}
+                        </TableHeader>
                       );
                     })}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )}
-          </DataTable>
-        )}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {r.map((row) => {
+                    const found = rows.find((x) => x.id === row.id);
+                    if (!found) return null;
+                    const { key: rk, ...rp } = getRowProps({ row });
+                    return (
+                      <TableRow key={rk} {...rp}>
+                        <TableCell>
+                          <span className="mono">{found.username}</span>
+                          {found.isSelf && (
+                            <Tag type="cool-gray" size="sm" style={{ marginLeft: '0.5rem' }}>
+                              você
+                            </Tag>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {found.role === 'admin' ? (
+                            <Tag type="blue" size="sm">
+                              Administrador
+                            </Tag>
+                          ) : (
+                            <Tag type="cool-gray" size="sm">
+                              Usuário
+                            </Tag>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Stack orientation="horizontal" gap={2}>
+                            {found.status === 'active' ? (
+                              <Tag type="green" size="sm">
+                                Ativo
+                              </Tag>
+                            ) : (
+                              <Tag type="red" size="sm">
+                                Inativo
+                              </Tag>
+                            )}
+                            {found.user.mustChangePassword && (
+                              <Tag type="purple" size="sm">
+                                Troca de senha pendente
+                              </Tag>
+                            )}
+                          </Stack>
+                        </TableCell>
+                        <TableCell>{found.createdAt}</TableCell>
+                        <TableCell>
+                          <div style={{ display: 'flex', gap: '0.25rem' }}>
+                            <Button
+                              kind="ghost"
+                              size="sm"
+                              hasIconOnly
+                              renderIcon={Edit}
+                              iconDescription={`Editar ${found.username}`}
+                              tooltipPosition="left"
+                              onClick={() => openEdit(found.user)}
+                            />
+                            {!found.isSelf && (
+                              <Button
+                                kind="danger--ghost"
+                                size="sm"
+                                hasIconOnly
+                                renderIcon={TrashCan}
+                                iconDescription={`Remover ${found.username}`}
+                                tooltipPosition="left"
+                                onClick={() => setPendingDelete(found.user)}
+                              />
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </DataTable>
+      )}
 
-        <Modal
-          open={createOpen}
-          modalHeading="Novo usuário"
-          modalLabel="Usuários"
-          primaryButtonText="Criar usuário"
-          secondaryButtonText="Cancelar"
-          primaryButtonDisabled={creating}
-          onRequestClose={() => setCreateOpen(false)}
-          onRequestSubmit={() => void handleCreate()}
-        >
+      <Modal
+        open={createOpen}
+        modalHeading="Novo usuário"
+        modalLabel="Usuários"
+        primaryButtonText="Criar usuário"
+        secondaryButtonText="Cancelar"
+        primaryButtonDisabled={creating}
+        onRequestClose={() => setCreateOpen(false)}
+        onRequestSubmit={() => void handleCreate()}
+      >
+        <Form style={{ marginBottom: '1rem' }}>
+          <Stack gap={5}>
+            <TextInput
+              id="new_user_username"
+              labelText="Usuário"
+              placeholder="Ex.: jsilva"
+              value={newUsername}
+              onChange={(e) => setNewUsername(e.target.value)}
+              invalid={!!createErrors.username}
+              invalidText={createErrors.username}
+            />
+            <Select
+              id="new_user_role"
+              labelText="Papel"
+              helperText="Administradores gerenciam usuários e configurações."
+              value={newRole}
+              onChange={(e) => setNewRole(e.target.value as UserRole)}
+            >
+              <SelectItem value="user" text="Usuário" />
+              <SelectItem value="admin" text="Administrador" />
+            </Select>
+            <TextInput
+              id="new_user_password"
+              labelText="Senha provisória"
+              helperText="O usuário deverá trocá-la no primeiro acesso."
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              invalid={!!createErrors.password}
+              invalidText={createErrors.password}
+            />
+            <TextInput
+              id="new_user_confirm"
+              labelText="Confirmar senha"
+              type="password"
+              value={newConfirm}
+              onChange={(e) => setNewConfirm(e.target.value)}
+              invalid={!!createErrors.confirmPassword}
+              invalidText={createErrors.confirmPassword}
+            />
+          </Stack>
+        </Form>
+      </Modal>
+
+      <Modal
+        open={!!editForm}
+        modalHeading={editForm ? `Editar "${editForm.user.username}"` : ''}
+        modalLabel="Usuários"
+        primaryButtonText="Salvar"
+        secondaryButtonText="Cancelar"
+        primaryButtonDisabled={saving}
+        onRequestClose={() => setEditForm(null)}
+        onRequestSubmit={() => void handleSaveEdit()}
+      >
+        {editForm && (
           <Form style={{ marginBottom: '1rem' }}>
             <Stack gap={5}>
               <TextInput
-                id="new_user_username"
+                id="edit_username"
                 labelText="Usuário"
-                placeholder="Ex.: jsilva"
-                value={newUsername}
-                onChange={(e) => setNewUsername(e.target.value)}
-                invalid={!!createErrors.username}
-                invalidText={createErrors.username}
+                value={editForm.username}
+                onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+                invalid={!!editErrors.username}
+                invalidText={editErrors.username}
               />
               <Select
-                id="new_user_role"
+                id="edit_role"
                 labelText="Papel"
-                helperText="Administradores gerenciam usuários e configurações."
-                value={newRole}
-                onChange={(e) => setNewRole(e.target.value as UserRole)}
+                disabled={editForm.user.username === currentUsername}
+                helperText={
+                  editForm.user.username === currentUsername
+                    ? 'Você não pode alterar o seu próprio papel.'
+                    : undefined
+                }
+                value={editForm.role}
+                onChange={(e) => setEditForm({ ...editForm, role: e.target.value as UserRole })}
               >
                 <SelectItem value="user" text="Usuário" />
                 <SelectItem value="admin" text="Administrador" />
               </Select>
+              <Select
+                id="edit_status"
+                labelText="Situação"
+                disabled={editForm.user.username === currentUsername}
+                helperText={
+                  editForm.user.username === currentUsername
+                    ? 'Você não pode alterar o seu próprio status.'
+                    : 'Inativar encerra as sessões ativas do usuário.'
+                }
+                value={editForm.status}
+                onChange={(e) => setEditForm({ ...editForm, status: e.target.value as UserStatus })}
+              >
+                <SelectItem value="active" text="Ativo" />
+                <SelectItem value="inactive" text="Inativo" />
+              </Select>
               <TextInput
-                id="new_user_password"
-                labelText="Senha provisória"
-                helperText="O usuário deverá trocá-la no primeiro acesso."
+                id="edit_password"
+                labelText="Nova senha (opcional)"
+                helperText="Se preenchida, as sessões ativas serão encerradas."
                 type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                invalid={!!createErrors.password}
-                invalidText={createErrors.password}
+                value={editForm.password}
+                onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                invalid={!!editErrors.password}
+                invalidText={editErrors.password}
               />
               <TextInput
-                id="new_user_confirm"
-                labelText="Confirmar senha"
+                id="edit_confirm_password"
+                labelText="Confirmar nova senha"
                 type="password"
-                value={newConfirm}
-                onChange={(e) => setNewConfirm(e.target.value)}
-                invalid={!!createErrors.confirmPassword}
-                invalidText={createErrors.confirmPassword}
+                value={editForm.confirmPassword}
+                onChange={(e) => setEditForm({ ...editForm, confirmPassword: e.target.value })}
+                invalid={!!editErrors.confirmPassword}
+                invalidText={editErrors.confirmPassword}
+              />
+              <Checkbox
+                id="edit_must_change"
+                labelText="Exigir troca de senha no próximo acesso"
+                checked={editForm.mustChangePassword}
+                onChange={(_, { checked }) =>
+                  setEditForm({ ...editForm, mustChangePassword: checked })
+                }
               />
             </Stack>
           </Form>
-        </Modal>
+        )}
+      </Modal>
 
-        <Modal
-          open={!!editForm}
-          modalHeading={editForm ? `Editar "${editForm.user.username}"` : ''}
-          modalLabel="Usuários"
-          primaryButtonText="Salvar"
-          secondaryButtonText="Cancelar"
-          primaryButtonDisabled={saving}
-          onRequestClose={() => setEditForm(null)}
-          onRequestSubmit={() => void handleSaveEdit()}
-        >
-          {editForm && (
-            <Form style={{ marginBottom: '1rem' }}>
-              <Stack gap={5}>
-                <TextInput
-                  id="edit_username"
-                  labelText="Usuário"
-                  value={editForm.username}
-                  onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
-                  invalid={!!editErrors.username}
-                  invalidText={editErrors.username}
-                />
-                <Select
-                  id="edit_role"
-                  labelText="Papel"
-                  disabled={editForm.user.username === currentUsername}
-                  helperText={
-                    editForm.user.username === currentUsername
-                      ? 'Você não pode alterar o seu próprio papel.'
-                      : undefined
-                  }
-                  value={editForm.role}
-                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value as UserRole })}
-                >
-                  <SelectItem value="user" text="Usuário" />
-                  <SelectItem value="admin" text="Administrador" />
-                </Select>
-                <Select
-                  id="edit_status"
-                  labelText="Situação"
-                  disabled={editForm.user.username === currentUsername}
-                  helperText={
-                    editForm.user.username === currentUsername
-                      ? 'Você não pode alterar o seu próprio status.'
-                      : 'Inativar encerra as sessões ativas do usuário.'
-                  }
-                  value={editForm.status}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, status: e.target.value as UserStatus })
-                  }
-                >
-                  <SelectItem value="active" text="Ativo" />
-                  <SelectItem value="inactive" text="Inativo" />
-                </Select>
-                <TextInput
-                  id="edit_password"
-                  labelText="Nova senha (opcional)"
-                  helperText="Se preenchida, as sessões ativas serão encerradas."
-                  type="password"
-                  value={editForm.password}
-                  onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
-                  invalid={!!editErrors.password}
-                  invalidText={editErrors.password}
-                />
-                <TextInput
-                  id="edit_confirm_password"
-                  labelText="Confirmar nova senha"
-                  type="password"
-                  value={editForm.confirmPassword}
-                  onChange={(e) => setEditForm({ ...editForm, confirmPassword: e.target.value })}
-                  invalid={!!editErrors.confirmPassword}
-                  invalidText={editErrors.confirmPassword}
-                />
-                <Checkbox
-                  id="edit_must_change"
-                  labelText="Exigir troca de senha no próximo acesso"
-                  checked={editForm.mustChangePassword}
-                  onChange={(_, { checked }) =>
-                    setEditForm({ ...editForm, mustChangePassword: checked })
-                  }
-                />
-              </Stack>
-            </Form>
-          )}
-        </Modal>
-
-        <Modal
-          open={!!pendingDelete}
-          modalHeading="Remover usuário"
-          danger
-          primaryButtonText="Remover"
-          secondaryButtonText="Cancelar"
-          onRequestClose={() => setPendingDelete(null)}
-          onRequestSubmit={() => void handleConfirmDelete()}
-        >
-          <p>
-            Tem certeza que deseja remover o usuário <strong>{pendingDelete?.username}</strong>?
-            Esta ação não pode ser desfeita.
-          </p>
-        </Modal>
-      </main>
+      <Modal
+        open={!!pendingDelete}
+        modalHeading="Remover usuário"
+        danger
+        primaryButtonText="Remover"
+        secondaryButtonText="Cancelar"
+        onRequestClose={() => setPendingDelete(null)}
+        onRequestSubmit={() => void handleConfirmDelete()}
+      >
+        <p>
+          Tem certeza que deseja remover o usuário <strong>{pendingDelete?.username}</strong>? Esta
+          ação não pode ser desfeita.
+        </p>
+      </Modal>
     </div>
   );
 }

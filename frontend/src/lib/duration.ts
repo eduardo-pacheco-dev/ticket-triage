@@ -47,3 +47,17 @@ export function slaLabel(entry: {
 
   return { wait };
 }
+
+export function formatEntryTime(value: DateLike): string {
+  const date = new Date(value);
+  const now = new Date();
+  const time = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+  if (date.toDateString() === now.toDateString()) return time;
+
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (date.toDateString() === yesterday.toDateString()) return `ontem ${time}`;
+
+  return `${date.toLocaleDateString('pt-BR')} ${time}`;
+}

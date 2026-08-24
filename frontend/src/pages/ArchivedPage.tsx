@@ -1,53 +1,14 @@
-import { Link } from 'react-router-dom';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  DataTable,
-  Table,
-  TableHead,
-  TableRow,
-  TableHeader,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableToolbar,
-  TableToolbarContent,
-  TableToolbarSearch,
-  Button,
-  Tag,
-  InlineNotification,
-  Loading,
-  Pagination,
-} from '@carbon/react';
-import { Restart, ArrowLeft } from '@carbon/icons-react';
-import { AppHeader } from '../components/AppHeader';
+import { Button, InlineNotification, Loading, Pagination, Tag } from '@carbon/react';
+import { Restart } from '@carbon/icons-react';
+import { AdminTable } from '../components/AdminTable';
+import type { AdminColumn } from '../components/AdminTable';
 import { fetchArchivedQueue, updateStatus } from '../lib/api';
 import { useQueueEvents } from '../hooks/useQueueEvents';
 import { statusLabel } from '../lib/types';
 import type { QueueEntry } from '../lib/types';
 import { slaLabel } from '../lib/duration';
-
-interface Row {
-  id: string;
-  protocol: string;
-  site_id: string;
-  technician_name: string;
-  request_type: string;
-  statusRaw: string;
-  sla: string;
-  updated_at: string;
-  entry: QueueEntry;
-}
-
-const headers = [
-  { key: 'protocol', header: 'Protocolo' },
-  { key: 'site_id', header: 'SITE ID' },
-  { key: 'technician_name', header: 'Técnico' },
-  { key: 'request_type', header: 'Tipo' },
-  { key: 'statusRaw', header: 'Status' },
-  { key: 'sla', header: 'SLA' },
-  { key: 'updated_at', header: 'Concluído em' },
-  { key: 'actions', header: 'Ações' },
-];
+import { statusTagType } from '../lib/status';
 
 function formatDate(iso: string | Date) {
   return new Date(iso).toLocaleString('pt-BR');
@@ -69,8 +30,9 @@ export default function ArchivedPage() {
       setTotal(result.total);
       setPage(result.page);
       setPageSize(result.pageSize);
-    } catch {
-      setError('Erro ao carregar arquivados.');
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao carregar arquivados.');
     }
   }, []);
 
@@ -94,179 +56,118 @@ export default function ArchivedPage() {
     }
   }
 
-  const rows: Row[] = entries.map((e) => {
-    const { wait, service, total } = slaLabel(e);
-    return {
-      id: e.id,
-      protocol: e.protocol,
-      site_id: e.site_id,
-      technician_name: e.technician_name,
-      request_type: e.request_type,
-      statusRaw: e.status,
-      sla: total || `${wait} / ${service}`,
-      updated_at: formatDate(e.updated_at),
-      entry: e,
-    };
-  });
+  const columns: AdminColumn<QueueEntry>[] = [
+    {
+      key: 'protocol',
+      header: 'Protocolo',
+      sortable: true,
+      render: (row) => <span className="mono">#{row.protocol}</span>,
+      value: (row) => row.protocol,
+    },
+    {
+      key: 'site_id',
+      header: 'SITE ID',
+      sortable: true,
+      render: (row) => <span className="mono">{row.site_id}</span>,
+      value: (row) => row.site_id,
+    },
+    { key: 'technician_name', header: 'Técnico', sortable: true },
+    { key: 'request_type', header: 'Tipo', sortable: true },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (row) => (
+        <Tag type={statusTagType[row.status]} size="sm">
+          {statusLabel[row.status]}
+        </Tag>
+      ),
+    },
+    {
+      key: 'sla',
+      header: 'SLA total',
+      render: (row) => {
+        const { wait, service, total: slaTotal } = slaLabel(row);
+        return <span className="muted">{slaTotal ?? `${wait} / ${service ?? '-'}`}</span>;
+      },
+    },
+    {
+      key: 'updated_at',
+      header: 'Concluído em',
+      sortable: true,
+      sortValue: (row) => new Date(row.updated_at).getTime(),
+      render: (row) => <span className="muted">{formatDate(row.updated_at)}</span>,
+    },
+    {
+      key: 'actions',
+      header: 'Ações',
+      render: (row) => (
+        <Button
+          size="sm"
+          kind="ghost"
+          renderIcon={Restart}
+          disabled={!!pending[row.id]}
+          onClick={() => void handleReopen(row.id)}
+        >
+          Reabrir
+        </Button>
+      ),
+    },
+  ];
 
   return (
-    <div className="app-shell">
-      <AppHeader />
-      <main className="app-main" style={{ maxWidth: 1200 }}>
-        <div style={{ marginBottom: '1rem' }}>
-          <Link to="/admin">
-            <Button kind="ghost" renderIcon={ArrowLeft} size="sm">
-              Voltar para a fila
-            </Button>
-          </Link>
+    <div className="admin-page">
+      <div className="admin-page-header">
+        <div>
+          <h1 className="admin-title">Arquivados</h1>
+          <p className="admin-subtitle">
+            Solicitações concluídas ou recusadas. Reabra para devolver à fila.
+          </p>
         </div>
+      </div>
 
-        <h1 className="admin-title">Arquivados</h1>
-        <p className="admin-subtitle" style={{ marginBottom: '1.5rem' }}>
-          Solicitações concluídas (aprovadas ou recusadas).
-        </p>
+      {error && (
+        <InlineNotification
+          kind="error"
+          lowContrast
+          title="Erro"
+          subtitle={error}
+          onCloseButtonClick={() => setError(null)}
+        />
+      )}
 
-        {error && (
-          <InlineNotification
-            kind="error"
-            lowContrast
-            title="Erro"
-            subtitle={error}
-            onCloseButtonClick={() => setError(null)}
+      {loading ? (
+        <div style={{ position: 'relative', minHeight: 200 }}>
+          <Loading withOverlay={false} />
+        </div>
+      ) : (
+        <>
+          <AdminTable
+            title="Solicitações arquivadas"
+            description={`${total} registro(s) no histórico`}
+            columns={columns}
+            rows={entries}
+            getRowKey={(row) => row.id}
+            searchFields={(row) => [row.site_id, row.technician_name, row.protocol]}
+            searchPlaceholder="Buscar por SITE ID, técnico ou protocolo"
+            emptyMessage="Nenhuma solicitação arquivada."
           />
-        )}
-
-        {loading ? (
-          <div style={{ position: 'relative', minHeight: 200 }}>
-            <Loading withOverlay={false} />
-          </div>
-        ) : (
-          <>
-            <DataTable rows={rows} headers={headers} isSortable>
-              {({
-                rows: r,
-                headers: h,
-                getHeaderProps,
-                getRowProps,
-                getTableProps,
-                onInputChange,
-              }) => (
-                <TableContainer
-                  title="Solicitações arquivadas"
-                  description={`${total} solicitação(ões) concluída(s)`}
-                >
-                  <TableToolbar>
-                    <TableToolbarContent>
-                      <TableToolbarSearch
-                        onChange={(e) => onInputChange(e as React.ChangeEvent<HTMLInputElement>)}
-                        placeholder="Buscar..."
-                      />
-                    </TableToolbarContent>
-                  </TableToolbar>
-                  <Table {...getTableProps()}>
-                    <TableHead>
-                      <TableRow>
-                        {h.map((header) => {
-                          const { key: hk, ...hp } = getHeaderProps({ header });
-                          return (
-                            <TableHeader key={hk} {...hp}>
-                              {header.header}
-                            </TableHeader>
-                          );
-                        })}
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {r.map((row) => {
-                        const found = rows.find((x) => x.id === row.id);
-                        if (!found) return null;
-                        const entry = found.entry;
-                        const busy = !!pending[entry.id];
-                        const { key: rk, ...rp } = getRowProps({ row });
-                        return (
-                          <TableRow key={rk} {...rp}>
-                            {row.cells.map((cell) => {
-                              if (cell.info.header === 'protocol') {
-                                return (
-                                  <TableCell key={cell.id}>
-                                    <span className="mono">#{cell.value as string}</span>
-                                  </TableCell>
-                                );
-                              }
-                              if (cell.info.header === 'site_id') {
-                                return (
-                                  <TableCell key={cell.id}>
-                                    <span className="mono">{cell.value as string}</span>
-                                  </TableCell>
-                                );
-                              }
-                              if (cell.info.header === 'sla') {
-                                return (
-                                  <TableCell key={cell.id}>
-                                    <span style={{ color: '#525252', fontSize: '0.875rem' }}>
-                                      {cell.value as string}
-                                    </span>
-                                  </TableCell>
-                                );
-                              }
-                              if (cell.info.header === 'statusRaw') {
-                                return (
-                                  <TableCell key={cell.id}>
-                                    <Tag type={entry.status === 'approved' ? 'green' : 'red'}>
-                                      {statusLabel[entry.status]}
-                                    </Tag>
-                                  </TableCell>
-                                );
-                              }
-                              if (cell.info.header === 'actions') {
-                                return (
-                                  <TableCell key={cell.id}>
-                                    <Button
-                                      size="sm"
-                                      kind="ghost"
-                                      renderIcon={Restart}
-                                      disabled={busy}
-                                      onClick={() => handleReopen(entry.id)}
-                                    >
-                                      Reabrir
-                                    </Button>
-                                  </TableCell>
-                                );
-                              }
-                              return (
-                                <TableCell key={cell.id}>{String(cell.value ?? '')}</TableCell>
-                              );
-                            })}
-                          </TableRow>
-                        );
-                      })}
-                      {r.length === 0 && (
-                        <TableRow>
-                          <TableCell
-                            colSpan={headers.length}
-                            style={{ textAlign: 'center', color: '#525252', padding: '2rem' }}
-                          >
-                            Nenhuma solicitação arquivada.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
-            </DataTable>
+          <div style={{ marginTop: '1rem' }}>
             <Pagination
               page={page}
               pageSize={pageSize}
-              pageSizes={[10, 20, 50, 100]}
+              pageSizes={[10, 20, 50]}
               totalItems={total}
-              onChange={({ page: newPage, pageSize: newPageSize }) =>
-                void load(newPage, newPageSize)
-              }
+              onChange={({ page: nextPage, pageSize: nextSize }) => {
+                if (nextPage === page && nextSize === pageSize) return;
+                setLoading(true);
+                setPage(nextPage);
+                setPageSize(nextSize);
+                void load(nextPage, nextSize).finally(() => setLoading(false));
+              }}
             />
-          </>
-        )}
-      </main>
+          </div>
+        </>
+      )}
     </div>
   );
 }

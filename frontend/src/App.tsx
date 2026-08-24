@@ -2,6 +2,7 @@ import { Suspense, lazy } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Loading } from '@carbon/react';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { AdminLayout } from './components/AdminLayout';
 import { Toaster } from './components/Toaster';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
@@ -36,42 +37,16 @@ export default function App() {
               path="/admin"
               element={
                 <ProtectedRoute>
-                  <AdminQueuePage />
+                  <AdminLayout />
                 </ProtectedRoute>
               }
-            />
-            <Route
-              path="/admin/dashboard"
-              element={
-                <ProtectedRoute>
-                  <DashboardPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/arquivados"
-              element={
-                <ProtectedRoute>
-                  <ArchivedPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/configuracoes"
-              element={
-                <ProtectedRoute>
-                  <ConfigPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/usuarios"
-              element={
-                <ProtectedRoute>
-                  <UsersPage />
-                </ProtectedRoute>
-              }
-            />
+            >
+              <Route index element={<AdminQueuePage />} />
+              <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="arquivados" element={<ArchivedPage />} />
+              <Route path="configuracoes" element={<ConfigPage />} />
+              <Route path="usuarios" element={<UsersPage />} />
+            </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

@@ -11,6 +11,7 @@ import type {
 } from './types';
 
 const BASE = '/api';
+const REQUEST_TIMEOUT_MS = 15000;
 
 export class ApiError extends Error {
   status: number;
@@ -36,11 +37,20 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   if (token) headers.Authorization = `Bearer ${token}`;
   if (options.body) headers['Content-Type'] = 'application/json';
 
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
   let res: Response;
   try {
-    res = await fetch(`${BASE}${path}`, { ...options, headers });
+    res = await fetch(`${BASE}${path}`, {
+      ...options,
+      headers: { ...(options.headers as Record<string, string> | undefined), ...headers },
+      signal: controller.signal,
+    });
   } catch {
     throw new ApiError(0, 'Não foi possível conectar ao servidor.');
+  } finally {
+    clearTimeout(timer);
   }
 
   if (res.status === 204) return undefined as T;
@@ -83,8 +93,11 @@ export function changePassword(data: { currentPassword: string; newPassword: str
   });
 }
 
-export function logout() {
-  return request<{ ok: boolean }>('/auth/logout', { method: 'POST' });
+export function logout(token: string) {
+  return request<{ ok: boolean }>('/auth/logout', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
 }
 
 export interface CheckInInput {

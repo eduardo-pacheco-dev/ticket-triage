@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Form, Stack, TextInput, Button, InlineNotification, Tile } from '@carbon/react';
 import { Login as LoginIcon } from '@carbon/icons-react';
-import { AppHeader } from '../components/AppHeader';
+import { PublicHeader } from '../components/PublicHeader';
 import { useAuthStore } from '../stores/auth';
 import { ApiError } from '../lib/api';
 import { loginSchema } from '@ticket-triage/shared';
@@ -10,6 +10,8 @@ import { zodFieldErrors } from '../lib/schemas';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as { from?: string } | null)?.from;
   const login = useAuthStore((s) => s.login);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -32,7 +34,7 @@ export default function LoginPage() {
     try {
       await login(parsed.data.username, parsed.data.password);
       const mustChange = useAuthStore.getState().mustChangePassword;
-      navigate(mustChange ? '/admin/configuracoes' : '/admin', { replace: true });
+      navigate(mustChange ? '/admin/configuracoes' : (from ?? '/admin'), { replace: true });
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         setError('Usuário ou senha inválidos.');
@@ -46,7 +48,7 @@ export default function LoginPage() {
 
   return (
     <div className="app-shell">
-      <AppHeader variant="public" />
+      <PublicHeader />
       <main className="login-main">
         <div className="login-container">
           <Tile className="login-card">

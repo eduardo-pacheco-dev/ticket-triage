@@ -5,8 +5,6 @@ export type UserStatus = 'active' | 'inactive';
 export interface QueueEntry {
   id: string;
   protocol: string;
-  full_name: string;
-  identifier: string;
   site_id: string;
   technician_name: string;
   request_type: string;

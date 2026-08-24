@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
@@ -17,11 +17,18 @@ export default defineConfig({
       },
     },
   },
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
+  },
   server: {
+    host: true,
     port: 5173,
+    watch: process.env.VITE_DOCKER_DEV ? { usePolling: true } : undefined,
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: process.env.VITE_API_PROXY ?? 'http://localhost:3000',
         changeOrigin: true,
       },
     },

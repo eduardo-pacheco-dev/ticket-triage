@@ -24,8 +24,16 @@ export class SlaService {
     }
   }
 
+  private async findFirstConfig(): Promise<SlaConfig | null> {
+    const [config] = await this.configRepository.find({
+      order: { id: 'ASC' },
+      take: 1,
+    });
+    return config ?? null;
+  }
+
   async get(): Promise<SlaConfig> {
-    let config = await this.findFirst();
+    let config = await this.findFirstConfig();
     if (!config) {
       config = await this.configRepository.save(this.configRepository.create({}));
     }
@@ -37,7 +45,7 @@ export class SlaService {
     const expectedServiceMin = Number(input.expectedServiceMin);
     this.validate(expectedWaitMin, expectedServiceMin);
 
-    let config = await this.findFirst();
+    let config = await this.findFirstConfig();
     if (!config) {
       config = await this.configRepository.save(
         this.configRepository.create({ expectedWaitMin, expectedServiceMin }),
@@ -48,11 +56,5 @@ export class SlaService {
       config = await this.configRepository.save(config);
     }
     return config;
-  }
-
-  private findFirst(): Promise<SlaConfig | null> {
-    return this.configRepository
-      .find({ order: { id: 'ASC' }, take: 1 })
-      .then(([config]) => config ?? null);
   }
 }

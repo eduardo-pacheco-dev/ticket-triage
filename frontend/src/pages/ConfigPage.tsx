@@ -1,27 +1,25 @@
-import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import {
-  Tile,
-  Form,
-  Stack,
-  TextInput,
   Button,
+  Form,
   InlineNotification,
   Loading,
-  Tag,
-  Tabs,
-  TabList,
+  Stack,
   Tab,
-  TabPanels,
+  TabList,
   TabPanel,
+  TabPanels,
+  Tabs,
+  Tag,
+  TextInput,
+  Tile,
 } from '@carbon/react';
-import { Add, TrashCan, ArrowLeft, Settings, UserAvatar, Time } from '@carbon/icons-react';
-import { AppHeader } from '../components/AppHeader';
+import { Add, Settings, TrashCan, UserAvatar, Time } from '@carbon/icons-react';
 import {
-  fetchRequestTypes,
   addRequestType,
-  deleteRequestType,
   changePassword,
+  deleteRequestType,
+  fetchRequestTypes,
   fetchSlaConfig,
   updateSlaConfig,
 } from '../lib/api';
@@ -30,6 +28,8 @@ import { createRequestTypeSchema } from '@ticket-triage/shared';
 import { changePasswordFormSchema, slaConfigSchema, zodFieldErrors } from '../lib/schemas';
 import { useAuthStore } from '../stores/auth';
 import type { RequestType } from '../lib/types';
+
+type TabKey = 'geral' | 'sla' | 'perfil';
 
 function GeralTab() {
   const [types, setTypes] = useState<RequestType[]>([]);
@@ -58,7 +58,6 @@ function GeralTab() {
     e.preventDefault();
     setError(null);
     setFieldErrors({});
-
     const parsed = createRequestTypeSchema.safeParse({ name });
     if (!parsed.success) {
       setFieldErrors(zodFieldErrors(parsed.error));
@@ -68,8 +67,7 @@ function GeralTab() {
     try {
       await addRequestType(parsed.data.name);
       setName('');
-      const rows = await fetchRequestTypes();
-      setTypes(rows);
+      setTypes(await fetchRequestTypes());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao adicionar tipo.');
     } finally {
@@ -81,8 +79,7 @@ function GeralTab() {
     setError(null);
     try {
       await deleteRequestType(id);
-      const rows = await fetchRequestTypes();
-      setTypes(rows);
+      setTypes(await fetchRequestTypes());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao remover tipo.');
     }
@@ -105,7 +102,7 @@ function GeralTab() {
           Novo tipo de solicitação
         </h2>
         <Form onSubmit={handleAdd}>
-          <Stack gap={5} orientation="horizontal">
+          <div className="config-add-row">
             <TextInput
               id="new_type"
               labelText="Nome do tipo"
@@ -115,12 +112,10 @@ function GeralTab() {
               invalid={!!fieldErrors.name}
               invalidText={fieldErrors.name}
             />
-            <div style={{ alignSelf: 'end' }}>
-              <Button type="submit" renderIcon={Add} disabled={busy}>
-                Adicionar
-              </Button>
-            </div>
-          </Stack>
+            <Button type="submit" renderIcon={Add} disabled={busy}>
+              Adicionar
+            </Button>
+          </div>
         </Form>
       </Tile>
 
@@ -133,14 +128,16 @@ function GeralTab() {
             <Loading withOverlay={false} />
           </div>
         ) : types.length === 0 ? (
-          <p style={{ color: '#525252' }}>Nenhum tipo cadastrado.</p>
+          <p className="muted">Nenhum tipo cadastrado.</p>
         ) : (
           <Stack gap={3}>
             {types.map((t) => (
               <div key={t.id} className="type-row">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <Tag type="blue">{t.name}</Tag>
-                  <span style={{ color: '#525252', fontSize: '0.75rem' }}>
+                  <Tag type="blue" size="sm">
+                    {t.name}
+                  </Tag>
+                  <span className="muted" style={{ fontSize: '0.75rem' }}>
                     Adicionado em {new Date(t.created_at).toLocaleDateString('pt-BR')}
                   </span>
                 </div>
@@ -148,7 +145,7 @@ function GeralTab() {
                   kind="danger--ghost"
                   size="sm"
                   renderIcon={TrashCan}
-                  onClick={() => handleDelete(t.id)}
+                  onClick={() => void handleDelete(t.id)}
                 >
                   Remover
                 </Button>
@@ -190,7 +187,6 @@ function SlaTab() {
     setError(null);
     setSuccess(false);
     setFieldErrors({});
-
     const parsed = slaConfigSchema.safeParse({
       expectedWaitMin: waitMin,
       expectedServiceMin: serviceMin,
@@ -275,6 +271,7 @@ function SlaTab() {
 function PerfilTab() {
   const applyAccessToken = useAuthStore((s) => s.applyAccessToken);
   const clearMustChangePassword = useAuthStore((s) => s.clearMustChangePassword);
+  const mustChangePassword = useAuthStore((s) => s.mustChangePassword);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -288,7 +285,6 @@ function PerfilTab() {
     setError(null);
     setSuccess(false);
     setFieldErrors({});
-
     const parsed = changePasswordFormSchema.safeParse({
       currentPassword,
       newPassword,
@@ -298,7 +294,6 @@ function PerfilTab() {
       setFieldErrors(zodFieldErrors(parsed.error));
       return;
     }
-
     setBusy(true);
     try {
       const result = await changePassword({
@@ -320,6 +315,16 @@ function PerfilTab() {
 
   return (
     <div>
+      {mustChangePassword && (
+        <InlineNotification
+          kind="warning"
+          lowContrast
+          hideCloseButton
+          title="Troca de senha obrigatória"
+          subtitle="Por segurança, defina uma nova senha antes de usar o painel."
+          style={{ marginBottom: '1rem' }}
+        />
+      )}
       {error && (
         <InlineNotification
           kind="error"
@@ -387,39 +392,54 @@ function PerfilTab() {
 }
 
 export default function ConfigPage() {
+  const mustChangePassword = useAuthStore((s) => s.mustChangePassword);
+  const defaultIndex = mustChangePassword ? 2 : 0;
+  const [tab, setTab] = useState<TabKey>(mustChangePassword ? 'perfil' : 'geral');
+
   return (
-    <div className="app-shell">
-      <AppHeader />
-      <main className="app-main" style={{ maxWidth: 800 }}>
-        <div style={{ marginBottom: '1rem' }}>
-          <Link to="/admin">
-            <Button kind="ghost" renderIcon={ArrowLeft} size="sm">
-              Voltar para a fila
-            </Button>
-          </Link>
+    <div>
+      <div className="admin-page-header">
+        <div>
+          <h1 className="admin-title">Configurações</h1>
+          <p className="admin-subtitle">Tipos de solicitação, metas de SLA e sua conta.</p>
         </div>
+      </div>
 
-        <h1 className="admin-title">Configurações</h1>
+      {mustChangePassword && tab !== 'perfil' && (
+        <InlineNotification
+          kind="warning"
+          lowContrast
+          hideCloseButton
+          title="Troca de senha obrigatória"
+          subtitle="Abra a aba Perfil para definir uma nova senha."
+        >
+          <Button size="sm" kind="ghost" onClick={() => setTab('perfil')}>
+            Ir para o perfil
+          </Button>
+        </InlineNotification>
+      )}
 
-        <Tabs>
-          <TabList aria-label="Configurações">
-            <Tab renderIcon={Settings}>Geral</Tab>
-            <Tab renderIcon={Time}>SLA</Tab>
-            <Tab renderIcon={UserAvatar}>Perfil</Tab>
-          </TabList>
-          <TabPanels>
-            <TabPanel>
-              <GeralTab />
-            </TabPanel>
-            <TabPanel>
-              <SlaTab />
-            </TabPanel>
-            <TabPanel>
-              <PerfilTab />
-            </TabPanel>
-          </TabPanels>
-        </Tabs>
-      </main>
+      <Tabs
+        defaultSelectedIndex={defaultIndex}
+        onChange={(state) => setTab((['geral', 'sla', 'perfil'] as const)[state.selectedIndex])}
+      >
+        <TabList aria-label="Configurações">
+          <Tab renderIcon={Settings}>Geral</Tab>
+          <Tab renderIcon={Time}>SLA</Tab>
+          <Tab renderIcon={UserAvatar}>Perfil</Tab>
+        </TabList>
+        <TabPanels>
+          <TabPanel>
+            <GeralTab />
+          </TabPanel>
+          <TabPanel>
+            <SlaTab />
+          </TabPanel>
+          <TabPanel>
+            <PerfilTab />
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
     </div>
   );
 }
