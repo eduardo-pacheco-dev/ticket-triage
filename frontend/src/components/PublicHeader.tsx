@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Header, HeaderName } from '@carbon/react';
-import { Login, Logout } from '@carbon/icons-react';
+import { Dashboard, Login, Logout } from '@carbon/icons-react';
 import { useAuthStore } from '../stores/auth';
 
 export function PublicHeader() {
@@ -22,9 +22,11 @@ export function PublicHeader() {
               <button
                 type="button"
                 className="public-header-link"
+                aria-label="Painel"
+                title="Painel"
                 onClick={() => navigate('/admin')}
               >
-                Painel
+                <Dashboard size={20} />
               </button>
             )}
             <button

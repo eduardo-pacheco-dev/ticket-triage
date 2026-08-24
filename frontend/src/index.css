@@ -68,6 +68,10 @@ code,
   font-size: 0.875rem;
 }
 
+.public-header {
+  background-color: #ffffff;
+}
+
 .public-header-actions {
   display: flex;
   align-items: center;
@@ -82,11 +86,14 @@ code,
   padding: 0 1rem;
   border: none;
   background: transparent;
-  color: var(--cds-text-primary, #f4f4f4);
+  color: #161616;
   cursor: pointer;
 }
 .public-header-link:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.06);
+}
+.public-header .cds--header__name {
+  color: #161616;
 }
 
 .sidenav-collapse-toggle {

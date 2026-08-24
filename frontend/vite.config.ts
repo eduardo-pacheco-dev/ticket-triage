@@ -3,6 +3,12 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  // Pré-otimiza pacotes usados sobretudo por rotas lazy (admin). Sem isso o
+  // Vite os descobre tarde, reotimiza no meio da sessão e quebra as abas já
+  // abertas (sintoma: ícones do Carbon desaparecem com o botão clicável).
+  optimizeDeps: {
+    include: ['@carbon/react', '@carbon/icons-react'],
+  },
   build: {
     rollupOptions: {
       output: {
