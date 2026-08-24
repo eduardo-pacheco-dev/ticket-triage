@@ -273,6 +273,42 @@ code,
   flex-wrap: wrap;
 }
 
+.config-add-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-start;
+}
+.config-add-row > .cds--form-item {
+  flex: 1 1 240px;
+}
+.config-add-row > .cds--btn-wrapper,
+.config-add-row > button {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 671px) {
+  .checkin-card {
+    padding: 1.5rem 1.25rem;
+    margin: 1rem auto;
+  }
+  .admin-title {
+    font-size: 1.375rem;
+  }
+  .admin-page-header {
+    align-items: flex-start;
+  }
+  .admin-content {
+    padding-inline: 1rem;
+  }
+  .topbar-user {
+    display: none;
+  }
+  .history-row {
+    gap: 0.5rem;
+  }
+}
+
 .toast-stack {
   position: fixed;
   top: 3.5rem;

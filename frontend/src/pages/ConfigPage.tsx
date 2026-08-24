@@ -102,7 +102,7 @@ function GeralTab() {
           Novo tipo de solicitação
         </h2>
         <Form onSubmit={handleAdd}>
-          <Stack gap={5} orientation="horizontal">
+          <div className="config-add-row">
             <TextInput
               id="new_type"
               labelText="Nome do tipo"
@@ -112,12 +112,10 @@ function GeralTab() {
               invalid={!!fieldErrors.name}
               invalidText={fieldErrors.name}
             />
-            <div style={{ alignSelf: 'end' }}>
-              <Button type="submit" renderIcon={Add} disabled={busy}>
-                Adicionar
-              </Button>
-            </div>
-          </Stack>
+            <Button type="submit" renderIcon={Add} disabled={busy}>
+              Adicionar
+            </Button>
+          </div>
         </Form>
       </Tile>
 
