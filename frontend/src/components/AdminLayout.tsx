@@ -19,6 +19,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Notification as BellIcon,
+  UserFollow,
 } from '@carbon/icons-react';
 import { useAuthStore } from '../stores/auth';
 import { useToastStore } from '../stores/toast';
@@ -103,6 +104,14 @@ export function AdminLayout() {
         isActive={pathname.startsWith('/admin/arquivados')}
       >
         Arquivados
+      </SideNavLink>
+      <SideNavLink
+        as={Link}
+        to="/admin/usuarios"
+        renderIcon={UserFollow}
+        isActive={pathname.startsWith('/admin/usuarios')}
+      >
+        Usuários
       </SideNavLink>
       <SideNavLink
         as={Link}
