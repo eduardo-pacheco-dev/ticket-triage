@@ -71,7 +71,20 @@ echo "HEAD agora em: $(git rev-parse --short HEAD) — $(git log -1 --format=%s)
 step_done
 
 step "Instalando dependências (npm ci)"
-npm ci --no-audit --no-fund
+NPM_OK=0
+for attempt in 1 2 3; do
+  echo "    tentativa $attempt/3"
+  if npm ci --no-audit --no-fund; then
+    NPM_OK=1
+    break
+  fi
+  echo "    falhou; aguardando 5s antes de repetir"
+  sleep 5
+done
+if [ "$NPM_OK" -ne 1 ]; then
+  echo "::error::npm ci falhou após 3 tentativas (verifique rede/registry na VPS)."
+  exit 1
+fi
 step_done
 
 step "Build do backend"
