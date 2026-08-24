@@ -7,6 +7,7 @@ import type {
   QueueStatus,
   RequestType,
   SlaConfig,
+  SafeUser,
 } from './types';
 
 const BASE = '/api';
@@ -162,4 +163,40 @@ export function updateSlaConfig(data: { expectedWaitMin: number; expectedService
     method: 'PUT',
     body: JSON.stringify(data),
   });
+}
+
+export function fetchUsers() {
+  return request<SafeUser[]>('/users');
+}
+
+export interface CreateUserInput {
+  username: string;
+  password: string;
+  role?: 'admin' | 'user';
+}
+
+export interface UpdateUserInput {
+  username?: string;
+  password?: string;
+  mustChangePassword?: boolean;
+  role?: 'admin' | 'user';
+  status?: 'active' | 'inactive';
+}
+
+export function createUser(data: CreateUserInput) {
+  return request<SafeUser>('/users', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateUser(id: string, data: UpdateUserInput) {
+  return request<SafeUser>(`/users/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteUser(id: string) {
+  return request<void>(`/users/${id}`, { method: 'DELETE' });
 }

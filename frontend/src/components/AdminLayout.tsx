@@ -13,13 +13,13 @@ import {
 import {
   Dashboard,
   Archive,
-  Document,
   List,
   Settings,
   Logout,
   ChevronLeft,
   ChevronRight,
   Notification as BellIcon,
+  UserFollow,
 } from '@carbon/icons-react';
 import { useAuthStore } from '../stores/auth';
 import { useToastStore } from '../stores/toast';
@@ -107,14 +107,19 @@ export function AdminLayout() {
       </SideNavLink>
       <SideNavLink
         as={Link}
+        to="/admin/usuarios"
+        renderIcon={UserFollow}
+        isActive={pathname.startsWith('/admin/usuarios')}
+      >
+        Usuários
+      </SideNavLink>
+      <SideNavLink
+        as={Link}
         to="/admin/configuracoes"
         renderIcon={Settings}
         isActive={pathname.startsWith('/admin/configuracoes')}
       >
         Configurações
-      </SideNavLink>
-      <SideNavLink as={Link} to="/" renderIcon={Document}>
-        Check-in público
       </SideNavLink>
     </SideNavItems>
   );

@@ -5,7 +5,7 @@ function toMs(value: DateLike): number {
 }
 
 export function formatDuration(start: DateLike, end?: DateLike): string {
-  const diffMs = (end ? toMs(end) : Date.now()) - toMs(start);
+  const diffMs = Math.max(0, (end ? toMs(end) : Date.now()) - toMs(start));
   const totalMinutes = Math.floor(diffMs / 60_000);
 
   if (totalMinutes < 1) return 'Menos de 1 min';

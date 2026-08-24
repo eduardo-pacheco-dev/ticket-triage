@@ -16,12 +16,18 @@ export function slaMinutesSchema(coerce = false): z.ZodType<number> {
 }
 
 export const createCheckInSchema = z.object({
-  site_id: z.string().trim().min(1, 'SITE ID é obrigatório.').max(100, 'Máximo de 100 caracteres.'),
+  site_id: z
+    .string()
+    .trim()
+    .min(1, 'SITE ID é obrigatório.')
+    .max(100, 'Máximo de 100 caracteres.')
+    .transform((v) => v.toUpperCase()),
   technician_name: z
     .string()
     .trim()
     .min(1, 'Nome do técnico é obrigatório.')
-    .max(200, 'Máximo de 200 caracteres.'),
+    .max(200, 'Máximo de 200 caracteres.')
+    .transform((v) => v.toUpperCase()),
   request_type: z
     .string()
     .trim()
@@ -58,6 +64,40 @@ export const updateSlaSchema = z
   })
   .partial();
 
+export const userRoleSchema = z.enum(['admin', 'user'], {
+  message: 'Papel inválido.',
+});
+export const userStatusSchema = z.enum(['active', 'inactive'], {
+  message: 'Status inválido.',
+});
+
+export type UserRole = z.infer<typeof userRoleSchema>;
+export type UserStatus = z.infer<typeof userStatusSchema>;
+
+export const createUserSchema = z.object({
+  username: z
+    .string()
+    .trim()
+    .min(1, 'Usuário é obrigatório.')
+    .max(100, 'Máximo de 100 caracteres.'),
+  password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres.').max(200),
+  role: userRoleSchema.default('user'),
+});
+
+export const updateUserSchema = z
+  .object({
+    username: z
+      .string()
+      .trim()
+      .min(1, 'Usuário é obrigatório.')
+      .max(100, 'Máximo de 100 caracteres.'),
+    password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres.').max(200),
+    mustChangePassword: z.boolean(),
+    role: userRoleSchema,
+    status: userStatusSchema,
+  })
+  .partial();
+
 export const paginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
@@ -69,4 +109,6 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export type CreateRequestTypeInput = z.infer<typeof createRequestTypeSchema>;
 export type UpdateSlaInput = z.infer<typeof updateSlaSchema>;
+export type CreateUserInput = z.infer<typeof createUserSchema>;
+export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 export type PaginationInput = z.infer<typeof paginationSchema>;

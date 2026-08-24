@@ -1,5 +1,11 @@
 import { z } from 'zod';
-import { changePasswordSchema, slaMinutesSchema } from '@ticket-triage/shared';
+import {
+  changePasswordSchema,
+  createUserSchema,
+  slaMinutesSchema,
+  userRoleSchema,
+  userStatusSchema,
+} from '@ticket-triage/shared';
 
 export const changePasswordFormSchema = changePasswordSchema
   .extend({
@@ -9,6 +15,43 @@ export const changePasswordFormSchema = changePasswordSchema
     message: 'As senhas não conferem.',
     path: ['confirmPassword'],
   });
+
+export const createUserFormSchema = createUserSchema
+  .extend({
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'As senhas não conferem.',
+    path: ['confirmPassword'],
+  });
+
+export const updateUserFormSchema = z
+  .object({
+    username: z
+      .string()
+      .trim()
+      .min(1, 'Usuário é obrigatório.')
+      .max(100, 'Máximo de 100 caracteres.'),
+    password: z.union([
+      z.literal(''),
+      z.string().min(6, 'A senha deve ter no mínimo 6 caracteres.'),
+    ]),
+    confirmPassword: z.string(),
+    mustChangePassword: z.boolean(),
+    role: userRoleSchema,
+    status: userStatusSchema,
+  })
+  .superRefine((data, ctx) => {
+    if (data.password && data.password !== data.confirmPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['confirmPassword'],
+        message: 'As senhas não conferem.',
+      });
+    }
+  });
+
+export type UpdateUserFormInput = z.infer<typeof updateUserFormSchema>;
 
 export const slaConfigSchema = z.object({
   expectedWaitMin: slaMinutesSchema(true),

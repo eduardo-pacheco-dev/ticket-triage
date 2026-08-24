@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { AdminGuard } from './admin.guard';
 import { User } from './user.entity';
 import { CommonModule } from '../common/common.module';
 
@@ -23,7 +24,7 @@ if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAuthGuard],
-  exports: [JwtModule, JwtAuthGuard],
+  providers: [AuthService, JwtAuthGuard, AdminGuard],
+  exports: [JwtModule, JwtAuthGuard, AdminGuard],
 })
 export class AuthModule {}

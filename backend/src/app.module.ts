@@ -6,6 +6,7 @@ import { SlaConfig } from './sla/sla-config.entity';
 import { User } from './auth/user.entity';
 import { AuthModule } from './auth/auth.module';
 import { CommonModule } from './common/common.module';
+import { UsersModule } from './users/users.module';
 import { appDataSourceOptions } from './data-source';
 import { QueueController } from './queue/queue.controller';
 import { AdminController } from './queue/admin.controller';
@@ -26,6 +27,7 @@ import { HealthController } from './health/health.controller';
     TypeOrmModule.forFeature([User]),
     CommonModule,
     AuthModule,
+    UsersModule,
   ],
   controllers: [
     QueueController,

@@ -25,6 +25,9 @@ export class AuthService {
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
       throw new UnauthorizedException('Usuário ou senha inválidos.');
     }
+    if (user.status !== 'active') {
+      throw new UnauthorizedException('Usuário inativo. Procure um administrador.');
+    }
     return {
       access_token: this.signToken(user),
       mustChangePassword: user.mustChangePassword,

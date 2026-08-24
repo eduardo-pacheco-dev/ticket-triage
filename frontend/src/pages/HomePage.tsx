@@ -130,7 +130,7 @@ export default function HomePage() {
                       labelText="SITE ID"
                       placeholder="Ex.: SITE-0421"
                       value={siteId}
-                      onChange={(e) => setSiteId(e.target.value)}
+                      onChange={(e) => setSiteId(e.target.value.toUpperCase())}
                       invalid={!!fieldErrors.site_id}
                       invalidText={fieldErrors.site_id}
                       required
@@ -138,9 +138,9 @@ export default function HomePage() {
                     <TextInput
                       id="technician_name"
                       labelText="Nome do Técnico"
-                      placeholder="Ex.: Maria Silva"
+                      placeholder="Ex.: Francisco Silva"
                       value={technicianName}
-                      onChange={(e) => setTechnicianName(e.target.value)}
+                      onChange={(e) => setTechnicianName(e.target.value.toUpperCase())}
                       invalid={!!fieldErrors.technician_name}
                       invalidText={fieldErrors.technician_name}
                       required
@@ -223,7 +223,7 @@ export default function HomePage() {
                     labelText="SITE ID"
                     placeholder="Ex.: SITE-0421"
                     value={searchSiteId}
-                    onChange={(e) => setSearchSiteId(e.target.value)}
+                    onChange={(e) => setSearchSiteId(e.target.value.toUpperCase())}
                     required
                   />
                   <Button type="submit" kind="secondary" renderIcon={Search} size="lg">
