@@ -2,11 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HeaderGlobalAction } from '@carbon/react';
 import { Notification as BellIcon } from '@carbon/icons-react';
-import {
-  fetchNotifications,
-  markAllNotificationsRead,
-  markNotificationRead,
-} from '../lib/api';
+import { fetchNotifications, markAllNotificationsRead, markNotificationRead } from '../lib/api';
 import type { AppNotification } from '../lib/types';
 import { useQueueEvents } from '../hooks/useQueueEvents';
 import { formatEntryTime } from '../lib/duration';

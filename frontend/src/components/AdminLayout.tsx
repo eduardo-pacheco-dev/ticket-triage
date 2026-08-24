@@ -5,7 +5,6 @@ import {
   HeaderName,
   HeaderMenuButton,
   HeaderGlobalBar,
-  HeaderGlobalAction,
   SideNav,
   SideNavItems,
   SideNavLink,
@@ -15,7 +14,6 @@ import {
   Archive,
   List,
   Settings,
-  Logout,
   ChevronLeft,
   ChevronRight,
   UserFollow,
@@ -23,6 +21,7 @@ import {
 import { useAuthStore } from '../stores/auth';
 import { useIsDesktop } from '../hooks/useIsDesktop';
 import { NotificationsMenu } from './NotificationsMenu';
+import { UserMenu } from './UserMenu';
 
 const SIDENAV_PREF_KEY = 'triagem_sidenav_expanded';
 
@@ -30,8 +29,6 @@ export function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const isDesktop = useIsDesktop();
-  const username = useAuthStore((s) => s.username);
-  const logout = useAuthStore((s) => s.logout);
   const mustChangePassword = useAuthStore((s) => s.mustChangePassword);
   const pathname = location.pathname;
 
@@ -112,18 +109,8 @@ export function AdminLayout() {
           Triagem Docs
         </HeaderName>
         <HeaderGlobalBar>
-          <span className="topbar-user">{username}</span>
           <NotificationsMenu />
-          <HeaderGlobalAction
-            aria-label="Sair"
-            tooltipAlignment="end"
-            onClick={() => {
-              logout();
-              navigate('/login', { replace: true });
-            }}
-          >
-            <Logout size={20} />
-          </HeaderGlobalAction>
+          <UserMenu />
         </HeaderGlobalBar>
       </Header>
 
