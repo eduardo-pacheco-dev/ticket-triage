@@ -38,8 +38,15 @@ export function AdminLayout() {
   const isDesktop = useIsDesktop();
   const username = useAuthStore((s) => s.username);
   const logout = useAuthStore((s) => s.logout);
+  const mustChangePassword = useAuthStore((s) => s.mustChangePassword);
   const notify = useToastStore((s) => s.notify);
   const pathname = location.pathname;
+
+  useEffect(() => {
+    if (mustChangePassword && pathname !== '/admin/configuracoes') {
+      navigate('/admin/configuracoes', { replace: true });
+    }
+  }, [mustChangePassword, pathname, navigate]);
 
   const [collapsed, setCollapsed] = useState(
     () => typeof window !== 'undefined' && localStorage.getItem(SIDENAV_PREF_KEY) === 'false',

@@ -55,3 +55,11 @@ export const useAuthStore = create<AuthState>((set) => ({
 window.addEventListener('triagem:unauthorized', () => {
   useAuthStore.setState({ token: null, username: null, mustChangePassword: false });
 });
+
+window.addEventListener('triagem:must-change-password', () => {
+  const current = getStoredAuth();
+  if (current && !current.mustChangePassword) {
+    setStoredAuth({ ...current, mustChangePassword: true });
+  }
+  useAuthStore.setState({ mustChangePassword: true });
+});

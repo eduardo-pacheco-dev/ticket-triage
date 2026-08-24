@@ -63,11 +63,15 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
 
   if (!res.ok) {
+    const message = extractMessage(body) ?? `Erro ${res.status}`;
     if (res.status === 401) {
       clearAuth();
       window.dispatchEvent(new CustomEvent('triagem:unauthorized'));
     }
-    throw new ApiError(res.status, extractMessage(body) ?? `Erro ${res.status}`);
+    if (res.status === 403 && message.includes('Troque a senha')) {
+      window.dispatchEvent(new CustomEvent('triagem:must-change-password'));
+    }
+    throw new ApiError(res.status, message);
   }
 
   return body as T;
