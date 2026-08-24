@@ -30,6 +30,7 @@ import {
 } from '../lib/notifications';
 
 const DESKTOP_QUERY = '(min-width: 1056px)';
+const SIDENAV_PREF_KEY = 'triagem_sidenav_expanded';
 
 function useIsDesktop() {
   const [isDesktop, setIsDesktop] = useState(
@@ -57,14 +58,27 @@ export function AppHeader({ variant = 'admin' }: { variant?: 'admin' | 'public' 
   const isAdminArea = variant === 'admin';
   const showNav = isAdminArea && authed;
   const isDesktop = useIsDesktop();
+  const [navExpanded, setNavExpanded] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem(SIDENAV_PREF_KEY) !== 'false';
+  });
+  const toggleNav = () =>
+    setNavExpanded((prev) => {
+      localStorage.setItem(SIDENAV_PREF_KEY, String(!prev));
+      return !prev;
+    });
   const [notifPermission, setNotifPermission] = useState<NotificationPermission | 'unsupported'>(
     () => getNotificationPermission(),
   );
 
   useEffect(() => {
-    document.body.classList.toggle('has-admin-sidenav', showNav && isDesktop);
-    return () => document.body.classList.remove('has-admin-sidenav');
-  }, [showNav, isDesktop]);
+    document.body.classList.toggle('has-admin-sidenav', showNav && isDesktop && navExpanded);
+    document.body.classList.toggle('has-admin-sidenav-rail', showNav && isDesktop && !navExpanded);
+    return () => {
+      document.body.classList.remove('has-admin-sidenav');
+      document.body.classList.remove('has-admin-sidenav-rail');
+    };
+  }, [showNav, isDesktop, navExpanded]);
 
   async function handleNotifications() {
     if (notifPermission === 'unsupported') {
@@ -140,6 +154,14 @@ export function AppHeader({ variant = 'admin' }: { variant?: 'admin' | 'public' 
                 onClick={onClickSideNavExpand}
               />
             )}
+            {showNav && isDesktop && (
+              <HeaderMenuButton
+                aria-label={navExpanded ? 'Recolher menu' : 'Expandir menu'}
+                aria-expanded={navExpanded}
+                isActive={false}
+                onClick={toggleNav}
+              />
+            )}
             <HeaderName as={Link} to="/" prefix="AFL">
               Triagem Docs
             </HeaderName>
@@ -183,7 +205,14 @@ export function AppHeader({ variant = 'admin' }: { variant?: 'admin' | 'public' 
           </Header>
           {showNav &&
             (isDesktop ? (
-              <SideNav isFixedNav aria-label="Navegação principal" expanded>
+              <SideNav
+                isFixedNav
+                isRail={!navExpanded}
+                aria-label="Navegação principal"
+                expanded={navExpanded}
+                addMouseListeners={false}
+                addFocusListeners={false}
+              >
                 {navLinks}
               </SideNav>
             ) : (

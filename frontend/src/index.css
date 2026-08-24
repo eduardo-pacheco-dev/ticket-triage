@@ -71,8 +71,12 @@ code,
 body.has-admin-sidenav .app-main {
   margin-left: 16rem;
 }
+body.has-admin-sidenav-rail .app-main {
+  margin-left: 3rem;
+}
 @media (max-width: 1055px) {
-  body.has-admin-sidenav .app-main {
+  body.has-admin-sidenav .app-main,
+  body.has-admin-sidenav-rail .app-main {
     margin-left: 0;
   }
 }
