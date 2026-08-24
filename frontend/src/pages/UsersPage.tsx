@@ -1,45 +1,47 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Button,
-  Checkbox,
-  DataTable,
-  Form,
-  InlineNotification,
-  Loading,
-  Modal,
-  Select,
-  SelectItem,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableHeader,
-  TableRow,
-  Tag,
-  TextInput,
-} from '@carbon/react';
-import { Add, ArrowLeft, Edit, TrashCan } from '@carbon/icons-react';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import IconButton from '@mui/material/IconButton';
+import MenuItem from '@mui/material/MenuItem';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import TableSortLabel from '@mui/material/TableSortLabel';
+import TextField from '@mui/material/TextField';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import AddIcon from '@mui/icons-material/Add';
+import ArrowLeftIcon from '@mui/icons-material/ArrowBack';
+import EditIcon from '@mui/icons-material/EditOutlined';
+import TrashCanIcon from '@mui/icons-material/DeleteOutlined';
 import { createUser, deleteUser, fetchUsers, updateUser, ApiError } from '../lib/api';
 import { createUserFormSchema, updateUserFormSchema, zodFieldErrors } from '../lib/schemas';
 import { useAuthStore } from '../stores/auth';
 import { useToastStore } from '../stores/toast';
 import type { SafeUser, UserRole, UserStatus } from '../lib/types';
 
-const headers = [
-  { key: 'username', header: 'Usuário' },
-  { key: 'role', header: 'Papel' },
-  { key: 'situacao', header: 'Situação' },
-  { key: 'createdAt', header: 'Criado em' },
-  { key: 'actions', header: '' },
-];
-
 const userStatusLabel: Record<UserStatus, string> = {
   active: 'Ativo',
   inactive: 'Inativo',
 };
+
+type SortKey = 'username' | 'role' | 'situacao' | 'createdAt';
 
 interface EditFormState {
   user: SafeUser;
@@ -57,6 +59,9 @@ export default function UsersPage() {
   const [users, setUsers] = useState<SafeUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [sortKey, setSortKey] = useState<SortKey>('username');
+  const [sortAsc, setSortAsc] = useState(true);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [newUsername, setNewUsername] = useState('');
@@ -202,25 +207,42 @@ export default function UsersPage() {
     }
   }
 
-  const rows = users.map((u) => ({
-    id: u.id,
-    username: u.username,
-    role: u.role,
-    status: u.status,
-    situacao: userStatusLabel[u.status],
-    createdAt: new Date(u.createdAt).toLocaleDateString('pt-BR'),
-    user: u,
-    isSelf: u.username === currentUsername,
-  }));
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortAsc((prev) => !prev);
+    } else {
+      setSortKey(key);
+      setSortAsc(true);
+    }
+  }
+
+  const rows = useMemo(() => {
+    const mapped = users.map((u) => ({
+      id: u.id,
+      username: u.username,
+      role: u.role,
+      status: u.status,
+      situacao: userStatusLabel[u.status],
+      createdAt: new Date(u.createdAt).toLocaleDateString('pt-BR'),
+      createdAtValue: new Date(u.createdAt).getTime(),
+      user: u,
+      isSelf: u.username === currentUsername,
+    }));
+    return [...mapped].sort((a, b) => {
+      const va = a[sortKey === 'createdAt' ? 'createdAtValue' : sortKey];
+      const vb = b[sortKey === 'createdAt' ? 'createdAtValue' : sortKey];
+      if (va < vb) return sortAsc ? -1 : 1;
+      if (va > vb) return sortAsc ? 1 : -1;
+      return 0;
+    });
+  }, [users, sortKey, sortAsc, currentUsername]);
 
   return (
     <div className="admin-page">
       <div style={{ marginBottom: '1rem' }}>
-        <Link to="/admin">
-          <Button kind="ghost" renderIcon={ArrowLeft} size="sm">
-            Voltar para a fila
-          </Button>
-        </Link>
+        <Button component={Link} to="/admin" startIcon={<ArrowLeftIcon />} size="small">
+          Voltar para a fila
+        </Button>
       </div>
 
       <h1 className="admin-title">Usuários</h1>
@@ -229,272 +251,282 @@ export default function UsersPage() {
       </p>
 
       {error && (
-        <InlineNotification
-          kind="error"
-          lowContrast
-          title="Erro"
-          subtitle={error}
-          onCloseButtonClick={() => setError(null)}
-        />
+        <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
+          <strong>Erro.</strong> {error}
+        </Alert>
       )}
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-        <Button kind="primary" renderIcon={Add} onClick={openCreate}>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
           Novo usuário
         </Button>
       </div>
 
       {loading ? (
-        <div style={{ position: 'relative', minHeight: 200 }}>
-          <Loading withOverlay={false} />
-        </div>
+        <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: 200 }}>
+          <CircularProgress size={32} />
+        </Box>
       ) : (
-        <DataTable rows={rows} headers={headers} isSortable>
-          {({ rows: r, headers: h, getHeaderProps, getRowProps, getTableProps }) => (
-            <TableContainer title="Usuários cadastrados" description={`${users.length} acesso(s)`}>
-              <Table {...getTableProps()}>
-                <TableHead>
-                  <TableRow>
-                    {h.map((header) => {
-                      const { key: hk, ...hp } = getHeaderProps({ header });
-                      return (
-                        <TableHeader key={hk} {...hp}>
-                          {header.header}
-                        </TableHeader>
-                      );
-                    })}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {r.map((row) => {
-                    const found = rows.find((x) => x.id === row.id);
-                    if (!found) return null;
-                    const { key: rk, ...rp } = getRowProps({ row });
-                    return (
-                      <TableRow key={rk} {...rp}>
-                        <TableCell>
-                          <span className="mono">{found.username}</span>
-                          {found.isSelf && (
-                            <Tag type="cool-gray" size="sm" style={{ marginLeft: '0.5rem' }}>
-                              você
-                            </Tag>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {found.role === 'admin' ? (
-                            <Tag type="blue" size="sm">
-                              Administrador
-                            </Tag>
-                          ) : (
-                            <Tag type="cool-gray" size="sm">
-                              Usuário
-                            </Tag>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Stack orientation="horizontal" gap={2}>
-                            {found.status === 'active' ? (
-                              <Tag type="green" size="sm">
-                                Ativo
-                              </Tag>
-                            ) : (
-                              <Tag type="red" size="sm">
-                                Inativo
-                              </Tag>
-                            )}
-                            {found.user.mustChangePassword && (
-                              <Tag type="purple" size="sm">
-                                Troca de senha pendente
-                              </Tag>
-                            )}
-                          </Stack>
-                        </TableCell>
-                        <TableCell>{found.createdAt}</TableCell>
-                        <TableCell>
-                          <div style={{ display: 'flex', gap: '0.25rem' }}>
-                            <Button
-                              kind="ghost"
-                              size="sm"
-                              hasIconOnly
-                              renderIcon={Edit}
-                              iconDescription={`Editar ${found.username}`}
-                              tooltipPosition="left"
-                              onClick={() => openEdit(found.user)}
-                            />
-                            {!found.isSelf && (
-                              <Button
-                                kind="danger--ghost"
-                                size="sm"
-                                hasIconOnly
-                                renderIcon={TrashCan}
-                                iconDescription={`Remover ${found.username}`}
-                                tooltipPosition="left"
-                                onClick={() => setPendingDelete(found.user)}
-                              />
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </DataTable>
+        <TableContainer component={Paper} variant="outlined">
+          <Toolbar sx={{ px: { xs: 2, sm: 3 }, py: 1.5 }}>
+            <Stack>
+              <Typography variant="h6" component="div" fontSize="1rem" fontWeight={600}>
+                Usuários cadastrados
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {users.length} acesso(s)
+              </Typography>
+            </Stack>
+          </Toolbar>
+          <Table size="medium">
+            <TableHead>
+              <TableRow>
+                {(
+                  [
+                    ['username', 'Usuário'],
+                    ['role', 'Papel'],
+                    ['situacao', 'Situação'],
+                    ['createdAt', 'Criado em'],
+                  ] as [SortKey, string][]
+                ).map(([key, label]) => (
+                  <TableCell key={key} sortDirection={sortKey === key ? (sortAsc ? 'asc' : 'desc') : false}>
+                    <TableSortLabel
+                      active={sortKey === key}
+                      direction={sortKey === key && !sortAsc ? 'desc' : 'asc'}
+                      onClick={() => toggleSort(key)}
+                    >
+                      {label}
+                    </TableSortLabel>
+                  </TableCell>
+                ))}
+                <TableCell />
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {rows.map((row) => (
+                <TableRow key={row.id} hover>
+                  <TableCell>
+                    <span className="mono">{row.username}</span>
+                    {row.isSelf && (
+                      <Chip size="small" sx={{ ml: 1 }} label="você" />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {row.role === 'admin' ? (
+                      <Chip size="small" color="primary" label="Administrador" />
+                    ) : (
+                      <Chip size="small" label="Usuário" />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>
+                      {row.status === 'active' ? (
+                        <Chip size="small" color="success" label="Ativo" />
+                      ) : (
+                        <Chip size="small" color="error" label="Inativo" />
+                      )}
+                      {row.user.mustChangePassword && (
+                        <Chip size="small" color="secondary" variant="outlined" label="Troca de senha pendente" />
+                      )}
+                    </Box>
+                  </TableCell>
+                  <TableCell>{row.createdAt}</TableCell>
+                  <TableCell align="right">
+                    <Box sx={{ display: 'flex', gap: 0.25, justifyContent: 'flex-end' }}>
+                      <IconButton
+                        size="small"
+                        aria-label={`Editar ${row.username}`}
+                        title={`Editar ${row.username}`}
+                        onClick={() => openEdit(row.user)}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      {!row.isSelf && (
+                        <IconButton
+                          size="small"
+                          aria-label={`Remover ${row.username}`}
+                          title={`Remover ${row.username}`}
+                          onClick={() => setPendingDelete(row.user)}
+                        >
+                          <TrashCanIcon fontSize="small" />
+                        </IconButton>
+                      )}
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
 
-      <Modal
-        open={createOpen}
-        modalHeading="Novo usuário"
-        modalLabel="Usuários"
-        primaryButtonText="Criar usuário"
-        secondaryButtonText="Cancelar"
-        primaryButtonDisabled={creating}
-        onRequestClose={() => setCreateOpen(false)}
-        onRequestSubmit={() => void handleCreate()}
-      >
-        <Form style={{ marginBottom: '1rem' }}>
-          <Stack gap={5}>
-            <TextInput
-              id="new_user_username"
-              labelText="Usuário"
-              placeholder="Ex.: jsilva"
-              value={newUsername}
-              onChange={(e) => setNewUsername(e.target.value)}
-              invalid={!!createErrors.username}
-              invalidText={createErrors.username}
-            />
-            <Select
-              id="new_user_role"
-              labelText="Papel"
-              helperText="Administradores gerenciam usuários e configurações."
-              value={newRole}
-              onChange={(e) => setNewRole(e.target.value as UserRole)}
-            >
-              <SelectItem value="user" text="Usuário" />
-              <SelectItem value="admin" text="Administrador" />
-            </Select>
-            <TextInput
-              id="new_user_password"
-              labelText="Senha provisória"
-              helperText="O usuário deverá trocá-la no primeiro acesso."
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              invalid={!!createErrors.password}
-              invalidText={createErrors.password}
-            />
-            <TextInput
-              id="new_user_confirm"
-              labelText="Confirmar senha"
-              type="password"
-              value={newConfirm}
-              onChange={(e) => setNewConfirm(e.target.value)}
-              invalid={!!createErrors.confirmPassword}
-              invalidText={createErrors.confirmPassword}
-            />
-          </Stack>
-        </Form>
-      </Modal>
-
-      <Modal
-        open={!!editForm}
-        modalHeading={editForm ? `Editar "${editForm.user.username}"` : ''}
-        modalLabel="Usuários"
-        primaryButtonText="Salvar"
-        secondaryButtonText="Cancelar"
-        primaryButtonDisabled={saving}
-        onRequestClose={() => setEditForm(null)}
-        onRequestSubmit={() => void handleSaveEdit()}
-      >
-        {editForm && (
-          <Form style={{ marginBottom: '1rem' }}>
-            <Stack gap={5}>
-              <TextInput
-                id="edit_username"
-                labelText="Usuário"
-                value={editForm.username}
-                onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
-                invalid={!!editErrors.username}
-                invalidText={editErrors.username}
+      <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Novo usuário</DialogTitle>
+        <DialogContent>
+          <Box component="form" noValidate sx={{ mt: 1 }}>
+            <Stack spacing={2.5}>
+              <TextField
+                id="new_user_username"
+                label="Usuário"
+                placeholder="Ex.: jsilva"
+                value={newUsername}
+                onChange={(e) => setNewUsername(e.target.value)}
+                error={!!createErrors.username}
+                helperText={createErrors.username}
+                fullWidth
               />
-              <Select
-                id="edit_role"
-                labelText="Papel"
-                disabled={editForm.user.username === currentUsername}
-                helperText={
-                  editForm.user.username === currentUsername
-                    ? 'Você não pode alterar o seu próprio papel.'
-                    : undefined
-                }
-                value={editForm.role}
-                onChange={(e) => setEditForm({ ...editForm, role: e.target.value as UserRole })}
+              <TextField
+                id="new_user_role"
+                select
+                label="Papel"
+                helperText="Administradores gerenciam usuários e configurações."
+                value={newRole}
+                onChange={(e) => setNewRole(e.target.value as UserRole)}
+                fullWidth
               >
-                <SelectItem value="user" text="Usuário" />
-                <SelectItem value="admin" text="Administrador" />
-              </Select>
-              <Select
-                id="edit_status"
-                labelText="Situação"
-                disabled={editForm.user.username === currentUsername}
-                helperText={
-                  editForm.user.username === currentUsername
-                    ? 'Você não pode alterar o seu próprio status.'
-                    : 'Inativar encerra as sessões ativas do usuário.'
-                }
-                value={editForm.status}
-                onChange={(e) => setEditForm({ ...editForm, status: e.target.value as UserStatus })}
-              >
-                <SelectItem value="active" text="Ativo" />
-                <SelectItem value="inactive" text="Inativo" />
-              </Select>
-              <TextInput
-                id="edit_password"
-                labelText="Nova senha (opcional)"
-                helperText="Se preenchida, as sessões ativas serão encerradas."
+                <MenuItem value="user">Usuário</MenuItem>
+                <MenuItem value="admin">Administrador</MenuItem>
+              </TextField>
+              <TextField
+                id="new_user_password"
+                label="Senha provisória"
+                helperText={createErrors.password ?? 'O usuário deverá trocá-la no primeiro acesso.'}
                 type="password"
-                value={editForm.password}
-                onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
-                invalid={!!editErrors.password}
-                invalidText={editErrors.password}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                error={!!createErrors.password}
+                fullWidth
               />
-              <TextInput
-                id="edit_confirm_password"
-                labelText="Confirmar nova senha"
+              <TextField
+                id="new_user_confirm"
+                label="Confirmar senha"
                 type="password"
-                value={editForm.confirmPassword}
-                onChange={(e) => setEditForm({ ...editForm, confirmPassword: e.target.value })}
-                invalid={!!editErrors.confirmPassword}
-                invalidText={editErrors.confirmPassword}
-              />
-              <Checkbox
-                id="edit_must_change"
-                labelText="Exigir troca de senha no próximo acesso"
-                checked={editForm.mustChangePassword}
-                onChange={(_, { checked }) =>
-                  setEditForm({ ...editForm, mustChangePassword: checked })
-                }
+                value={newConfirm}
+                onChange={(e) => setNewConfirm(e.target.value)}
+                error={!!createErrors.confirmPassword}
+                helperText={createErrors.confirmPassword}
+                fullWidth
               />
             </Stack>
-          </Form>
-        )}
-      </Modal>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCreateOpen(false)}>Cancelar</Button>
+          <Button variant="contained" disabled={creating} onClick={() => void handleCreate()}>
+            Criar usuário
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-      <Modal
-        open={!!pendingDelete}
-        modalHeading="Remover usuário"
-        danger
-        primaryButtonText="Remover"
-        secondaryButtonText="Cancelar"
-        onRequestClose={() => setPendingDelete(null)}
-        onRequestSubmit={() => void handleConfirmDelete()}
-      >
-        <p>
-          Tem certeza que deseja remover o usuário <strong>{pendingDelete?.username}</strong>? Esta
-          ação não pode ser desfeita.
-        </p>
-      </Modal>
+      <Dialog open={!!editForm} onClose={() => setEditForm(null)} maxWidth="sm" fullWidth>
+        <DialogTitle>{editForm ? `Editar "${editForm.user.username}"` : ''}</DialogTitle>
+        <DialogContent>
+          {editForm && (
+            <Box component="form" noValidate sx={{ mt: 1 }}>
+              <Stack spacing={2.5}>
+                <TextField
+                  id="edit_username"
+                  label="Usuário"
+                  value={editForm.username}
+                  onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+                  error={!!editErrors.username}
+                  helperText={editErrors.username}
+                  fullWidth
+                />
+                <TextField
+                  id="edit_role"
+                  select
+                  label="Papel"
+                  disabled={editForm.user.username === currentUsername}
+                  helperText={
+                    editForm.user.username === currentUsername
+                      ? 'Você não pode alterar o seu próprio papel.'
+                      : undefined
+                  }
+                  value={editForm.role}
+                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value as UserRole })}
+                  fullWidth
+                >
+                  <MenuItem value="user">Usuário</MenuItem>
+                  <MenuItem value="admin">Administrador</MenuItem>
+                </TextField>
+                <TextField
+                  id="edit_status"
+                  select
+                  label="Situação"
+                  disabled={editForm.user.username === currentUsername}
+                  helperText={
+                    editForm.user.username === currentUsername
+                      ? 'Você não pode alterar o seu próprio status.'
+                      : 'Inativar encerra as sessões ativas do usuário.'
+                  }
+                  value={editForm.status}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, status: e.target.value as UserStatus })
+                  }
+                  fullWidth
+                >
+                  <MenuItem value="active">Ativo</MenuItem>
+                  <MenuItem value="inactive">Inativo</MenuItem>
+                </TextField>
+                <TextField
+                  id="edit_password"
+                  label="Nova senha (opcional)"
+                  helperText={editErrors.password ?? 'Se preenchida, as sessões ativas serão encerradas.'}
+                  type="password"
+                  value={editForm.password}
+                  onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                  error={!!editErrors.password}
+                  fullWidth
+                />
+                <TextField
+                  id="edit_confirm_password"
+                  label="Confirmar nova senha"
+                  type="password"
+                  value={editForm.confirmPassword}
+                  onChange={(e) => setEditForm({ ...editForm, confirmPassword: e.target.value })}
+                  error={!!editErrors.confirmPassword}
+                  helperText={editErrors.confirmPassword}
+                  fullWidth
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={editForm.mustChangePassword}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, mustChangePassword: e.target.checked })
+                      }
+                    />
+                  }
+                  label="Exigir troca de senha no próximo acesso"
+                />
+              </Stack>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditForm(null)}>Cancelar</Button>
+          <Button variant="contained" disabled={saving} onClick={() => void handleSaveEdit()}>
+            Salvar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={!!pendingDelete} onClose={() => setPendingDelete(null)} maxWidth="sm" fullWidth>
+        <DialogTitle>Remover usuário</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Tem certeza que deseja remover o usuário <strong>{pendingDelete?.username}</strong>? Esta
+            ação não pode ser desfeita.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPendingDelete(null)}>Cancelar</Button>
+          <Button color="error" variant="contained" onClick={() => void handleConfirmDelete()}>
+            Remover
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

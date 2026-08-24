@@ -1,17 +1,18 @@
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import {
-  Table,
-  TableHead,
-  TableRow,
-  TableHeader,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableToolbar,
-  TableToolbarContent,
-  TableToolbarSearch,
-} from '@carbon/react';
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import TableSortLabel from '@mui/material/TableSortLabel';
+import TextField from '@mui/material/TextField';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
 
 export interface AdminColumn<T> {
   key: string;
@@ -90,37 +91,57 @@ export function AdminTable<T>({
   const searchedOut = rows.length > 0 && sorted.length === 0;
 
   return (
-    <TableContainer title={title} description={description}>
-      <TableToolbar>
-        <TableToolbarContent>
+    <TableContainer component={Paper} variant="outlined">
+      {(searchFields || toolbarExtra) && (
+        <Toolbar sx={{ px: { xs: 2, sm: 3 }, py: 1.5, gap: 2, flexWrap: 'wrap' }}>
+          <Stack sx={{ flexGrow: 1 }}>
+            <Typography variant="h6" component="div" fontSize="1rem" fontWeight={600}>
+              {title}
+            </Typography>
+            {description && (
+              <Typography variant="body2" color="text.secondary">
+                {description}
+              </Typography>
+            )}
+          </Stack>
           {searchFields && (
-            <TableToolbarSearch
+            <TextField
+              size="small"
               placeholder={searchPlaceholder}
-              onChange={(e) => setQuery(e === '' ? '' : e.target.value)}
-              persistent
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              sx={{ width: { xs: '100%', sm: 300 } }}
             />
           )}
           {toolbarExtra}
-        </TableToolbarContent>
-      </TableToolbar>
-      <Table size="lg">
+        </Toolbar>
+      )}
+      <Table size="medium">
         <TableHead>
           <TableRow>
             {columns.map((column) => (
-              <TableHeader
+              <TableCell
                 key={column.key}
-                isSortable={!!column.sortable}
-                sortDirection={sortKey === column.key ? (sortAsc ? 'ASC' : 'DESC') : 'NONE'}
-                onClick={() => toggleSort(column)}
+                sortDirection={sortKey === column.key ? (sortAsc ? 'asc' : 'desc') : false}
               >
-                {column.header}
-              </TableHeader>
+                {column.sortable ? (
+                  <TableSortLabel
+                    active={sortKey === column.key}
+                    direction={sortKey === column.key && !sortAsc ? 'desc' : 'asc'}
+                    onClick={() => toggleSort(column)}
+                  >
+                    {column.header}
+                  </TableSortLabel>
+                ) : (
+                  column.header
+                )}
+              </TableCell>
             ))}
           </TableRow>
         </TableHead>
         <TableBody>
           {sorted.map((row) => (
-            <TableRow key={getRowKey(row)}>
+            <TableRow key={getRowKey(row)} hover>
               {columns.map((column) => (
                 <TableCell key={column.key}>
                   {column.render
@@ -133,8 +154,8 @@ export function AdminTable<T>({
           ))}
           {(sorted.length === 0 || searchedOut) && (
             <TableRow>
-              <TableCell colSpan={columns.length} style={{ textAlign: 'center', padding: '2rem' }}>
-                {searchedOut ? 'Nenhum resultado para a busca.' : emptyMessage}
+              <TableCell colSpan={columns.length} align="center" sx={{ py: 6 }}>
+                <Box>{searchedOut ? 'Nenhum resultado para a busca.' : emptyMessage}</Box>
               </TableCell>
             </TableRow>
           )}

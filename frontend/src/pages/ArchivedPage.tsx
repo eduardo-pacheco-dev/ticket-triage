@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Button, InlineNotification, Loading, Pagination, Tag } from '@carbon/react';
-import { Restart } from '@carbon/icons-react';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
+import Paper from '@mui/material/Paper';
+import TablePagination from '@mui/material/TablePagination';
+import RestartIcon from '@mui/icons-material/RotateLeftOutlined';
 import { AdminTable } from '../components/AdminTable';
 import type { AdminColumn } from '../components/AdminTable';
 import { fetchArchivedQueue, updateStatus } from '../lib/api';
@@ -8,7 +14,7 @@ import { useQueueEvents } from '../hooks/useQueueEvents';
 import { statusLabel } from '../lib/types';
 import type { QueueEntry } from '../lib/types';
 import { slaLabel } from '../lib/duration';
-import { statusTagType } from '../lib/status';
+import { statusChipColor } from '../lib/status';
 
 function formatDate(iso: string | Date) {
   return new Date(iso).toLocaleString('pt-BR');
@@ -56,6 +62,21 @@ export default function ArchivedPage() {
     }
   }
 
+  function handleChangePage(_event: unknown, newPage: number) {
+    if (newPage + 1 === page) return;
+    setLoading(true);
+    setPage(newPage + 1);
+    void load(newPage + 1, pageSize).finally(() => setLoading(false));
+  }
+
+  function handleChangeRowsPerPage(event: React.ChangeEvent<HTMLInputElement>) {
+    const nextSize = parseInt(event.target.value, 10);
+    setLoading(true);
+    setPage(1);
+    setPageSize(nextSize);
+    void load(1, nextSize).finally(() => setLoading(false));
+  }
+
   const columns: AdminColumn<QueueEntry>[] = [
     {
       key: 'protocol',
@@ -77,9 +98,7 @@ export default function ArchivedPage() {
       key: 'status',
       header: 'Status',
       render: (row) => (
-        <Tag type={statusTagType[row.status]} size="sm">
-          {statusLabel[row.status]}
-        </Tag>
+        <Chip size="small" color={statusChipColor[row.status]} label={statusLabel[row.status]} />
       ),
     },
     {
@@ -102,9 +121,8 @@ export default function ArchivedPage() {
       header: 'Ações',
       render: (row) => (
         <Button
-          size="sm"
-          kind="ghost"
-          renderIcon={Restart}
+          size="small"
+          startIcon={<RestartIcon />}
           disabled={!!pending[row.id]}
           onClick={() => void handleReopen(row.id)}
         >
@@ -126,19 +144,15 @@ export default function ArchivedPage() {
       </div>
 
       {error && (
-        <InlineNotification
-          kind="error"
-          lowContrast
-          title="Erro"
-          subtitle={error}
-          onCloseButtonClick={() => setError(null)}
-        />
+        <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
+          <strong>Erro.</strong> {error}
+        </Alert>
       )}
 
       {loading ? (
-        <div style={{ position: 'relative', minHeight: 200 }}>
-          <Loading withOverlay={false} />
-        </div>
+        <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: 200 }}>
+          <CircularProgress size={32} />
+        </Box>
       ) : (
         <>
           <AdminTable
@@ -151,21 +165,19 @@ export default function ArchivedPage() {
             searchPlaceholder="Buscar por SITE ID, técnico ou protocolo"
             emptyMessage="Nenhuma solicitação arquivada."
           />
-          <div style={{ marginTop: '1rem' }}>
-            <Pagination
-              page={page}
-              pageSize={pageSize}
-              pageSizes={[10, 20, 50]}
-              totalItems={total}
-              onChange={({ page: nextPage, pageSize: nextSize }) => {
-                if (nextPage === page && nextSize === pageSize) return;
-                setLoading(true);
-                setPage(nextPage);
-                setPageSize(nextSize);
-                void load(nextPage, nextSize).finally(() => setLoading(false));
-              }}
+          <Paper variant="outlined" sx={{ mt: 2 }}>
+            <TablePagination
+              component="div"
+              count={total}
+              page={page - 1}
+              onPageChange={handleChangePage}
+              rowsPerPage={pageSize}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={[10, 20, 50]}
+              labelRowsPerPage="Por página"
+              labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`}
             />
-          </div>
+          </Paper>
         </>
       )}
     </div>

@@ -1,21 +1,22 @@
 import { useEffect, useState } from 'react';
-import {
-  Button,
-  Form,
-  InlineNotification,
-  Loading,
-  Stack,
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
-  Tabs,
-  Tag,
-  TextInput,
-  Tile,
-  Toggle,
-} from '@carbon/react';
-import { Add, Bot, Settings, TrashCan, UserAvatar, Time } from '@carbon/icons-react';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Switch from '@mui/material/Switch';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
+import TextField from '@mui/material/TextField';
+import AddIcon from '@mui/icons-material/Add';
+import BotIcon from '@mui/icons-material/SmartToyOutlined';
+import SettingsIcon from '@mui/icons-material/SettingsOutlined';
+import TrashCanIcon from '@mui/icons-material/DeleteOutlined';
+import UserAvatarIcon from '@mui/icons-material/PersonOutlined';
+import TimeIcon from '@mui/icons-material/ScheduleOutlined';
 import {
   addRequestType,
   changePassword,
@@ -35,6 +36,22 @@ import { useAuthStore } from '../stores/auth';
 import type { RequestType } from '../lib/types';
 
 type TabKey = 'geral' | 'sla' | 'bot' | 'perfil';
+
+const TAB_KEYS: TabKey[] = ['geral', 'sla', 'bot', 'perfil'];
+
+const TAB_ICONS = {
+  geral: <SettingsIcon />,
+  sla: <TimeIcon />,
+  bot: <BotIcon />,
+  perfil: <UserAvatarIcon />,
+};
+
+const TAB_LABELS = {
+  geral: 'Geral',
+  sla: 'SLA',
+  bot: 'Bot',
+  perfil: 'Perfil',
+};
 
 function GeralTab() {
   const [types, setTypes] = useState<RequestType[]>([]);
@@ -93,63 +110,58 @@ function GeralTab() {
   return (
     <div>
       {error && (
-        <InlineNotification
-          kind="error"
-          lowContrast
-          title="Erro"
-          subtitle={error}
-          onCloseButtonClick={() => setError(null)}
-        />
+        <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
+          <strong>Erro.</strong> {error}
+        </Alert>
       )}
 
-      <Tile className="checkin-card" style={{ maxWidth: '100%', marginTop: 0 }}>
+      <Paper variant="outlined" className="checkin-card" sx={{ maxWidth: '100%', mt: 0 }}>
         <h2 style={{ fontSize: '1.125rem', margin: '0 0 1rem', fontWeight: 500 }}>
           Novo tipo de solicitação
         </h2>
-        <Form onSubmit={handleAdd}>
+        <Box component="form" onSubmit={handleAdd} noValidate>
           <div className="config-add-row">
-            <TextInput
+            <TextField
               id="new_type"
-              labelText="Nome do tipo"
+              label="Nome do tipo"
               placeholder="Ex.: Vistoria Técnica"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              invalid={!!fieldErrors.name}
-              invalidText={fieldErrors.name}
+              error={!!fieldErrors.name}
+              helperText={fieldErrors.name}
+              sx={{ flex: '1 1 240px' }}
             />
-            <Button type="submit" renderIcon={Add} disabled={busy}>
+            <Button type="submit" startIcon={<AddIcon />} disabled={busy}>
               Adicionar
             </Button>
           </div>
-        </Form>
-      </Tile>
+        </Box>
+      </Paper>
 
-      <Tile className="checkin-card" style={{ maxWidth: '100%', marginTop: '1rem' }}>
+      <Paper variant="outlined" className="checkin-card" sx={{ maxWidth: '100%', mt: 2 }}>
         <h2 style={{ fontSize: '1.125rem', margin: '0 0 1rem', fontWeight: 500 }}>
           Tipos cadastrados
         </h2>
         {loading ? (
-          <div style={{ position: 'relative', minHeight: 100 }}>
-            <Loading withOverlay={false} />
-          </div>
+          <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: 100 }}>
+            <CircularProgress size={28} />
+          </Box>
         ) : types.length === 0 ? (
           <p className="muted">Nenhum tipo cadastrado.</p>
         ) : (
-          <Stack gap={3}>
+          <Stack spacing={1.5}>
             {types.map((t) => (
               <div key={t.id} className="type-row">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <Tag type="blue" size="sm">
-                    {t.name}
-                  </Tag>
+                  <Chip size="small" color="primary" label={t.name} />
                   <span className="muted" style={{ fontSize: '0.75rem' }}>
                     Adicionado em {new Date(t.created_at).toLocaleDateString('pt-BR')}
                   </span>
                 </div>
                 <Button
-                  kind="danger--ghost"
-                  size="sm"
-                  renderIcon={TrashCan}
+                  color="error"
+                  size="small"
+                  startIcon={<TrashCanIcon />}
                   onClick={() => void handleDelete(t.id)}
                 >
                   Remover
@@ -158,7 +170,7 @@ function GeralTab() {
             ))}
           </Stack>
         )}
-      </Tile>
+      </Paper>
     </div>
   );
 }
@@ -211,64 +223,62 @@ function SlaTab() {
     }
   }
 
-  if (!loaded && !error) return <Loading withOverlay={false} />;
+  if (!loaded && !error)
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: 100 }}>
+        <CircularProgress size={28} />
+      </Box>
+    );
 
   return (
     <div>
       {error && (
-        <InlineNotification
-          kind="error"
-          lowContrast
-          title="Erro"
-          subtitle={error}
-          onCloseButtonClick={() => setError(null)}
-        />
+        <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
+          <strong>Erro.</strong> {error}
+        </Alert>
       )}
       {success && (
-        <InlineNotification
-          kind="success"
-          lowContrast
-          title="Configuração salva!"
-          hideCloseButton
-        />
+        <Alert severity="success" variant="outlined" sx={{ mb: 2 }}>
+          Configuração salva!
+        </Alert>
       )}
 
-      <Tile className="checkin-card" style={{ maxWidth: '100%', marginTop: 0 }}>
+      <Paper variant="outlined" className="checkin-card" sx={{ maxWidth: '100%', mt: 0 }}>
         <h2 style={{ fontSize: '1.125rem', margin: '0 0 1rem', fontWeight: 500 }}>
           Metas de SLA (minutos)
         </h2>
-        <Form onSubmit={handleSubmit}>
-          <Stack gap={6}>
-            <TextInput
+        <Box component="form" onSubmit={handleSubmit} noValidate>
+          <Stack spacing={3}>
+            <TextField
               id="expected_wait"
-              labelText="Tempo máximo de espera (min)"
+              label="Tempo máximo de espera (min)"
               type="number"
               value={waitMin}
               onChange={(e) => setWaitMin(e.target.value)}
-              invalid={!!fieldErrors.expectedWaitMin}
-              invalidText={fieldErrors.expectedWaitMin}
+              error={!!fieldErrors.expectedWaitMin}
+              helperText={fieldErrors.expectedWaitMin}
               required
-              min={1}
-              max={1440}
+              slotProps={{ htmlInput: { min: 1, max: 1440 } }}
+              fullWidth
             />
-            <TextInput
+            <TextField
               id="expected_service"
-              labelText="Tempo máximo de atendimento (min)"
+              label="Tempo máximo de atendimento (min)"
               type="number"
               value={serviceMin}
               onChange={(e) => setServiceMin(e.target.value)}
-              invalid={!!fieldErrors.expectedServiceMin}
-              invalidText={fieldErrors.expectedServiceMin}
+              error={!!fieldErrors.expectedServiceMin}
+              helperText={fieldErrors.expectedServiceMin}
               required
-              min={1}
-              max={1440}
+              slotProps={{ htmlInput: { min: 1, max: 1440 } }}
+              fullWidth
             />
             <Button type="submit" disabled={busy}>
               {busy ? 'Salvando...' : 'Salvar'}
             </Button>
           </Stack>
-        </Form>
-      </Tile>
+        </Box>
+      </Paper>
     </div>
   );
 }
@@ -345,7 +355,12 @@ function BotTab() {
     }
   }
 
-  if (loading) return <Loading withOverlay={false} />;
+  if (loading)
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: 100 }}>
+        <CircularProgress size={28} />
+      </Box>
+    );
 
   const tagText = !status?.tokenMasked
     ? 'Inativo'
@@ -354,35 +369,26 @@ function BotTab() {
       : status.configured
         ? 'Ativo'
         : 'Aguardando inscrição';
-  const tagKind = tagText === 'Ativo' ? 'green' : tagText === 'Pausado' ? 'teal' : 'gray';
+  const chipColor =
+    tagText === 'Ativo' ? 'success' : tagText === 'Pausado' ? 'warning' : 'default';
 
   return (
     <div>
       {error && (
-        <InlineNotification
-          kind="error"
-          lowContrast
-          title="Erro"
-          subtitle={error}
-          onCloseButtonClick={() => setError(null)}
-        />
+        <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
+          <strong>Erro.</strong> {error}
+        </Alert>
       )}
       {success && (
-        <InlineNotification
-          kind="success"
-          lowContrast
-          title="Sucesso"
-          subtitle={success}
-          onCloseButtonClick={() => setSuccess(null)}
-        />
+        <Alert severity="success" onClose={() => setSuccess(null)} sx={{ mb: 2 }}>
+          {success}
+        </Alert>
       )}
 
-      <Tile className="checkin-card" style={{ maxWidth: '100%', marginTop: 0 }}>
+      <Paper variant="outlined" className="checkin-card" sx={{ maxWidth: '100%', mt: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
           <h2 style={{ fontSize: '1.125rem', margin: 0, fontWeight: 500 }}>Bot do Telegram</h2>
-          <Tag type={tagKind} size="sm">
-            {tagText}
-          </Tag>
+          <Chip size="small" color={chipColor} label={tagText} />
           {status?.tokenMasked && (
             <span className="muted" style={{ fontSize: '0.75rem' }}>
               Token: {status.tokenMasked}
@@ -394,34 +400,40 @@ function BotTab() {
             </span>
           )}
         </div>
-        <Toggle
-          id="bot_polling"
-          labelText="Receber eventos (long polling)"
-          labelA="Desligado"
-          labelB="Ligado"
-          toggled={status?.polling ?? false}
-          disabled={busy || !status?.tokenMasked}
-          onToggle={(next) => void handleTogglePolling(next)}
-          style={{ marginBottom: '1.5rem' }}
+        <FormControlLabel
+          sx={{ mb: 3 }}
+          control={
+            <Switch
+              id="bot_polling"
+              checked={status?.polling ?? false}
+              disabled={busy || !status?.tokenMasked}
+              onChange={(e) => void handleTogglePolling(e.target.checked)}
+            />
+          }
+          label="Receber eventos (long polling)"
         />
-        <Form onSubmit={handleSave}>
-          <Stack gap={6}>
-            <TextInput
+        <Box component="form" onSubmit={handleSave} noValidate>
+          <Stack spacing={3}>
+            <TextField
               id="bot_token"
-              labelText={status?.tokenMasked ? 'Novo token (deixe vazio para manter)' : 'Token do @BotFather'}
+              label={
+                status?.tokenMasked ? 'Novo token (deixe vazio para manter)' : 'Token do @BotFather'
+              }
               type="password"
               placeholder="Ex.: 123456789:AA..."
               value={token}
               onChange={(e) => setToken(e.target.value)}
               autoComplete="off"
+              fullWidth
             />
-            <TextInput
+            <TextField
               id="bot_chat"
-              labelText="Chat ID fixo adicional (opcional)"
+              label="Chat ID fixo adicional (opcional)"
               placeholder="Ex.: -1001234567890"
               value={chatId}
               onChange={(e) => setChatId(e.target.value)}
               autoComplete="off"
+              fullWidth
             />
             <p className="muted" style={{ fontSize: '0.8125rem', margin: 0 }}>
               Como inscrever chats: adicione o bot ao grupo ou mande <strong>/start</strong> no privado —
@@ -433,7 +445,7 @@ function BotTab() {
               </Button>
               <Button
                 type="button"
-                kind="secondary"
+                variant="outlined"
                 disabled={busy || !status?.configured}
                 onClick={() => void handleTest()}
               >
@@ -441,16 +453,16 @@ function BotTab() {
               </Button>
             </div>
           </Stack>
-        </Form>
-      </Tile>
+        </Box>
+      </Paper>
 
-      <Tile className="checkin-card" style={{ maxWidth: '100%', marginTop: '1rem' }}>
+      <Paper variant="outlined" className="checkin-card" sx={{ maxWidth: '100%', mt: 2 }}>
         <h2 style={{ fontSize: '1.125rem', margin: '0 0 0.5rem', fontWeight: 500 }}>O que o bot envia</h2>
         <p className="muted" style={{ margin: 0 }}>
           Novos check-ins e mudanças de status das solicitações (análise iniciada, aprovada, recusada,
           reaberta), com protocolo e dados da unidade — entregues a todos os chats inscritos.
         </p>
-      </Tile>
+      </Paper>
     </div>
   );
 }
@@ -503,84 +515,75 @@ function PerfilTab() {
   return (
     <div>
       {mustChangePassword && (
-        <InlineNotification
-          kind="warning"
-          lowContrast
-          hideCloseButton
-          title="Troca de senha obrigatória"
-          subtitle="Por segurança, defina uma nova senha antes de usar o painel."
-          style={{ marginBottom: '1rem' }}
-        />
+        <Alert severity="warning" variant="outlined" sx={{ mb: 2 }}>
+          <strong>Troca de senha obrigatória.</strong> Por segurança, defina uma nova senha antes de
+          usar o painel.
+        </Alert>
       )}
       {error && (
-        <InlineNotification
-          kind="error"
-          lowContrast
-          title="Erro"
-          subtitle={error}
-          onCloseButtonClick={() => setError(null)}
-        />
+        <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
+          <strong>Erro.</strong> {error}
+        </Alert>
       )}
       {success && (
-        <InlineNotification
-          kind="success"
-          lowContrast
-          title="Senha alterada com sucesso!"
-          hideCloseButton
-        />
+        <Alert severity="success" variant="outlined" sx={{ mb: 2 }}>
+          Senha alterada com sucesso!
+        </Alert>
       )}
 
-      <Tile className="checkin-card" style={{ maxWidth: '100%', marginTop: 0 }}>
+      <Paper variant="outlined" className="checkin-card" sx={{ maxWidth: '100%', mt: 0 }}>
         <h2 style={{ fontSize: '1.125rem', margin: '0 0 1rem', fontWeight: 500 }}>Alterar senha</h2>
-        <Form onSubmit={handleSubmit}>
-          <Stack gap={6}>
-            <TextInput
+        <Box component="form" onSubmit={handleSubmit} noValidate>
+          <Stack spacing={3}>
+            <TextField
               id="current_password"
-              labelText="Senha atual"
+              label="Senha atual"
               type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              invalid={!!fieldErrors.currentPassword}
-              invalidText={fieldErrors.currentPassword}
+              error={!!fieldErrors.currentPassword}
+              helperText={fieldErrors.currentPassword}
               required
               autoComplete="current-password"
+              fullWidth
             />
-            <TextInput
+            <TextField
               id="new_password"
-              labelText="Nova senha"
+              label="Nova senha"
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              invalid={!!fieldErrors.newPassword}
-              invalidText={fieldErrors.newPassword}
+              error={!!fieldErrors.newPassword}
+              helperText={fieldErrors.newPassword}
               required
-              minLength={6}
+              slotProps={{ htmlInput: { minLength: 6 } }}
               autoComplete="new-password"
+              fullWidth
             />
-            <TextInput
+            <TextField
               id="confirm_password"
-              labelText="Confirmar nova senha"
+              label="Confirmar nova senha"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              invalid={!!fieldErrors.confirmPassword}
-              invalidText={fieldErrors.confirmPassword}
+              error={!!fieldErrors.confirmPassword}
+              helperText={fieldErrors.confirmPassword}
               required
               autoComplete="new-password"
+              fullWidth
             />
             <Button type="submit" disabled={busy}>
               {busy ? 'Salvando...' : 'Salvar senha'}
             </Button>
           </Stack>
-        </Form>
-      </Tile>
+        </Box>
+      </Paper>
     </div>
   );
 }
 
 export default function ConfigPage() {
   const mustChangePassword = useAuthStore((s) => s.mustChangePassword);
-  const defaultIndex = mustChangePassword ? 3 : 0;
   const [tab, setTab] = useState<TabKey>(mustChangePassword ? 'perfil' : 'geral');
 
   return (
@@ -593,44 +596,37 @@ export default function ConfigPage() {
       </div>
 
       {mustChangePassword && tab !== 'perfil' && (
-        <InlineNotification
-          kind="warning"
-          lowContrast
-          hideCloseButton
-          title="Troca de senha obrigatória"
-          subtitle="Abra a aba Perfil para definir uma nova senha."
-        >
-          <Button size="sm" kind="ghost" onClick={() => setTab('perfil')}>
-            Ir para o perfil
-          </Button>
-        </InlineNotification>
+        <Alert severity="warning" variant="outlined" sx={{ mb: 2 }}>
+          <strong>Troca de senha obrigatória.</strong> Abra a aba Perfil para definir uma nova senha.
+          <Box sx={{ mt: 1 }}>
+            <Button size="small" onClick={() => setTab('perfil')}>
+              Ir para o perfil
+            </Button>
+          </Box>
+        </Alert>
       )}
 
       <Tabs
-        defaultSelectedIndex={defaultIndex}
-        onChange={(state) => setTab((['geral', 'sla', 'bot', 'perfil'] as const)[state.selectedIndex])}
+        value={tab}
+        onChange={(_, next: TabKey) => setTab(next)}
+        aria-label="Configurações"
+        sx={{ mb: 2 }}
       >
-        <TabList aria-label="Configurações">
-          <Tab renderIcon={Settings}>Geral</Tab>
-          <Tab renderIcon={Time}>SLA</Tab>
-          <Tab renderIcon={Bot}>Bot</Tab>
-          <Tab renderIcon={UserAvatar}>Perfil</Tab>
-        </TabList>
-        <TabPanels>
-          <TabPanel>
-            <GeralTab />
-          </TabPanel>
-          <TabPanel>
-            <SlaTab />
-          </TabPanel>
-          <TabPanel>
-            <BotTab />
-          </TabPanel>
-          <TabPanel>
-            <PerfilTab />
-          </TabPanel>
-        </TabPanels>
+        {TAB_KEYS.map((key) => (
+          <Tab
+            key={key}
+            value={key}
+            icon={TAB_ICONS[key]}
+            iconPosition="start"
+            label={TAB_LABELS[key]}
+          />
+        ))}
       </Tabs>
+
+      {tab === 'geral' && <GeralTab />}
+      {tab === 'sla' && <SlaTab />}
+      {tab === 'bot' && <BotTab />}
+      {tab === 'perfil' && <PerfilTab />}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Logout as LogoutIcon, Settings } from '@carbon/icons-react';
+import SettingsIcon from '@mui/icons-material/SettingsOutlined';
+import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuthStore } from '../stores/auth';
 
 function initials(username: string): string {
@@ -74,11 +75,11 @@ export function UserMenu() {
               navigate('/admin/configuracoes');
             }}
           >
-            <Settings size={16} />
+            <SettingsIcon sx={{ fontSize: 16 }} />
             Configurações
           </button>
           <button type="button" className="user-panel-item" onClick={handleLogout}>
-            <LogoutIcon size={16} />
+            <LogoutIcon sx={{ fontSize: 16 }} />
             Sair
           </button>
         </div>

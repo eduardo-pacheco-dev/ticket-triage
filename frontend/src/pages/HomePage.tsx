@@ -1,20 +1,24 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Form,
-  Stack,
-  TextInput,
-  Button,
-  InlineNotification,
-  Tile,
-  Tag,
-  ComboBox,
-  Checkbox,
-  Modal,
-  Grid,
-  Column,
-} from '@carbon/react';
-import { ArrowRight, Restart, Search } from '@carbon/icons-react';
+import Autocomplete from '@mui/material/Autocomplete';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import Chip from '@mui/material/Chip';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import Alert from '@mui/material/Alert';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Grid from '@mui/material/Grid';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
+import ArrowRightIcon from '@mui/icons-material/ArrowForward';
+import RestartIcon from '@mui/icons-material/RotateLeftOutlined';
+import SearchIcon from '@mui/icons-material/Search';
 import { PublicHeader } from '../components/PublicHeader';
 import { createCheckIn, fetchRequestTypes } from '../lib/api';
 import { useQueueEvents } from '../hooks/useQueueEvents';
@@ -104,9 +108,9 @@ export default function HomePage() {
     <div className="app-shell">
       <PublicHeader />
       <main className="app-main">
-        <Grid narrow>
-          <Column sm={4} md={8} lg={8}>
-            <Tile className="checkin-card">
+        <Grid container spacing={4} justifyContent="center">
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Paper className="checkin-card">
               <h1 className="checkin-title">Solicitar Avaliação</h1>
               <p className="checkin-subtitle">
                 Preencha os dados abaixo para entrar na fila de análise. Um número de protocolo será
@@ -114,68 +118,81 @@ export default function HomePage() {
               </p>
 
               {!entry ? (
-                <Form onSubmit={handleSubmit}>
-                  <Stack gap={6}>
+                <Box component="form" onSubmit={handleSubmit} noValidate>
+                  <Stack spacing={3}>
                     {error && (
-                      <InlineNotification
-                        kind="error"
-                        lowContrast
-                        title="Não foi possível prosseguir"
-                        subtitle={error}
-                        hideCloseButton
-                      />
+                      <Alert severity="error" variant="outlined">
+                        <strong>Não foi possível prosseguir.</strong> {error}
+                      </Alert>
                     )}
-                    <TextInput
+                    <TextField
                       id="site_id"
-                      labelText="SITE ID"
+                      label="SITE ID"
                       placeholder="Ex.: SITE-0421"
                       value={siteId}
                       onChange={(e) => setSiteId(e.target.value.toUpperCase())}
-                      invalid={!!fieldErrors.site_id}
-                      invalidText={fieldErrors.site_id}
+                      error={!!fieldErrors.site_id}
+                      helperText={fieldErrors.site_id}
                       required
+                      fullWidth
                     />
-                    <TextInput
+                    <TextField
                       id="technician_name"
-                      labelText="Nome do Técnico"
+                      label="Nome do Técnico"
                       placeholder="Ex.: Francisco Silva"
                       value={technicianName}
                       onChange={(e) => setTechnicianName(e.target.value.toUpperCase())}
-                      invalid={!!fieldErrors.technician_name}
-                      invalidText={fieldErrors.technician_name}
+                      error={!!fieldErrors.technician_name}
+                      helperText={fieldErrors.technician_name}
                       required
+                      fullWidth
                     />
-                    <ComboBox
+                    <Autocomplete
                       id="request_type"
-                      titleText="Tipo de Solicitação"
-                      placeholder="Selecione um tipo"
-                      items={types}
-                      itemToString={(item: RequestType | null) => (item ? item.name : '')}
-                      selectedItem={requestType}
-                      onChange={({ selectedItem }) => setRequestType(selectedItem ?? null)}
-                      invalid={!!fieldErrors.request_type}
-                      invalidText={fieldErrors.request_type ?? 'Selecione um tipo da lista'}
+                      options={types}
+                      getOptionKey={(option) => option.id}
+                      getOptionLabel={(option: RequestType) => option.name}
+                      value={requestType}
+                      onChange={(_, newValue) => setRequestType(newValue ?? null)}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Tipo de Solicitação"
+                          placeholder="Selecione um tipo"
+                          error={!!fieldErrors.request_type}
+                          helperText={
+                            fieldErrors.request_type ?? 'Selecione um tipo da lista'
+                          }
+                        />
+                      )}
                     />
-                    <Checkbox
-                      id="checkin_confirm"
-                      labelText="Realizado Check-in e QCP3"
-                      checked={checkedIn}
-                      onChange={(_, { checked }) => setCheckedIn(checked)}
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          id="checkin_confirm"
+                          checked={checkedIn}
+                          onChange={(e) => setCheckedIn(e.target.checked)}
+                        />
+                      }
+                      label="Realizado Check-in e QCP3"
                     />
-                    <Button type="submit" disabled={loading} renderIcon={ArrowRight} size="lg">
+                    <Button
+                      type="submit"
+                      disabled={loading}
+                      endIcon={<ArrowRightIcon />}
+                      size="large"
+                    >
                       {loading ? 'Registrando...' : 'Solicitar Avaliação'}
                     </Button>
                   </Stack>
-                </Form>
+                </Box>
               ) : (
-                <Stack gap={6}>
-                  <InlineNotification
-                    kind="success"
-                    lowContrast
-                    title="Solicitação registrada com sucesso!"
-                    subtitle="Guarde seu número de protocolo e SITE ID para acompanhamento."
-                    hideCloseButton
-                  />
+                <Stack spacing={3}>
+                  <Alert severity="success" variant="outlined">
+                    <strong>Solicitação registrada com sucesso!</strong> Guarde seu número de
+                    protocolo e SITE ID para acompanhamento.
+                  </Alert>
                   <div>
                     <div className="field-label">Protocolo</div>
                     <div className="protocol-code">#{entry.protocol}</div>
@@ -188,70 +205,69 @@ export default function HomePage() {
                   </div>
                   <div>
                     <div className="field-label">Status atual</div>
-                    <Tag type="blue" size="md">
-                      {statusLabel[entry.status]}
-                    </Tag>
+                    <Chip color="primary" label={statusLabel[entry.status]} />
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     <Button
-                      renderIcon={Search}
+                      startIcon={<SearchIcon />}
                       onClick={() => navigate(`/status/${encodeURIComponent(entry.site_id)}`)}
                     >
                       Ver acompanhamento
                     </Button>
-                    <Button kind="tertiary" renderIcon={Restart} onClick={reset}>
+                    <Button variant="outlined" startIcon={<RestartIcon />} onClick={reset}>
                       Nova solicitação
                     </Button>
-                  </div>
+                  </Box>
                 </Stack>
               )}
-            </Tile>
-          </Column>
+            </Paper>
+          </Grid>
 
-          <Column sm={4} md={8} lg={8}>
-            <Tile className="checkin-card">
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Paper className="checkin-card">
               <h2 className="checkin-title" style={{ fontSize: '1.5rem' }}>
                 Acompanhar Status
               </h2>
               <p className="checkin-subtitle">
                 Já solicitou uma avaliação? Consulte o andamento pelo SITE ID.
               </p>
-              <Form onSubmit={handleSearch}>
-                <Stack gap={6}>
-                  <TextInput
+              <Box component="form" onSubmit={handleSearch} noValidate>
+                <Stack spacing={3}>
+                  <TextField
                     id="search_site_id"
-                    labelText="SITE ID"
+                    label="SITE ID"
                     placeholder="Ex.: SITE-0421"
                     value={searchSiteId}
                     onChange={(e) => setSearchSiteId(e.target.value.toUpperCase())}
                     required
+                    fullWidth
                   />
-                  <Button type="submit" kind="secondary" renderIcon={Search} size="lg">
+                  <Button type="submit" variant="outlined" startIcon={<SearchIcon />} size="large">
                     Buscar Status
                   </Button>
                 </Stack>
-              </Form>
-            </Tile>
-          </Column>
+              </Box>
+            </Paper>
+          </Grid>
         </Grid>
       </main>
 
-      <Modal
-        open={showModal}
-        onRequestClose={() => setShowModal(false)}
-        modalHeading="Check-in obrigatório"
-        primaryButtonText="Entendi"
-        onRequestSubmit={() => setShowModal(false)}
-      >
-        <p style={{ marginBottom: '1rem' }}>
-          É necessário realizar o <strong>Check-in</strong> e o <strong>QCP3</strong> antes de
-          solicitar a avaliação.
-        </p>
-        <p style={{ color: '#525252', fontSize: '0.875rem' }}>
-          Certifique-se de que ambos os procedimentos foram concluídos e marque a opção no
-          formulário.
-        </p>
-      </Modal>
+      <Dialog open={showModal} onClose={() => setShowModal(false)}>
+        <DialogTitle>Check-in obrigatório</DialogTitle>
+        <DialogContent>
+          <p style={{ marginBottom: '1rem' }}>
+            É necessário realizar o <strong>Check-in</strong> e o <strong>QCP3</strong> antes de
+            solicitar a avaliação.
+          </p>
+          <DialogContentText sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+            Certifique-se de que ambos os procedimentos foram concluídos e marque a opção no
+            formulário.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowModal(false)}>Entendi</Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

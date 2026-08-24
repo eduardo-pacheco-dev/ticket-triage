@@ -1,6 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, InlineNotification, Loading, Modal, Tag } from '@carbon/react';
-import { CheckmarkFilled, CloseFilled, PlayFilledAlt } from '@carbon/icons-react';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import CheckCircleIcon from '@mui/icons-material/CheckCircleOutlined';
+import CancelIcon from '@mui/icons-material/CancelOutlined';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { AdminTable } from '../components/AdminTable';
 import type { AdminColumn } from '../components/AdminTable';
 import { fetchActiveQueue, updateStatus } from '../lib/api';
@@ -10,7 +21,7 @@ import { showDesktopNotification } from '../lib/notifications';
 import { statusLabel } from '../lib/types';
 import type { QueueEntry, QueueStatus } from '../lib/types';
 import { formatEntryTime, slaLabel } from '../lib/duration';
-import { statusTagType } from '../lib/status';
+import { statusChipColor } from '../lib/status';
 
 function waitMinutes(entry: QueueEntry): number {
   const start = new Date(entry.created_at).getTime();
@@ -124,9 +135,7 @@ export default function AdminQueuePage() {
       key: 'status',
       header: 'Status',
       render: (row) => (
-        <Tag type={statusTagType[row.status]} size="sm">
-          {statusLabel[row.status]}
-        </Tag>
+        <Chip size="small" color={statusChipColor[row.status]} label={statusLabel[row.status]} />
       ),
     },
     {
@@ -137,9 +146,9 @@ export default function AdminQueuePage() {
         if (row.status === 'waiting') {
           return (
             <Button
-              size="sm"
-              kind="primary"
-              renderIcon={PlayFilledAlt}
+              size="small"
+              variant="contained"
+              startIcon={<PlayArrowIcon />}
               disabled={busy}
               onClick={() => void handleUpdate(row.id, 'in_review')}
             >
@@ -149,26 +158,27 @@ export default function AdminQueuePage() {
         }
         if (row.status === 'in_review') {
           return (
-            <div className="row-actions">
+            <Box className="row-actions">
               <Button
-                size="sm"
-                kind="primary"
-                renderIcon={CheckmarkFilled}
+                size="small"
+                variant="contained"
+                startIcon={<CheckCircleIcon />}
                 disabled={busy}
                 onClick={() => void handleUpdate(row.id, 'approved')}
               >
                 Concluir
               </Button>
               <Button
-                size="sm"
-                kind="danger--tertiary"
-                renderIcon={CloseFilled}
+                size="small"
+                variant="outlined"
+                color="error"
+                startIcon={<CancelIcon />}
                 disabled={busy}
                 onClick={() => setRejectTarget(row)}
               >
                 Recusar
               </Button>
-            </div>
+            </Box>
           );
         }
         return <span className="muted">-</span>;
@@ -186,29 +196,21 @@ export default function AdminQueuePage() {
           </p>
         </div>
         <div className="admin-chips">
-          <Tag type="gray" size="sm">
-            Aguardando: {stats.waiting}
-          </Tag>
-          <Tag type="blue" size="sm">
-            Em análise: {stats.in_review}
-          </Tag>
+          <Chip size="small" color="default" label={`Aguardando: ${stats.waiting}`} />
+          <Chip size="small" color="primary" label={`Em análise: ${stats.in_review}`} />
         </div>
       </div>
 
       {error && (
-        <InlineNotification
-          kind="error"
-          lowContrast
-          title="Erro"
-          subtitle={error}
-          onCloseButtonClick={() => setError(null)}
-        />
+        <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
+          <strong>Erro.</strong> {error}
+        </Alert>
       )}
 
       {loading ? (
-        <div style={{ position: 'relative', minHeight: 200 }}>
-          <Loading withOverlay={false} />
-        </div>
+        <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: 200 }}>
+          <CircularProgress size={32} />
+        </Box>
       ) : (
         <AdminTable
           title="Solicitações"
@@ -222,28 +224,38 @@ export default function AdminQueuePage() {
         />
       )}
 
-      <Modal
+      <Dialog
         open={!!rejectTarget}
-        danger
-        modalHeading="Recusar solicitação"
-        primaryButtonText="Recusar"
-        secondaryButtonText="Cancelar"
-        onRequestClose={() => setRejectTarget(null)}
-        onRequestSubmit={() => {
-          const target = rejectTarget;
-          setRejectTarget(null);
-          if (target) void handleUpdate(target.id, 'rejected');
-        }}
+        onClose={() => setRejectTarget(null)}
+        maxWidth="sm"
+        fullWidth
       >
-        <p style={{ marginBottom: '0.5rem' }}>
-          Confirma recusar a solicitação <strong className="mono">#{rejectTarget?.protocol}</strong>
-          ?
-        </p>
-        <p style={{ color: 'var(--cds-text-secondary, #525252)', fontSize: '0.875rem' }}>
-          SITE ID {rejectTarget?.site_id} · técnico {rejectTarget?.technician_name}. A solicitação
-          será arquivada como recusada e poderá ser reaberta em "Arquivados".
-        </p>
-      </Modal>
+        <DialogTitle>Recusar solicitação</DialogTitle>
+        <DialogContent>
+          <DialogContentText component="div" gutterBottom>
+            Confirma recusar a solicitação{' '}
+            <strong className="mono">#{rejectTarget?.protocol}</strong>?
+          </DialogContentText>
+          <DialogContentText sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+            SITE ID {rejectTarget?.site_id} · técnico {rejectTarget?.technician_name}. A solicitação
+            será arquivada como recusada e poderá ser reaberta em "Arquivados".
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRejectTarget(null)}>Cancelar</Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={() => {
+              const target = rejectTarget;
+              setRejectTarget(null);
+              if (target) void handleUpdate(target.id, 'rejected');
+            }}
+          >
+            Recusar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

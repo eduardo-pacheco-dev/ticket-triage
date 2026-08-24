@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HeaderGlobalAction } from '@carbon/react';
-import { Notification as BellIcon } from '@carbon/icons-react';
+import Badge from '@mui/material/Badge';
+import IconButton from '@mui/material/IconButton';
+import BellIcon from '@mui/icons-material/NotificationsOutlined';
 import { fetchNotifications, markAllNotificationsRead, markNotificationRead } from '../lib/api';
 import type { AppNotification } from '../lib/types';
 import { useQueueEvents } from '../hooks/useQueueEvents';
@@ -71,18 +72,16 @@ export function NotificationsMenu() {
 
   return (
     <div className="notif-root" ref={rootRef}>
-      <HeaderGlobalAction
+      <IconButton
+        className="notif-trigger"
         aria-label="Notificações"
         aria-expanded={open}
-        tooltipAlignment="start"
-        isActive={open}
         onClick={() => setOpen((value) => !value)}
       >
-        <BellIcon size={20} />
-        {unreadCount > 0 && (
-          <span className="notif-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
-        )}
-      </HeaderGlobalAction>
+        <Badge badgeContent={unreadCount > 9 ? '9+' : unreadCount} color="error" max={Infinity} invisible={unreadCount === 0}>
+          <BellIcon />
+        </Badge>
+      </IconButton>
 
       {open && (
         <div className="notif-panel" role="dialog" aria-label="Notificações">

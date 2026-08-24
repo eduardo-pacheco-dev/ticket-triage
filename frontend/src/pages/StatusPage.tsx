@@ -1,27 +1,27 @@
 import { Link, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import {
-  Tile,
-  Tag,
-  Button,
-  InlineNotification,
-  Loading,
-  ProgressIndicator,
-  ProgressStep,
-  Stack,
-} from '@carbon/react';
-import { ArrowLeft } from '@carbon/icons-react';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Step from '@mui/material/Step';
+import StepLabel from '@mui/material/StepLabel';
+import Stepper from '@mui/material/Stepper';
+import ArrowLeftIcon from '@mui/icons-material/ArrowBack';
 import { PublicHeader } from '../components/PublicHeader';
 import { fetchBySiteId } from '../lib/api';
 import { useQueueEvents } from '../hooks/useQueueEvents';
 import { statusLabel } from '../lib/types';
 import type { PublicQueueEntry, QueueStatus } from '../lib/types';
 
-const tagType: Record<QueueStatus, 'gray' | 'blue' | 'green' | 'red'> = {
-  waiting: 'gray',
-  in_review: 'blue',
-  approved: 'green',
-  rejected: 'red',
+const chipColor: Record<QueueStatus, 'default' | 'primary' | 'success' | 'error'> = {
+  waiting: 'default',
+  in_review: 'primary',
+  approved: 'success',
+  rejected: 'error',
 };
 
 function currentStep(status: QueueStatus): number {
@@ -71,45 +71,42 @@ export default function StatusPage() {
     <div className="app-shell">
       <PublicHeader />
       <main className="app-main" style={{ maxWidth: 900 }}>
-        <div style={{ marginBottom: '1rem' }}>
-          <Link to="/">
-            <Button kind="ghost" renderIcon={ArrowLeft} size="sm">
-              Voltar
-            </Button>
-          </Link>
-        </div>
+        <Box sx={{ mb: 2 }}>
+          <Button component={Link} to="/" startIcon={<ArrowLeftIcon />} size="small">
+            Voltar
+          </Button>
+        </Box>
 
-        <Tile className="checkin-card" style={{ maxWidth: '100%' }}>
+        <Paper className="checkin-card" sx={{ maxWidth: '100%' }}>
           <div className="field-label">SITE ID</div>
           <h1 className="checkin-title mono" style={{ fontSize: '1.75rem' }}>
             {siteId}
           </h1>
 
           {loading && (
-            <div style={{ position: 'relative', minHeight: 120 }}>
-              <Loading withOverlay={false} />
-            </div>
+            <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: 120 }}>
+              <CircularProgress size={32} />
+            </Box>
           )}
 
-          {error && <InlineNotification kind="error" lowContrast title="Erro" subtitle={error} />}
+          {error && (
+            <Alert severity="error" variant="outlined" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
 
           {!loading && !latest && (
-            <InlineNotification
-              kind="info"
-              lowContrast
-              title="Nenhuma solicitação encontrada"
-              subtitle={`Não localizamos solicitações para o SITE ID "${siteId}".`}
-              hideCloseButton
-            />
+            <Alert severity="info" variant="outlined">
+              <strong>Nenhuma solicitação encontrada.</strong> Não localizamos solicitações para o
+              SITE ID "{siteId}".
+            </Alert>
           )}
 
           {latest && (
-            <Stack gap={6}>
+            <Stack spacing={3}>
               <div>
                 <div className="field-label">Status atual</div>
-                <Tag type={tagType[latest.status]} size="md">
-                  {statusLabel[latest.status]}
-                </Tag>
+                <Chip color={chipColor[latest.status]} label={statusLabel[latest.status]} />
               </div>
               {position !== null && (
                 <div>
@@ -120,17 +117,19 @@ export default function StatusPage() {
                 </div>
               )}
 
-              <ProgressIndicator currentIndex={currentStep(latest.status)} spaceEqually>
-                <ProgressStep label="Na Fila" description="Aguardando análise" />
-                <ProgressStep label="Em Análise" description="Sendo revisado" />
-                <ProgressStep
-                  label={latest.status === 'rejected' ? 'Recusado' : 'Concluído'}
-                  description={
-                    latest.status === 'rejected' ? 'Solicitação recusada' : 'Análise finalizada'
-                  }
-                  invalid={latest.status === 'rejected'}
-                />
-              </ProgressIndicator>
+              <Stepper activeStep={currentStep(latest.status)} alternativeLabel>
+                <Step>
+                  <StepLabel>Na Fila</StepLabel>
+                </Step>
+                <Step>
+                  <StepLabel>Em Análise</StepLabel>
+                </Step>
+                <Step>
+                  <StepLabel error={latest.status === 'rejected'}>
+                    {latest.status === 'rejected' ? 'Recusado' : 'Concluído'}
+                  </StepLabel>
+                </Step>
+              </Stepper>
 
               <div className="detail-grid">
                 <div>
@@ -142,22 +141,22 @@ export default function StatusPage() {
               </div>
             </Stack>
           )}
-        </Tile>
+        </Paper>
 
         {entries.length > 1 && (
-          <Tile className="checkin-card" style={{ maxWidth: '100%', marginTop: '1rem' }}>
+          <Paper className="checkin-card" sx={{ maxWidth: '100%', mt: 2 }}>
             <h2 style={{ fontSize: '1rem', margin: '0 0 1rem' }}>
               Histórico de solicitações deste SITE ID
             </h2>
-            <Stack gap={3}>
+            <Stack spacing={1.5}>
               {entries.slice(1).map((e) => (
                 <div key={e.protocol} className="history-row">
                   <span className="mono">#{e.protocol}</span>
-                  <Tag type={tagType[e.status]}>{statusLabel[e.status]}</Tag>
+                  <Chip size="small" color={chipColor[e.status]} label={statusLabel[e.status]} />
                 </div>
               ))}
             </Stack>
-          </Tile>
+          </Paper>
         )}
       </main>
     </div>
