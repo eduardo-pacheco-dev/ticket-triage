@@ -125,12 +125,18 @@ if ! command -v nginx > /dev/null 2>&1; then
   sudo apt-get update -qq
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq nginx
 fi
-sudo cp deploy/nginx.conf.example /etc/nginx/sites-available/ticket-triage
-sudo ln -sfn /etc/nginx/sites-available/ticket-triage /etc/nginx/sites-enabled/ticket-triage
+
+PORT=$(grep -E '^PORT=' backend/.env | cut -d= -f2 || true)
+PORT=${PORT:-3000}
+SITE_FILE=afl.brazil.vps-kinghost.net
+
+sed -e "s|__APP_DIR__|$APP_DIR|g" -e "s|__API_PORT__|$PORT|g" \
+  deploy/nginx.conf.example | sudo tee "/etc/nginx/sites-available/$SITE_FILE" > /dev/null
+sudo ln -sfn "/etc/nginx/sites-available/$SITE_FILE" "/etc/nginx/sites-enabled/$SITE_FILE"
 sudo rm -f /etc/nginx/sites-enabled/default
 if sudo nginx -t; then
   sudo systemctl reload nginx 2> /dev/null || sudo service nginx reload 2> /dev/null || sudo nginx -s reload
-  echo "    site 'ticket-triage' publicado para afl.vps-kinghost.net"
+  echo "    site '$SITE_FILE' publicado (estático + proxy /api → 127.0.0.1:$PORT)"
 else
   echo "::error::nginx -t falhou; nova configuração não foi aplicada."
   exit 1
@@ -142,9 +148,6 @@ pm2 startOrReload ecosystem.config.js --update-env
 pm2 save
 pm2 status
 step_done
-
-PORT=$(grep -E '^PORT=' backend/.env | cut -d= -f2 || true)
-PORT=${PORT:-3000}
 
 step "Health check (http://127.0.0.1:$PORT/api/health)"
 for i in $(seq 1 30); do

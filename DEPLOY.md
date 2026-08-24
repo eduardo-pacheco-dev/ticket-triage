@@ -51,18 +51,13 @@ bash scripts/deploy.sh $(git rev-parse HEAD)
 
 ## 4. Nginx
 
-O `deploy.sh` publica o site automaticamente a cada deploy (instala o nginx se faltar, copia
-`deploy/nginx.conf.example` → `/etc/nginx/sites-available/ticket-triage`, habilita, remove o
-site default e recarrega após validar com `nginx -t`). Requisito: usuário SSH com sudo sem senha.
+O `deploy.sh` publica o site automaticamente a cada deploy: instala o nginx se faltar, renderiza
+`deploy/nginx.conf.example` (domínio `afl.brazil.vps-kinghost.net`, porta da API lida do `.env`),
+escreve em `/etc/nginx/sites-available/afl.brazil.vps-kinghost.net`, habilita, remove o site
+default e recarrega após validar com `nginx -t`. Requisito: usuário SSH com sudo sem senha.
 
-Comandos manuais equivalentes:
-
-```bash
-sudo cp deploy/nginx.conf.example /etc/nginx/sites-available/ticket-triage
-sudo ln -sfn /etc/nginx/sites-available/ticket-triage /etc/nginx/sites-enabled/
-sudo rm -f /etc/nginx/sites-enabled/default
-sudo nginx -t && sudo systemctl reload nginx
-```
+O site serve os estáticos de `frontend/dist` (SPA) e repassa `/api/` para o PM2 mantendo o
+prefixo — sem rewrite — com buffering desligado para o SSE.
 
 HTTPS opcional: `sudo apt install certbot python3-certbot-nginx && sudo certbot --nginx`.
 

@@ -1,18 +1,15 @@
-# Exemplo de site Nginx para o Ticket Triage.
-# Copie para /etc/nginx/sites-available/ticket-triage e crie o link: sudo ln -s /etc/nginx/sites-available/ticket-triage /etc/nginx/sites-enabled/
-#
-# Frontend: arquivos estáticos de frontend/dist (SPA com fallback para index.html).
-# API: proxy para PM2 em 127.0.0.1:3000, com ajustes para SSE (/api/queue/events).
+# Site Nginx do Ticket Triage — publicado automaticamente pelo scripts/deploy.sh,
+# que substitui __APP_DIR__ e __API_PORT__ pelos valores reais da VPS.
 
 server {
     listen 80;
-    server_name afl.vps-kinghost.net;
+    server_name afl.brazil.vps-kinghost.net;
 
-    root /var/www/app/ticket-triage/frontend/dist;
+    root __APP_DIR__/frontend/dist;
     index index.html;
 
     gzip on;
-    gzip_min_length 1024;
+    gzip_min_length 256;
     gzip_types text/css application/javascript application/json image/svg+xml;
 
     # Assets do Vite têm hash no nome: cache longo é seguro.
@@ -22,9 +19,10 @@ server {
         try_files $uri =404;
     }
 
-    # API (inclui SSE: sem buffering e timeout alto para conexões longas).
+    # API no PM2 — mantém o prefixo /api (setGlobalPrefix do Nest) e ajusta
+    # buffering/timeout para o SSE (/api/queue/events).
     location /api/ {
-        proxy_pass http://127.0.0.1:3000;
+        proxy_pass http://127.0.0.1:__API_PORT__;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
