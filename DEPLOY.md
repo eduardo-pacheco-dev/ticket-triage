@@ -27,17 +27,17 @@ sudo mysql -e "CREATE USER 'app'@'localhost' IDENTIFIED BY 'SENHA_FORTE';"
 sudo mysql -e "GRANT ALL PRIVILEGES ON ticket_triage.* TO 'app'@'localhost'; FLUSH PRIVILEGES;"
 ```
 
-## 2. Clonar e configurar
+## 2. Configurar o `.env` na VPS
+
+O `deploy.sh` clona o repositório sozinho no primeiro deploy. Antes disso, prepare o `.env`:
 
 ```bash
-sudo mkdir -p /var/www/app && sudo chown $USER /var/www/app
-git clone https://github.com/eduardo-pacheco-dev/ticket-triage.git /var/www/app/ticket-triage
-cd /var/www/app/ticket-triage
-
-cp backend/.env.production.example backend/.env
-nano backend/.env   # preencha DB_PASSWORD, JWT_SECRET, SEED_ADMIN_PASSWORD
-mkdir -p backend/logs
+mkdir -p /var/www/app/ticket-triage/backend/logs
+curl -o /var/www/app/ticket-triage/backend/.env https://raw.githubusercontent.com/eduardo-pacheco-dev/ticket-triage/main/backend/.env.production.example
+nano /var/www/app/ticket-triage/backend/.env   # preencha DB_PASSWORD, JWT_SECRET, SEED_ADMIN_PASSWORD
 ```
+
+> Repositório privado? Cadastre uma **deploy key** (chave SSH de leitura) na VPS ou use `REPO_URL=https://<token>@github.com/...` ao chamar o script.
 
 ## 3. Primeiro deploy
 

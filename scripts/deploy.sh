@@ -7,19 +7,28 @@
 # Variáveis de ambiente:
 #   APP_DIR   Diretório da aplicação na VPS (padrão: /var/www/app/ticket-triage)
 #   BRANCH    Branch de origem do SHA (padrão: main)
+#   REPO_URL  URL do repositório para o primeiro clone (padrão: GitHub do projeto)
 #
 # Pré-requisitos na VPS: git, node >= 22, npm, pm2, mariadb rodando,
 # backend/.env configurado (veja backend/.env.production.example).
+# Se o repositório for privado, cadastre uma deploy key ou use REPO_URL com token.
 
 set -euo pipefail
 
 APP_DIR="${APP_DIR:-/var/www/app/ticket-triage}"
 BRANCH="${BRANCH:-main}"
+REPO_URL="${REPO_URL:-https://github.com/eduardo-pacheco-dev/ticket-triage.git}"
 SHA="${1:-}"
 
 if [ -z "$SHA" ]; then
   echo "Erro: informe o commit SHA a publicar. Ex.: bash scripts/deploy.sh abc1234"
   exit 1
+fi
+
+if [ ! -d "$APP_DIR/.git" ]; then
+  echo "==> Primeiro deploy: clonando $REPO_URL em $APP_DIR"
+  mkdir -p "$(dirname "$APP_DIR")"
+  git clone -b "$BRANCH" "$REPO_URL" "$APP_DIR"
 fi
 
 cd "$APP_DIR"
