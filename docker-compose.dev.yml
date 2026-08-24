@@ -6,7 +6,7 @@ services:
       sh -c "npm install --no-audit --no-fund --loglevel=error &&
              npm run dev --workspace frontend"
     environment:
-      VITE_DOCKER_DEV: "1"
+      VITE_DOCKER_DEV: '1'
       VITE_API_PROXY: http://api:3000
     ports: !override
       - '5173:5173'

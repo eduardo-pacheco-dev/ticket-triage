@@ -11,7 +11,7 @@ import {
   Stack,
 } from '@carbon/react';
 import { ArrowLeft } from '@carbon/icons-react';
-import { AppHeader } from '../components/AppHeader';
+import { PublicHeader } from '../components/PublicHeader';
 import { fetchBySiteId } from '../lib/api';
 import { useQueueEvents } from '../hooks/useQueueEvents';
 import { statusLabel } from '../lib/types';
@@ -69,7 +69,7 @@ export default function StatusPage() {
 
   return (
     <div className="app-shell">
-      <AppHeader variant="public" />
+      <PublicHeader />
       <main className="app-main" style={{ maxWidth: 900 }}>
         <div style={{ marginBottom: '1rem' }}>
           <Link to="/">

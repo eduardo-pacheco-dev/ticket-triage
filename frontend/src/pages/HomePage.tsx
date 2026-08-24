@@ -15,7 +15,7 @@ import {
   Column,
 } from '@carbon/react';
 import { ArrowRight, Restart, Search } from '@carbon/icons-react';
-import { AppHeader } from '../components/AppHeader';
+import { PublicHeader } from '../components/PublicHeader';
 import { createCheckIn, fetchRequestTypes } from '../lib/api';
 import { useQueueEvents } from '../hooks/useQueueEvents';
 import { createCheckInSchema } from '@ticket-triage/shared';
@@ -102,7 +102,7 @@ export default function HomePage() {
 
   return (
     <div className="app-shell">
-      <AppHeader variant="public" />
+      <PublicHeader />
       <main className="app-main">
         <Grid narrow>
           <Column sm={4} md={8} lg={8}>

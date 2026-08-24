@@ -68,17 +68,133 @@ code,
   font-size: 0.875rem;
 }
 
-body.has-admin-sidenav .app-main {
+.public-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+}
+.public-header-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 3rem;
+  padding: 0 1rem;
+  border: none;
+  background: transparent;
+  color: var(--cds-text-primary, #f4f4f4);
+  cursor: pointer;
+}
+.public-header-link:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.topbar-user {
+  align-self: center;
+  margin-right: 0.25rem;
+  font-size: 0.8125rem;
+  opacity: 0.85;
+}
+
+.sidenav-collapse-toggle {
+  position: fixed;
+  bottom: 1rem;
+  left: calc(16rem - 0.75rem);
+  z-index: 8001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 1px solid var(--cds-border-subtle, #c6c6c6);
+  border-radius: 50%;
+  background: var(--cds-layer, #ffffff);
+  color: var(--cds-icon-primary, #161616);
+  cursor: pointer;
+  transition: left 0.11s cubic-bezier(0.2, 0, 0.38, 0.9);
+}
+.sidenav-collapse-toggle:hover {
+  background: var(--cds-layer-hover, #e8e8e8);
+}
+.sidenav-collapse-toggle.collapsed {
+  left: calc(3rem - 0.75rem);
+}
+@media (max-width: 1055px) {
+  .sidenav-collapse-toggle {
+    display: none;
+  }
+}
+
+.admin-content {
+  min-width: 0;
+  box-sizing: border-box;
+  margin-top: 3rem;
+  padding: 2rem clamp(1rem, 3vw, 2.5rem) 4rem;
+  transition: margin-left 0.11s cubic-bezier(0.2, 0, 0.38, 0.9);
+}
+.admin-content-full {
   margin-left: 16rem;
 }
-body.has-admin-sidenav-rail .app-main {
+.admin-content-rail {
   margin-left: 3rem;
 }
 @media (max-width: 1055px) {
-  body.has-admin-sidenav .app-main,
-  body.has-admin-sidenav-rail .app-main {
+  .admin-content-full,
+  .admin-content-rail {
     margin-left: 0;
   }
+}
+.admin-page {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.admin-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+.admin-title {
+  font-size: 1.5rem;
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.admin-subtitle {
+  color: var(--cds-text-secondary, #525252);
+  font-size: 0.875rem;
+  margin: 0.25rem 0 0;
+}
+.admin-chips {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.muted {
+  color: var(--cds-text-secondary, #525252);
+}
+
+.row-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  text-align: center;
+  padding: 1.5rem 1rem !important;
+}
+.stat-value {
+  font-size: 2rem;
+  font-weight: 300;
+}
+.stat-label {
+  font-size: 0.8125rem;
+  color: var(--cds-text-secondary, #525252);
+  margin-top: 0.25rem;
 }
 
 .checkin-card {
