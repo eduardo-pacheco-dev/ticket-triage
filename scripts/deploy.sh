@@ -9,7 +9,7 @@
 #   BRANCH    Branch de origem do SHA (padrão: main)
 #   REPO_URL  URL do repositório para o primeiro clone (padrão: GitHub do projeto)
 #
-# Pré-requisitos na VPS: git, node >= 22, npm, pm2, mariadb rodando,
+# Pré-requisitos na VPS: git, node >= 20.19.2, npm, pm2, mariadb rodando,
 # backend/.env configurado (veja backend/.env.production.example).
 # Se o repositório for privado, cadastre uma deploy key ou use REPO_URL com token.
 

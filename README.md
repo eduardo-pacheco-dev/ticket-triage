@@ -42,7 +42,7 @@ shared/src/    schemas Zod + tipos inferidos
 
 ## Requisitos
 
-- Node.js 22+
+- Node.js 20.19.2+
 - Docker (para MariaDB local) ou uma instância MySQL/MariaDB existente
 
 ## Setup (desenvolvimento)
