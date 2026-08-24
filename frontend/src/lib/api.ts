@@ -182,6 +182,29 @@ export function updateSlaConfig(data: { expectedWaitMin: number; expectedService
   });
 }
 
+export interface TelegramStatus {
+  configured: boolean;
+  receiving: boolean;
+  chatId: string | null;
+  tokenMasked: string | null;
+}
+
+export function fetchTelegramConfig() {
+  return request<TelegramStatus>('/admin/telegram');
+}
+
+export function updateTelegramConfig(data: { token?: string; chatId?: string }) {
+  return request<TelegramStatus>('/admin/telegram', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export function testTelegram() {
+  return request<{ ok: boolean; error?: string }>('/admin/telegram/test', { method: 'POST' });
+}
+
+
 export function fetchUsers() {
   return request<SafeUser[]>('/users');
 }

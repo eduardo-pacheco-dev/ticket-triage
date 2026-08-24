@@ -14,22 +14,26 @@ import {
   TextInput,
   Tile,
 } from '@carbon/react';
-import { Add, Settings, TrashCan, UserAvatar, Time } from '@carbon/icons-react';
+import { Add, Bot, Settings, TrashCan, UserAvatar, Time } from '@carbon/icons-react';
 import {
   addRequestType,
   changePassword,
   deleteRequestType,
   fetchRequestTypes,
   fetchSlaConfig,
+  fetchTelegramConfig,
+  testTelegram,
   updateSlaConfig,
+  updateTelegramConfig,
 } from '../lib/api';
+import type { TelegramStatus } from '../lib/api';
 import { useQueueEvents } from '../hooks/useQueueEvents';
 import { createRequestTypeSchema } from '@ticket-triage/shared';
 import { changePasswordFormSchema, slaConfigSchema, zodFieldErrors } from '../lib/schemas';
 import { useAuthStore } from '../stores/auth';
 import type { RequestType } from '../lib/types';
 
-type TabKey = 'geral' | 'sla' | 'perfil';
+type TabKey = 'geral' | 'sla' | 'bot' | 'perfil';
 
 function GeralTab() {
   const [types, setTypes] = useState<RequestType[]>([]);
@@ -268,6 +272,149 @@ function SlaTab() {
   );
 }
 
+function BotTab() {
+  const [status, setStatus] = useState<TelegramStatus | null>(null);
+  const [token, setToken] = useState('');
+  const [chatId, setChatId] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchTelegramConfig()
+      .then((s) => {
+        setStatus(s);
+        setChatId(s.chatId ?? '');
+      })
+      .catch(() => setError('Erro ao carregar configuração do bot.'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    setBusy(true);
+    try {
+      const payload: { token?: string; chatId?: string } = {};
+      if (token.trim()) payload.token = token.trim();
+      if (chatId.trim() !== (status?.chatId ?? '')) payload.chatId = chatId.trim();
+      const updated = await updateTelegramConfig(payload);
+      setStatus(updated);
+      setToken('');
+      setSuccess('Configuração salva e aplicada.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao salvar configuração.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleTest() {
+    setError(null);
+    setSuccess(null);
+    setBusy(true);
+    try {
+      const result = await testTelegram();
+      if (result.ok) {
+        setSuccess('Mensagem de teste enviada! Verifique o Telegram.');
+      } else {
+        setError(`Falha no envio: ${result.error ?? 'motivo desconhecido'}`);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao testar envio.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (loading) return <Loading withOverlay={false} />;
+
+  return (
+    <div>
+      {error && (
+        <InlineNotification
+          kind="error"
+          lowContrast
+          title="Erro"
+          subtitle={error}
+          onCloseButtonClick={() => setError(null)}
+        />
+      )}
+      {success && (
+        <InlineNotification
+          kind="success"
+          lowContrast
+          title="Sucesso"
+          subtitle={success}
+          onCloseButtonClick={() => setSuccess(null)}
+        />
+      )}
+
+      <Tile className="checkin-card" style={{ maxWidth: '100%', marginTop: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+          <h2 style={{ fontSize: '1.125rem', margin: 0, fontWeight: 500 }}>Bot do Telegram</h2>
+          <Tag type={status?.configured ? 'green' : 'gray'} size="sm">
+            {status?.configured ? 'Ativo' : status?.receiving ? 'Aguardando chat' : 'Inativo'}
+          </Tag>
+          {status?.tokenMasked && (
+            <span className="muted" style={{ fontSize: '0.75rem' }}>
+              Token: {status.tokenMasked}
+            </span>
+          )}
+        </div>
+        <Form onSubmit={handleSave}>
+          <Stack gap={6}>
+            <TextInput
+              id="bot_token"
+              labelText={status?.tokenMasked ? 'Novo token (deixe vazio para manter)' : 'Token do @BotFather'}
+              type="password"
+              placeholder="Ex.: 123456789:AA..."
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              autoComplete="off"
+            />
+            <TextInput
+              id="bot_chat"
+              labelText="Chat ID de destino"
+              placeholder="Ex.: -1001234567890"
+              value={chatId}
+              onChange={(e) => setChatId(e.target.value)}
+              autoComplete="off"
+            />
+            <p className="muted" style={{ fontSize: '0.8125rem', margin: 0 }}>
+              Como descobrir o Chat ID: salve o token, adicione o bot ao grupo (ou mande /start no privado)
+              e envie o comando <strong>/id</strong> para ele.
+            </p>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <Button type="submit" disabled={busy}>
+                {busy ? 'Salvando...' : 'Salvar'}
+              </Button>
+              <Button
+                type="button"
+                kind="secondary"
+                disabled={busy || !status?.configured}
+                onClick={() => void handleTest()}
+              >
+                Testar envio
+              </Button>
+            </div>
+          </Stack>
+        </Form>
+      </Tile>
+
+      <Tile className="checkin-card" style={{ maxWidth: '100%', marginTop: '1rem' }}>
+        <h2 style={{ fontSize: '1.125rem', margin: '0 0 0.5rem', fontWeight: 500 }}>O que o bot envia</h2>
+        <p className="muted" style={{ margin: 0 }}>
+          Novos check-ins e mudanças de status das solicitações (análise iniciada, aprovada, recusada,
+          reaberta), com protocolo e dados da unidade.
+        </p>
+      </Tile>
+    </div>
+  );
+}
+
 function PerfilTab() {
   const applyAccessToken = useAuthStore((s) => s.applyAccessToken);
   const clearMustChangePassword = useAuthStore((s) => s.clearMustChangePassword);
@@ -393,7 +540,7 @@ function PerfilTab() {
 
 export default function ConfigPage() {
   const mustChangePassword = useAuthStore((s) => s.mustChangePassword);
-  const defaultIndex = mustChangePassword ? 2 : 0;
+  const defaultIndex = mustChangePassword ? 3 : 0;
   const [tab, setTab] = useState<TabKey>(mustChangePassword ? 'perfil' : 'geral');
 
   return (
@@ -421,11 +568,12 @@ export default function ConfigPage() {
 
       <Tabs
         defaultSelectedIndex={defaultIndex}
-        onChange={(state) => setTab((['geral', 'sla', 'perfil'] as const)[state.selectedIndex])}
+        onChange={(state) => setTab((['geral', 'sla', 'bot', 'perfil'] as const)[state.selectedIndex])}
       >
         <TabList aria-label="Configurações">
           <Tab renderIcon={Settings}>Geral</Tab>
           <Tab renderIcon={Time}>SLA</Tab>
+          <Tab renderIcon={Bot}>Bot</Tab>
           <Tab renderIcon={UserAvatar}>Perfil</Tab>
         </TabList>
         <TabPanels>
@@ -434,6 +582,9 @@ export default function ConfigPage() {
           </TabPanel>
           <TabPanel>
             <SlaTab />
+          </TabPanel>
+          <TabPanel>
+            <BotTab />
           </TabPanel>
           <TabPanel>
             <PerfilTab />
