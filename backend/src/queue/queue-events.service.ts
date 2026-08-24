@@ -7,6 +7,8 @@ export interface QueueEventPayload {
   site_id?: string;
   protocol?: string;
   status?: string;
+  title?: string;
+  body?: string;
 }
 
 @Injectable()

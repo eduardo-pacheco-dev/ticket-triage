@@ -73,6 +73,8 @@ describe('NotificationsService', () => {
         site_id: 'SITE-100',
         protocol: 'DOC-1234',
         status: 'waiting',
+        title: 'Nova solicitação',
+        body: 'SITE-100 • Instalação • Ana Souza',
       });
     });
 
