@@ -25,10 +25,12 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}'],
   },
   server: {
+    host: true,
     port: 5173,
+    watch: process.env.VITE_DOCKER_DEV ? { usePolling: true } : undefined,
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: process.env.VITE_API_PROXY ?? 'http://localhost:3000',
         changeOrigin: true,
       },
     },

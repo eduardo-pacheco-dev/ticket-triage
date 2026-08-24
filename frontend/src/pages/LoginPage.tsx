@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Form, Stack, TextInput, Button, InlineNotification, Tile } from '@carbon/react';
 import { Login as LoginIcon } from '@carbon/icons-react';
-import { AppHeader } from '../components/AppHeader';
+import { PublicHeader } from '../components/PublicHeader';
 import { useAuthStore } from '../stores/auth';
 import { ApiError } from '../lib/api';
 import { loginSchema } from '@ticket-triage/shared';
@@ -48,7 +48,7 @@ export default function LoginPage() {
 
   return (
     <div className="app-shell">
-      <AppHeader variant="public" />
+      <PublicHeader />
       <main className="login-main">
         <div className="login-container">
           <Tile className="login-card">
