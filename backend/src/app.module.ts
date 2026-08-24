@@ -4,6 +4,8 @@ import { QueueEntry } from './queue/queue-entry.entity';
 import { RequestType } from './request-types/request-type.entity';
 import { SlaConfig } from './sla/sla-config.entity';
 import { User } from './auth/user.entity';
+import { Notification } from './notifications/notification.entity';
+import { NotificationRead } from './notifications/notification-read.entity';
 import { AuthModule } from './auth/auth.module';
 import { CommonModule } from './common/common.module';
 import { UsersModule } from './users/users.module';
@@ -17,6 +19,8 @@ import { RequestTypesService } from './request-types/request-types.service';
 import { SlaController } from './sla/sla.controller';
 import { SlaService } from './sla/sla.service';
 import { HealthController } from './health/health.controller';
+import { NotificationsController } from './notifications/notifications.controller';
+import { NotificationsService } from './notifications/notifications.service';
 
 @Module({
   imports: [
@@ -25,6 +29,8 @@ import { HealthController } from './health/health.controller';
     TypeOrmModule.forFeature([RequestType]),
     TypeOrmModule.forFeature([SlaConfig]),
     TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([Notification]),
+    TypeOrmModule.forFeature([NotificationRead]),
     CommonModule,
     AuthModule,
     UsersModule,
@@ -35,7 +41,14 @@ import { HealthController } from './health/health.controller';
     RequestTypesController,
     SlaController,
     HealthController,
+    NotificationsController,
   ],
-  providers: [QueueService, RequestTypesService, SlaService, QueueEventsService],
+  providers: [
+    QueueService,
+    RequestTypesService,
+    SlaService,
+    QueueEventsService,
+    NotificationsService,
+  ],
 })
 export class AppModule {}
