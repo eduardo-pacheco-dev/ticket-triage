@@ -119,7 +119,7 @@ export function AdminLayout() {
                 <ListItemIcon
                   sx={{
                     minWidth: 0,
-                    mr: rail ? 'auto' : 3,
+                    mr: rail ? 0 : 3,
                     justifyContent: 'center',
                     color: 'inherit',
                   }}
@@ -185,7 +185,7 @@ export function AdminLayout() {
           >
             AFL&nbsp;Triagem Docs
           </Typography>
-          <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center' }}>
+          <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 0.25 }}>
             <NotificationsMenu />
             <UserMenu />
           </Box>
