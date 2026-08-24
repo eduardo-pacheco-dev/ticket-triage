@@ -87,16 +87,27 @@ export function AppHeader({ variant = 'admin' }: { variant?: 'admin' | 'public' 
             </HeaderGlobalAction>
           )}
           {authed ? (
-            <HeaderGlobalAction
-              aria-label="Sair"
-              onClick={() => {
-                void logout();
-                navigate('/login', { replace: true });
-              }}
-              tooltipAlignment="end"
-            >
-              <Logout />
-            </HeaderGlobalAction>
+            <>
+              {!isAdminArea && (
+                <HeaderGlobalAction
+                  aria-label="Ir para o menu administrativo"
+                  tooltipAlignment="end"
+                  onClick={() => navigate('/admin/dashboard')}
+                >
+                  <Dashboard />
+                </HeaderGlobalAction>
+              )}
+              <HeaderGlobalAction
+                aria-label="Sair"
+                onClick={() => {
+                  void logout();
+                  navigate('/login', { replace: true });
+                }}
+                tooltipAlignment="end"
+              >
+                <Logout />
+              </HeaderGlobalAction>
+            </>
           ) : (
             pathname !== '/login' && (
               <HeaderGlobalAction
@@ -120,9 +131,6 @@ export function AppHeader({ variant = 'admin' }: { variant?: 'admin' | 'public' 
               isActive={pathname.startsWith('/admin/dashboard')}
             >
               Dashboard
-            </SideNavLink>
-            <SideNavLink as={Link} to="/" renderIcon={Document} isActive={pathname === '/'}>
-              Check-in
             </SideNavLink>
             <SideNavLink as={Link} to="/admin" renderIcon={List} isActive={pathname === '/admin'}>
               Fila
