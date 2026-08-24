@@ -159,12 +159,15 @@ export function fetchUsers() {
 export interface CreateUserInput {
   username: string;
   password: string;
+  role?: 'admin' | 'user';
 }
 
 export interface UpdateUserInput {
   username?: string;
   password?: string;
   mustChangePassword?: boolean;
+  role?: 'admin' | 'user';
+  status?: 'active' | 'inactive';
 }
 
 export function createUser(data: CreateUserInput) {

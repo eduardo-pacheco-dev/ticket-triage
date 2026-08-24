@@ -1,4 +1,6 @@
 export type QueueStatus = 'waiting' | 'in_review' | 'approved' | 'rejected';
+export type UserRole = 'admin' | 'user';
+export type UserStatus = 'active' | 'inactive';
 
 export interface QueueEntry {
   id: string;
@@ -36,6 +38,8 @@ export interface SlaConfig {
 export interface SafeUser {
   id: string;
   username: string;
+  role: UserRole;
+  status: UserStatus;
   mustChangePassword: boolean;
   createdAt: Date | string;
 }

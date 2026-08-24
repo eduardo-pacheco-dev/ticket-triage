@@ -1,4 +1,5 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import type { UserRole, UserStatus } from '@ticket-triage/shared';
 
 @Entity('users')
 export class User {
@@ -10,6 +11,12 @@ export class User {
 
   @Column({ name: 'password_hash', type: 'varchar', length: 100 })
   passwordHash: string;
+
+  @Column({ type: 'varchar', length: 20, default: 'user' })
+  role: UserRole;
+
+  @Column({ type: 'varchar', length: 20, default: 'active' })
+  status: UserStatus;
 
   @Column({ name: 'token_version', type: 'int', default: 0 })
   tokenVersion: number;

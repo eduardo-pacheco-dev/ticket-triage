@@ -58,6 +58,16 @@ export const updateSlaSchema = z
   })
   .partial();
 
+export const userRoleSchema = z.enum(['admin', 'user'], {
+  message: 'Papel inválido.',
+});
+export const userStatusSchema = z.enum(['active', 'inactive'], {
+  message: 'Status inválido.',
+});
+
+export type UserRole = z.infer<typeof userRoleSchema>;
+export type UserStatus = z.infer<typeof userStatusSchema>;
+
 export const createUserSchema = z.object({
   username: z
     .string()
@@ -65,6 +75,7 @@ export const createUserSchema = z.object({
     .min(1, 'Usuário é obrigatório.')
     .max(100, 'Máximo de 100 caracteres.'),
   password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres.').max(200),
+  role: userRoleSchema.default('user'),
 });
 
 export const updateUserSchema = z
@@ -76,6 +87,8 @@ export const updateUserSchema = z
       .max(100, 'Máximo de 100 caracteres.'),
     password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres.').max(200),
     mustChangePassword: z.boolean(),
+    role: userRoleSchema,
+    status: userStatusSchema,
   })
   .partial();
 

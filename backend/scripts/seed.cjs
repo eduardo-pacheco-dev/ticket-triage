@@ -30,8 +30,8 @@ async function main() {
 
     const hash = await bcrypt.hash(ADMIN_PASS, 10);
     await connection.query(
-      `INSERT INTO users (id, username, password_hash, must_change_password) VALUES (UUID(), ?, ?, TRUE)
-       ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), must_change_password = TRUE`,
+      `INSERT INTO users (id, username, password_hash, must_change_password, role) VALUES (UUID(), ?, ?, TRUE, 'admin')
+       ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), must_change_password = TRUE, role = 'admin'`,
       [ADMIN_USER, hash],
     );
     console.log(

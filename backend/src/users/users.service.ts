@@ -3,10 +3,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
 import { Repository } from 'typeorm';
 import { User } from '../auth/user.entity';
+import type { UserRole, UserStatus } from '@ticket-triage/shared';
 
 export interface SafeUser {
   id: string;
   username: string;
+  role: UserRole;
+  status: UserStatus;
   mustChangePassword: boolean;
   createdAt: Date;
 }
@@ -31,10 +34,11 @@ export class UsersService {
     return this.toSafe(user);
   }
 
-  async create(username: string, password: string): Promise<SafeUser> {
+  async create(username: string, password: string, role: UserRole = 'user'): Promise<SafeUser> {
     try {
       const user = this.usersRepository.create({
         username,
+        role,
         passwordHash: await bcrypt.hash(password, 10),
       });
       const saved = await this.usersRepository.save(user);
@@ -49,14 +53,35 @@ export class UsersService {
 
   async update(
     id: string,
-    data: { username?: string; password?: string; mustChangePassword?: boolean },
+    data: {
+      username?: string;
+      password?: string;
+      mustChangePassword?: boolean;
+      role?: UserRole;
+      status?: UserStatus;
+    },
+    requesterId?: string,
   ): Promise<SafeUser> {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) throw new NotFoundException('Usuário não encontrado.');
 
+    if (
+      requesterId &&
+      requesterId === id &&
+      (data.role !== undefined || data.status !== undefined)
+    ) {
+      throw new BadRequestException('Não é possível alterar o próprio papel ou o próprio status.');
+    }
+
     const patch: Partial<User> = {};
     if (data.username !== undefined && data.username !== user.username)
       patch.username = data.username;
+    if (data.role !== undefined) patch.role = data.role;
+    if (data.status !== undefined) {
+      patch.status = data.status;
+      // Inativação/reativação encerra sessões ativas do usuário.
+      patch.tokenVersion = user.tokenVersion + 1;
+    }
     if (data.password !== undefined) {
       patch.passwordHash = await bcrypt.hash(data.password, 10);
       patch.tokenVersion = user.tokenVersion + 1;
@@ -89,6 +114,8 @@ export class UsersService {
     return {
       id: user.id,
       username: user.username,
+      role: user.role,
+      status: user.status,
       mustChangePassword: user.mustChangePassword,
       createdAt: user.createdAt,
     };

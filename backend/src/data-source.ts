@@ -7,6 +7,7 @@ import { SlaConfig } from './sla/sla-config.entity';
 import { User } from './auth/user.entity';
 import { InitSchema1756000000000 } from './migrations/1756000000000-InitSchema';
 import { UserSecurityColumns1756100000000 } from './migrations/1756100000000-UserSecurityColumns';
+import { UserRoleAndStatus1756200000000 } from './migrations/1756200000000-UserRoleAndStatus';
 
 if (process.env.NODE_ENV === 'production' && process.env.DB_SYNC !== 'false') {
   throw new Error(
@@ -14,7 +15,11 @@ if (process.env.NODE_ENV === 'production' && process.env.DB_SYNC !== 'false') {
   );
 }
 
-export const migrations = [InitSchema1756000000000, UserSecurityColumns1756100000000];
+export const migrations = [
+  InitSchema1756000000000,
+  UserSecurityColumns1756100000000,
+  UserRoleAndStatus1756200000000,
+];
 
 const dbLogging: LogLevel[] = process.env.DB_SYNC === 'false' ? ['error'] : ['error', 'schema'];
 

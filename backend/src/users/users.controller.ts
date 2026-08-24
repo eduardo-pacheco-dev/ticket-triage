@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } fro
 import type { Request } from 'express';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AdminGuard } from '../auth/admin.guard';
 import type { JwtPayload } from '../auth/jwt-auth.guard';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import {
@@ -12,7 +13,7 @@ import {
 } from '@ticket-triage/shared';
 
 @Controller('users')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AdminGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -28,15 +29,17 @@ export class UsersController {
 
   @Post()
   create(@Body(new ZodValidationPipe(createUserSchema)) body: CreateUserInput) {
-    return this.usersService.create(body.username, body.password);
+    return this.usersService.create(body.username, body.password, body.role);
   }
 
   @Patch(':id')
   update(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(updateUserSchema)) body: UpdateUserInput,
+    @Req() request: Request,
   ) {
-    return this.usersService.update(id, body);
+    const payload = (request.user ?? { sub: '' }) as JwtPayload;
+    return this.usersService.update(id, body, payload.sub);
   }
 
   @Delete(':id')

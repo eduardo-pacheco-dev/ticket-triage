@@ -1,5 +1,11 @@
 import { z } from 'zod';
-import { changePasswordSchema, createUserSchema, slaMinutesSchema } from '@ticket-triage/shared';
+import {
+  changePasswordSchema,
+  createUserSchema,
+  slaMinutesSchema,
+  userRoleSchema,
+  userStatusSchema,
+} from '@ticket-triage/shared';
 
 export const changePasswordFormSchema = changePasswordSchema
   .extend({
@@ -32,6 +38,8 @@ export const updateUserFormSchema = z
     ]),
     confirmPassword: z.string(),
     mustChangePassword: z.boolean(),
+    role: userRoleSchema,
+    status: userStatusSchema,
   })
   .superRefine((data, ctx) => {
     if (data.password && data.password !== data.confirmPassword) {

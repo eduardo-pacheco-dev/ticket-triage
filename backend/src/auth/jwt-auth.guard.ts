@@ -58,6 +58,10 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Sessão expirada ou inválida.');
     }
 
+    if (user.status !== 'active') {
+      throw new UnauthorizedException('Usuário inativo. Procure um administrador.');
+    }
+
     if (user.mustChangePassword && !MUST_CHANGE_PASSWORD_EXEMPT_PATHS.has(request.path)) {
       throw new ForbiddenException('Troque a senha antes de continuar.');
     }

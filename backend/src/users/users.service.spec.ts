@@ -7,6 +7,8 @@ function makeUser(overrides: Partial<User> = {}): User {
     id: '00000000-0000-4000-8000-000000000001',
     username: 'ana',
     passwordHash: '$2a$10$hashedpassword',
+    role: 'user',
+    status: 'active',
     tokenVersion: 0,
     mustChangePassword: true,
     createdAt: new Date('2026-08-20T10:00:00Z'),
@@ -56,10 +58,21 @@ describe(UsersService.name, () => {
       const result = await service.create('bruno', 'senha123');
 
       expect(result.username).toBe('bruno');
+      expect(result.role).toBe('user');
+      expect(result.status).toBe('active');
       expect(result).not.toHaveProperty('passwordHash');
       const saved = repo.save.mock.calls[0][0] as User;
       expect(saved.passwordHash).not.toBe('senha123');
       expect(saved.passwordHash.startsWith('$2')).toBe(true);
+    });
+
+    it('persiste o papel de administrador quando informado', async () => {
+      const { service, repo } = buildService();
+      const result = await service.create('chefe', 'senha123', 'admin');
+
+      expect(result.role).toBe('admin');
+      const saved = repo.save.mock.calls[0][0] as User;
+      expect(saved.role).toBe('admin');
     });
 
     it('lança BadRequest quando o username já existe', async () => {
@@ -99,6 +112,40 @@ describe(UsersService.name, () => {
       expect(patch.tokenVersion).toBeUndefined();
       expect(existing.tokenVersion).toBe(5);
       expect(existing.mustChangePassword).toBe(false);
+    });
+
+    it('promove o usuário a administrador', async () => {
+      const existing = makeUser({ role: 'user' });
+      const { service } = buildService([existing]);
+
+      const result = await service.update(existing.id, { role: 'admin' }, 'outro-id');
+
+      expect(result.role).toBe('admin');
+    });
+
+    it('inativa o usuário e encerra suas sessões', async () => {
+      const existing = makeUser({ status: 'active', tokenVersion: 7 });
+      const { service, repo } = buildService([existing]);
+      repo.update.mockImplementation(async (_where, patch: Partial<User>) => {
+        Object.assign(existing, patch);
+      });
+
+      const result = await service.update(existing.id, { status: 'inactive' }, 'outro-id');
+
+      expect(result.status).toBe('inactive');
+      expect(existing.tokenVersion).toBe(8);
+    });
+
+    it('bloqueia alteração do próprio papel ou status', async () => {
+      const existing = makeUser({ id: 'eu-mesmo', role: 'admin' });
+      const { service } = buildService([existing]);
+
+      await expect(service.update('eu-mesmo', { role: 'user' }, 'eu-mesmo')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      await expect(
+        service.update('eu-mesmo', { status: 'inactive' }, 'eu-mesmo'),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
   });
 
