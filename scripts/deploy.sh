@@ -19,9 +19,23 @@ APP_DIR="${APP_DIR:-/var/www/app/ticket-triage}"
 BRANCH="${BRANCH:-main}"
 REPO_URL="${REPO_URL:-https://github.com/eduardo-pacheco-dev/ticket-triage.git}"
 SHA="${1:-}"
+START=$SECONDS
+STEP_START=$SECONDS
+
+# Anotação de erro no GitHub Actions em qualquer comando que falhe.
+trap 'printf "::error::Deploy falhou na linha %s (total: %ss)\n" "${LINENO:-?}" "$((SECONDS - START))"' ERR
+
+step() {
+  STEP_START=$SECONDS
+  printf '\n==> [+%03ds] %s\n' "$SECONDS" "$1"
+}
+
+step_done() {
+  printf '    ok (%ss)\n' "$((SECONDS - STEP_START))"
+}
 
 if [ -z "$SHA" ]; then
-  echo "Erro: informe o commit SHA a publicar. Ex.: bash scripts/deploy.sh abc1234"
+  echo "::error::Informe o commit SHA a publicar. Ex.: bash scripts/deploy.sh abc1234"
   exit 1
 fi
 
@@ -34,45 +48,65 @@ fi
 cd "$APP_DIR"
 
 if [ ! -f backend/.env ]; then
-  echo "Erro: backend/.env não encontrado. Copie backend/.env.production.example e preencha."
+  echo "::error::backend/.env não encontrado em $APP_DIR. Copie backend/.env.production.example e preencha."
   exit 1
 fi
 
-echo "==> Publicando $SHA (branch $BRANCH) em $APP_DIR"
+echo "==============================================================="
+echo " Deploy do Ticket Triage"
+echo " Commit : $SHA"
+echo " Branch : $BRANCH"
+echo " Diretório: $APP_DIR"
+echo " Node : $(node -v 2>/dev/null || echo 'AUSENTE')"
+echo " npm  : $(npm -v 2>/dev/null || echo 'AUSENTE')"
+echo " pm2  : $(pm2 -v 2>/dev/null || echo 'AUSENTE')"
+echo " Início : $(date '+%Y-%m-%d %H:%M:%S %Z')"
+echo "==============================================================="
 
+step "Atualizando código para $SHA"
 git fetch origin "$BRANCH"
 git checkout -f "$BRANCH"
 git reset --hard "$SHA"
+echo "HEAD agora em: $(git rev-parse --short HEAD) — $(git log -1 --format=%s)"
+step_done
 
-echo "==> Instalando dependências"
-npm ci
+step "Instalando dependências (npm ci)"
+npm ci --no-audit --no-fund
+step_done
 
-echo "==> Build do backend"
+step "Build do backend"
 npm run build --workspace backend
+step_done
 
-echo "==> Migrations"
+step "Migrations do banco"
 npm run migration:run
+step_done
 
-echo "==> Build do frontend"
+step "Build do frontend"
 npm run build --workspace frontend
+step_done
 
-echo "==> PM2"
+step "Reiniciando API no PM2"
 pm2 startOrReload ecosystem.config.js --update-env
 pm2 save
+pm2 status
+step_done
 
 PORT=$(grep -E '^PORT=' backend/.env | cut -d= -f2 || true)
 PORT=${PORT:-3000}
 
-echo "==> Health check (http://127.0.0.1:$PORT/api/health)"
+step "Health check (http://127.0.0.1:$PORT/api/health)"
 for i in $(seq 1 30); do
   if curl -fsS "http://127.0.0.1:$PORT/api/health" > /dev/null 2>&1; then
-    echo "Deploy concluído com sucesso."
+    echo "    resposta saudável na tentativa $i"
+    printf '::notice::Deploy concluído com sucesso em %ss.\n' "$((SECONDS - START))"
     pm2 status
     exit 0
   fi
   sleep 1
 done
 
-echo "Falha no health check após 30s. Últimos logs:"
+echo "::error::Health check falhou após 30 tentativas."
+echo "Últimos 50 linhas de log do PM2:"
 pm2 logs ticket-triage-api --lines 50 --nostream || true
 exit 1
