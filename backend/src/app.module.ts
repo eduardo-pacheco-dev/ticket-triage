@@ -44,11 +44,6 @@ import { TelegramModule } from './telegram/telegram.module';
     HealthController,
     NotificationsController,
   ],
-  providers: [
-    QueueService,
-    RequestTypesService,
-    SlaService,
-    NotificationsService,
-  ],
+  providers: [QueueService, RequestTypesService, SlaService, NotificationsService],
 })
 export class AppModule {}

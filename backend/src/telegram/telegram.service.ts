@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  OnApplicationBootstrap,
-  OnApplicationShutdown,
-} from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap, OnApplicationShutdown } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TelegramChat } from './telegram-chat.entity';
@@ -117,7 +112,11 @@ export class TelegramService implements OnApplicationBootstrap, OnApplicationShu
     };
   }
 
-  async updateConfig(input: { token?: string; chatId?: string; polling?: boolean }): Promise<TelegramStatus> {
+  async updateConfig(input: {
+    token?: string;
+    chatId?: string;
+    polling?: boolean;
+  }): Promise<TelegramStatus> {
     await this.ensureLoaded();
     const row = await this.findOrCreateRow();
     if (input.token !== undefined) {
@@ -151,7 +150,9 @@ export class TelegramService implements OnApplicationBootstrap, OnApplicationShu
         error: 'Nenhum chat inscrito ainda. Adicione o bot ao grupo ou mande /start no privado.',
       };
     }
-    return this.broadcast('✅ Triagem Docs: mensagem de teste. As notificações de fila chegarão aqui.');
+    return this.broadcast(
+      '✅ Triagem Docs: mensagem de teste. As notificações de fila chegarão aqui.',
+    );
   }
 
   async sendMessage(text: string): Promise<void> {
@@ -171,7 +172,9 @@ export class TelegramService implements OnApplicationBootstrap, OnApplicationShu
     } else if (this.chatsCount === 0 && !this.chatId) {
       this.logger.log('Bot em long polling: nenhum chat inscrito ainda (envie /start ao bot).');
     } else {
-      this.logger.log(`Bot do Telegram ativo: transmitindo para ${this.chatsCount + (this.chatId ? 1 : 0)} chat(s).`);
+      this.logger.log(
+        `Bot do Telegram ativo: transmitindo para ${this.chatsCount + (this.chatId ? 1 : 0)} chat(s).`,
+      );
     }
   }
 
@@ -204,7 +207,9 @@ export class TelegramService implements OnApplicationBootstrap, OnApplicationShu
         }
         return;
       }
-      await this.chatsRepository.save(this.chatsRepository.create({ chatId, title: title ?? null }));
+      await this.chatsRepository.save(
+        this.chatsRepository.create({ chatId, title: title ?? null }),
+      );
       await this.refreshChatsCount();
       this.logger.log(`Novo chat inscrito: ${chatId}${title ? ` (${title})` : ''}.`);
     } catch (error) {
@@ -256,7 +261,12 @@ export class TelegramService implements OnApplicationBootstrap, OnApplicationShu
   private async findOrCreateRow(): Promise<TelegramConfig> {
     const existing = await this.configRepository.findOne({ where: { id: 1 } });
     if (existing) return existing;
-    const created = this.configRepository.create({ id: 1, token: null, chatId: null, pollingEnabled: true });
+    const created = this.configRepository.create({
+      id: 1,
+      token: null,
+      chatId: null,
+      pollingEnabled: true,
+    });
     return this.configRepository.save(created);
   }
 
@@ -279,7 +289,10 @@ export class TelegramService implements OnApplicationBootstrap, OnApplicationShu
     }
   }
 
-  private async request<T>(method: string, body: Record<string, unknown>): Promise<TelegramApiResponse<T>> {
+  private async request<T>(
+    method: string,
+    body: Record<string, unknown>,
+  ): Promise<TelegramApiResponse<T>> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), POLL_REQUEST_TIMEOUT_MS);
     try {
@@ -305,7 +318,9 @@ export class TelegramService implements OnApplicationBootstrap, OnApplicationShu
         });
         if (!result?.ok || !Array.isArray(result.result)) {
           if (!result?.ok) {
-            this.logger.warn(`getUpdates rejeitado: ${result?.description ?? 'resposta inválida'}.`);
+            this.logger.warn(
+              `getUpdates rejeitado: ${result?.description ?? 'resposta inválida'}.`,
+            );
           }
           await this.sleep(this.retryDelayMs);
           this.retryDelayMs = Math.min(this.retryDelayMs * 2, MAX_RETRY_DELAY_MS);
@@ -339,7 +354,10 @@ export class TelegramService implements OnApplicationBootstrap, OnApplicationShu
 
     const text = message.text?.trim().toLowerCase().split('@')[0];
     if (text === '/start' || text === '/id') {
-      void this.reply(String(chatId), '✅ Chat inscrito! A partir de agora você receberá as notificações da fila.');
+      void this.reply(
+        String(chatId),
+        '✅ Chat inscrito! A partir de agora você receberá as notificações da fila.',
+      );
     }
   }
 

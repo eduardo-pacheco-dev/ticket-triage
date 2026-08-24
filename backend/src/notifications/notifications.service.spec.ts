@@ -41,7 +41,9 @@ function buildService(qbOverrides: QbOverrides = {}) {
     })),
     save: jest.fn(async (rows: unknown) => rows),
     find: jest.fn(
-      async (_criteria?: unknown): Promise<Array<{ notificationId: string; userId: string; readAt: Date }>> => [],
+      async (
+        _criteria?: unknown,
+      ): Promise<Array<{ notificationId: string; userId: string; readAt: Date }>> => [],
     ),
   };
   const events = { emit: jest.fn() };
@@ -83,9 +85,7 @@ describe('NotificationsService', () => {
       const { service, notificationsRepo, events } = buildService();
       notificationsRepo.save.mockRejectedValueOnce(new Error('db down'));
 
-      await expect(
-        service.publish({ title: 'T', body: 'B' }),
-      ).resolves.toBeUndefined();
+      await expect(service.publish({ title: 'T', body: 'B' })).resolves.toBeUndefined();
       expect(events.emit).not.toHaveBeenCalled();
       warnSpy.mockRestore();
     });

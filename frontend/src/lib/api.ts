@@ -206,7 +206,6 @@ export function testTelegram() {
   return request<{ ok: boolean; error?: string }>('/admin/telegram/test', { method: 'POST' });
 }
 
-
 export function fetchUsers() {
   return request<SafeUser[]>('/users');
 }

@@ -14,11 +14,7 @@ export default defineConfig({
       output: {
         manualChunks(id: string) {
           if (!id.includes('node_modules')) return undefined;
-          if (
-            id.match(
-              /[\\/]node_modules[\\/](@mui|@emotion|@babel[\\/]*runtime|react-is)[\\/]/,
-            )
-          ) {
+          if (id.match(/[\\/]node_modules[\\/](@mui|@emotion|@babel[\\/]*runtime|react-is)[\\/]/)) {
             return 'vendor';
           }
           if (id.match(/[\\/]node_modules[\\/](react|react-dom|react-router|scheduler)[\\/]/)) {

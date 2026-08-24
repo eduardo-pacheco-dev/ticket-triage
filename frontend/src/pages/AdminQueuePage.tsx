@@ -224,12 +224,7 @@ export default function AdminQueuePage() {
         />
       )}
 
-      <Dialog
-        open={!!rejectTarget}
-        onClose={() => setRejectTarget(null)}
-        maxWidth="sm"
-        fullWidth
-      >
+      <Dialog open={!!rejectTarget} onClose={() => setRejectTarget(null)} maxWidth="sm" fullWidth>
         <DialogTitle>Recusar solicitação</DialogTitle>
         <DialogContent>
           <DialogContentText component="div" gutterBottom>
