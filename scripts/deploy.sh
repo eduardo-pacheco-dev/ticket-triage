@@ -106,6 +106,24 @@ step "Build do frontend"
 npm run build --workspace frontend
 step_done
 
+step "Nginx"
+if ! command -v nginx > /dev/null 2>&1; then
+  echo "    nginx ausente; instalando..."
+  sudo apt-get update -qq
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq nginx
+fi
+sudo cp deploy/nginx.conf.example /etc/nginx/sites-available/ticket-triage
+sudo ln -sfn /etc/nginx/sites-available/ticket-triage /etc/nginx/sites-enabled/ticket-triage
+sudo rm -f /etc/nginx/sites-enabled/default
+if sudo nginx -t; then
+  sudo systemctl reload nginx 2> /dev/null || sudo service nginx reload 2> /dev/null || sudo nginx -s reload
+  echo "    site 'ticket-triage' publicado para afl.vps-kinghost.net"
+else
+  echo "::error::nginx -t falhou; nova configuração não foi aplicada."
+  exit 1
+fi
+step_done
+
 step "Reiniciando API no PM2"
 pm2 startOrReload ecosystem.config.js --update-env
 pm2 save

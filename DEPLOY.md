@@ -51,10 +51,15 @@ bash scripts/deploy.sh $(git rev-parse HEAD)
 
 ## 4. Nginx
 
+O `deploy.sh` publica o site automaticamente a cada deploy (instala o nginx se faltar, copia
+`deploy/nginx.conf.example` → `/etc/nginx/sites-available/ticket-triage`, habilita, remove o
+site default e recarrega após validar com `nginx -t`). Requisito: usuário SSH com sudo sem senha.
+
+Comandos manuais equivalentes:
+
 ```bash
 sudo cp deploy/nginx.conf.example /etc/nginx/sites-available/ticket-triage
-sudo nano /etc/nginx/sites-available/ticket-triage   # server_name já vem como afl.vps-kinghost.net
-sudo ln -s /etc/nginx/sites-available/ticket-triage /etc/nginx/sites-enabled/
+sudo ln -sfn /etc/nginx/sites-available/ticket-triage /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t && sudo systemctl reload nginx
 ```
