@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Grid, Column, InlineNotification, Loading, Tag, Tile } from '@carbon/react';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
+import Grid from '@mui/material/Grid';
+import Paper from '@mui/material/Paper';
 import { fetchDashboard } from '../lib/api';
 import type { DashboardData } from '../lib/types';
 import { useQueueEvents } from '../hooks/useQueueEvents';
 import { slaLabel } from '../lib/duration';
-import { statusTagType } from '../lib/status';
+import { statusChipColor } from '../lib/status';
 import { statusLabel } from '../lib/types';
 import type { QueueEntry } from '../lib/types';
 
@@ -18,12 +23,12 @@ function StatCard({
   tone?: string;
 }) {
   return (
-    <Tile className="stat-card">
+    <Paper variant="outlined" className="stat-card">
       <div className="stat-value" style={tone ? { color: tone } : undefined}>
         {value}
       </div>
       <div className="stat-label">{label}</div>
-    </Tile>
+    </Paper>
   );
 }
 
@@ -59,52 +64,48 @@ export default function DashboardPage() {
       </div>
 
       {error && (
-        <InlineNotification
-          kind="error"
-          lowContrast
-          title="Erro"
-          subtitle={error}
-          onCloseButtonClick={() => setError(null)}
-        />
+        <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
+          <strong>Erro.</strong> {error}
+        </Alert>
       )}
 
       {loading ? (
-        <div style={{ position: 'relative', minHeight: 200 }}>
-          <Loading withOverlay={false} />
-        </div>
+        <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: 200 }}>
+          <CircularProgress size={32} />
+        </Box>
       ) : data ? (
         <>
-          <Grid narrow style={{ marginBottom: '1.5rem' }}>
-            <Column sm={2} md={4} lg={4}>
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}>
               <StatCard label="Total" value={data.total} />
-            </Column>
-            <Column sm={2} md={4} lg={4}>
+            </Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}>
               <StatCard label="Aguardando" value={data.waiting} />
-            </Column>
-            <Column sm={2} md={4} lg={4}>
+            </Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}>
               <StatCard label="Em análise" value={data.inReview} tone="#0f62fe" />
-            </Column>
-            <Column sm={2} md={4} lg={4}>
+            </Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}>
               <StatCard label="Aprovados" value={data.approved} tone="#24a148" />
-            </Column>
-            <Column sm={2} md={4} lg={4}>
+            </Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}>
               <StatCard label="Recusados" value={data.rejected} tone="#da1e28" />
-            </Column>
-            <Column sm={2} md={4} lg={4}>
+            </Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}>
               <StatCard
                 label="Espera média"
                 value={data.avgWaitMin > 0 ? `${data.avgWaitMin} min` : '-'}
               />
-            </Column>
-            <Column sm={2} md={4} lg={4}>
+            </Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}>
               <StatCard
                 label="Atendimento médio"
                 value={data.avgServiceMin > 0 ? `${data.avgServiceMin} min` : '-'}
               />
-            </Column>
+            </Grid>
           </Grid>
 
-          <Tile style={{ padding: '1.5rem' }}>
+          <Paper variant="outlined" sx={{ p: 3 }}>
             <h2 style={{ fontSize: '1.125rem', margin: '0 0 1rem', fontWeight: 500 }}>
               Últimas solicitações
             </h2>
@@ -123,9 +124,11 @@ export default function DashboardPage() {
                         {entry.site_id}
                       </span>
                       <span style={{ minWidth: 100 }}>{entry.technician_name}</span>
-                      <Tag type={statusTagType[entry.status]} size="sm">
-                        {statusLabel[entry.status]}
-                      </Tag>
+                      <Chip
+                        size="small"
+                        color={statusChipColor[entry.status]}
+                        label={statusLabel[entry.status]}
+                      />
                       <span className="muted" style={{ marginLeft: 'auto', fontSize: '0.875rem' }}>
                         {wait}
                         {service ? ` / ${service}` : ''}
@@ -135,7 +138,7 @@ export default function DashboardPage() {
                 })}
               </div>
             )}
-          </Tile>
+          </Paper>
         </>
       ) : null}
     </div>

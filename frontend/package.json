@@ -13,9 +13,10 @@
     "format": "prettier --write \"src/**/*.{ts,tsx}\""
   },
   "dependencies": {
-    "@carbon/icons-react": "^11.83.0",
-    "@carbon/react": "^1.111.0",
-    "@carbon/styles": "^1.110.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.5",
+    "@mui/material": "^7.3.5",
     "@ticket-triage/shared": "*",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

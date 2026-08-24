@@ -5,16 +5,22 @@ export default defineConfig({
   plugins: [react()],
   // Pré-otimiza pacotes usados sobretudo por rotas lazy (admin). Sem isso o
   // Vite os descobre tarde, reotimiza no meio da sessão e quebra as abas já
-  // abertas (sintoma: ícones do Carbon desaparecem com o botão clicável).
+  // abertas (sintoma: ícones do MUI desaparecem com o botão clicável).
   optimizeDeps: {
-    include: ['@carbon/react', '@carbon/icons-react'],
+    include: ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
   },
   build: {
     rollupOptions: {
       output: {
         manualChunks(id: string) {
           if (!id.includes('node_modules')) return undefined;
-          if (id.includes('@carbon')) return 'carbon';
+          if (
+            id.match(
+              /[\\/]node_modules[\\/](@mui|@emotion|@babel[\\/]*runtime|react-is)[\\/]/,
+            )
+          ) {
+            return 'vendor';
+          }
           if (id.match(/[\\/]node_modules[\\/](react|react-dom|react-router|scheduler)[\\/]/)) {
             return 'react';
           }

@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Form, Stack, TextInput, Button, InlineNotification, Tile } from '@carbon/react';
-import { Login as LoginIcon } from '@carbon/icons-react';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
+import LoginIcon from '@mui/icons-material/Login';
 import { PublicHeader } from '../components/PublicHeader';
 import { useAuthStore } from '../stores/auth';
 import { ApiError } from '../lib/api';
@@ -51,49 +56,47 @@ export default function LoginPage() {
       <PublicHeader />
       <main className="login-main">
         <div className="login-container">
-          <Tile className="login-card">
+          <Paper className="checkin-card login-card">
             <h1 className="login-title">Acessar Painel</h1>
             <p className="login-subtitle">
               Área restrita. Utilize suas credenciais para continuar.
             </p>
-            <Form onSubmit={handleSubmit}>
-              <Stack gap={6}>
+            <Box component="form" onSubmit={handleSubmit} noValidate>
+              <Stack spacing={3}>
                 {error && (
-                  <InlineNotification
-                    kind="error"
-                    lowContrast
-                    title="Falha no login"
-                    subtitle={error}
-                    hideCloseButton
-                  />
+                  <Alert severity="error" variant="outlined">
+                    <strong>Falha no login.</strong> {error}
+                  </Alert>
                 )}
-                <TextInput
+                <TextField
                   id="username"
-                  labelText="Usuário"
+                  label="Usuário"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  invalid={!!fieldErrors.username}
-                  invalidText={fieldErrors.username}
+                  error={!!fieldErrors.username}
+                  helperText={fieldErrors.username}
                   required
                   autoComplete="username"
+                  fullWidth
                 />
-                <TextInput
+                <TextField
                   id="password"
-                  labelText="Senha"
+                  label="Senha"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  invalid={!!fieldErrors.password}
-                  invalidText={fieldErrors.password}
+                  error={!!fieldErrors.password}
+                  helperText={fieldErrors.password}
                   required
                   autoComplete="current-password"
+                  fullWidth
                 />
-                <Button type="submit" renderIcon={LoginIcon} size="lg" disabled={loading}>
+                <Button type="submit" size="large" endIcon={<LoginIcon />} disabled={loading}>
                   {loading ? 'Entrando...' : 'Entrar'}
                 </Button>
               </Stack>
-            </Form>
-          </Tile>
+            </Box>
+          </Paper>
         </div>
       </main>
     </div>

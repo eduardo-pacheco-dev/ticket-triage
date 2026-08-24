@@ -1,10 +1,10 @@
 import type { QueueStatus } from './types';
 
-export type StatusTagType = 'gray' | 'blue' | 'green' | 'red';
+export type StatusChipColor = 'default' | 'primary' | 'success' | 'error';
 
-export const statusTagType: Record<QueueStatus, StatusTagType> = {
-  waiting: 'gray',
-  in_review: 'blue',
-  approved: 'green',
-  rejected: 'red',
+export const statusChipColor: Record<QueueStatus, StatusChipColor> = {
+  waiting: 'default',
+  in_review: 'primary',
+  approved: 'success',
+  rejected: 'error',
 };

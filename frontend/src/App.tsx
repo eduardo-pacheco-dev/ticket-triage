@@ -1,6 +1,7 @@
 import { Suspense, lazy } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { Loading } from '@carbon/react';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminLayout } from './components/AdminLayout';
 import { Toaster } from './components/Toaster';
@@ -17,9 +18,9 @@ const UsersPage = lazy(() => import('./pages/UsersPage'));
 
 function RouteFallback() {
   return (
-    <div style={{ position: 'relative', minHeight: 300 }}>
-      <Loading withOverlay={false} description="Carregando..." />
-    </div>
+    <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: 300, alignItems: 'center' }}>
+      <CircularProgress size={32} aria-label="Carregando..." />
+    </Box>
   );
 }
 

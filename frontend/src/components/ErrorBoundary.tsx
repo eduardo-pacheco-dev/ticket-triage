@@ -1,6 +1,8 @@
 import { Component } from 'react';
 import type { ReactNode } from 'react';
-import { Button, InlineNotification } from '@carbon/react';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Alert from '@mui/material/Alert';
 
 interface Props {
   children: ReactNode;
@@ -28,21 +30,16 @@ export class ErrorBoundary extends Component<Props, State> {
 
     return (
       <div style={{ maxWidth: 640, margin: '4rem auto', padding: '0 1rem' }}>
-        <InlineNotification
-          kind="error"
-          lowContrast
-          hideCloseButton
-          title="Algo deu errado"
-          subtitle="Ocorreu um erro inesperado ao exibir esta tela. Tente recarregar a página."
-        />
-        <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
-          <Button kind="primary" onClick={() => window.location.reload()}>
+        <Alert severity="error" variant="outlined">
+          <strong>Algo deu errado.</strong> Ocorreu um erro inesperado ao exibir esta tela. Tente
+          recarregar a página.
+        </Alert>
+        <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+          <Button variant="contained" onClick={() => window.location.reload()}>
             Recarregar página
           </Button>
-          <Button kind="ghost" onClick={() => window.location.assign('/')}>
-            Voltar ao início
-          </Button>
-        </div>
+          <Button onClick={() => window.location.assign('/')}>Voltar ao início</Button>
+        </Box>
       </div>
     );
   }
