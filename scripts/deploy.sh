@@ -70,6 +70,20 @@ git reset --hard "$SHA"
 echo "HEAD agora em: $(git rev-parse --short HEAD) — $(git log -1 --format=%s)"
 step_done
 
+step "Semeando cache de pacotes grandes"
+# A rede da VPS estagna em payloads grandes (@ibm/plex ~dezenas de MB). O curl
+# com retry/resume é mais resistente que o fetch interno do npm; se o download
+# falhar, seguimos mesmo assim e o npm ci tenta por conta própria.
+PLEX_TGZ=/tmp/plex-6.4.1.tgz
+if curl -fsSL --retry 5 --retry-all-errors -C - -o "$PLEX_TGZ" \
+     "https://registry.npmjs.org/@ibm/plex/-/plex-6.4.1.tgz"; then
+  npm cache add "$PLEX_TGZ" > /dev/null 2>&1 && echo "    @ibm/plex disponível no cache local"
+else
+  echo "    aviso: semente do @ibm/plex falhou; npm ci fará o download direto"
+fi
+rm -f "$PLEX_TGZ"
+step_done
+
 step "Instalando dependências (npm ci)"
 # Pacotes pesados (@ibm/plex) em redes instáveis: timeouts e retries generosos.
 export npm_config_fetch_timeout=900000
