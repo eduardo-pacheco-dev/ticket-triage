@@ -58,6 +58,27 @@ export const updateSlaSchema = z
   })
   .partial();
 
+export const createUserSchema = z.object({
+  username: z
+    .string()
+    .trim()
+    .min(1, 'Usuário é obrigatório.')
+    .max(100, 'Máximo de 100 caracteres.'),
+  password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres.').max(200),
+});
+
+export const updateUserSchema = z
+  .object({
+    username: z
+      .string()
+      .trim()
+      .min(1, 'Usuário é obrigatório.')
+      .max(100, 'Máximo de 100 caracteres.'),
+    password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres.').max(200),
+    mustChangePassword: z.boolean(),
+  })
+  .partial();
+
 export const paginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
@@ -69,4 +90,6 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export type CreateRequestTypeInput = z.infer<typeof createRequestTypeSchema>;
 export type UpdateSlaInput = z.infer<typeof updateSlaSchema>;
+export type CreateUserInput = z.infer<typeof createUserSchema>;
+export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 export type PaginationInput = z.infer<typeof paginationSchema>;
