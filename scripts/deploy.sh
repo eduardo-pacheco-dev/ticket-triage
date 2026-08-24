@@ -5,7 +5,7 @@
 #   bash scripts/deploy.sh <sha>          # a partir da raiz do repositório na VPS
 #
 # Variáveis de ambiente:
-#   APP_DIR   Diretório da aplicação na VPS (padrão: /var/www/ticket-triage)
+#   APP_DIR   Diretório da aplicação na VPS (padrão: /var/www/app/ticket-triage)
 #   BRANCH    Branch de origem do SHA (padrão: main)
 #
 # Pré-requisitos na VPS: git, node >= 22, npm, pm2, mariadb rodando,
@@ -13,7 +13,7 @@
 
 set -euo pipefail
 
-APP_DIR="${APP_DIR:-/var/www/ticket-triage}"
+APP_DIR="${APP_DIR:-/var/www/app/ticket-triage}"
 BRANCH="${BRANCH:-main}"
 SHA="${1:-}"
 

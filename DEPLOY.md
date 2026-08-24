@@ -30,9 +30,9 @@ sudo mysql -e "GRANT ALL PRIVILEGES ON ticket_triage.* TO 'app'@'localhost'; FLU
 ## 2. Clonar e configurar
 
 ```bash
-sudo mkdir -p /var/www/ticket-triage && sudo chown $USER /var/www/ticket-triage
-git clone https://github.com/eduardo-pacheco-dev/ticket-triage.git /var/www/ticket-triage
-cd /var/www/ticket-triage
+sudo mkdir -p /var/www/app && sudo chown $USER /var/www/app
+git clone https://github.com/eduardo-pacheco-dev/ticket-triage.git /var/www/app/ticket-triage
+cd /var/www/app/ticket-triage
 
 cp backend/.env.production.example backend/.env
 nano backend/.env   # preencha DB_PASSWORD, JWT_SECRET, SEED_ADMIN_PASSWORD
@@ -51,7 +51,7 @@ bash scripts/deploy.sh $(git rev-parse HEAD)
 
 ```bash
 sudo cp deploy/nginx.conf.example /etc/nginx/sites-available/ticket-triage
-sudo nano /etc/nginx/sites-available/ticket-triage   # ajuste server_name
+sudo nano /etc/nginx/sites-available/ticket-triage   # server_name já vem como afl.vps-kinghost.net
 sudo ln -s /etc/nginx/sites-available/ticket-triage /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t && sudo systemctl reload nginx
@@ -65,7 +65,7 @@ HTTPS opcional: `sudo apt install certbot python3-certbot-nginx && sudo certbot 
 | --- | --- |
 | `SSH_HOST` | IP ou host da VPS |
 | `SSH_PORT` | Porta SSH (opcional; padrão 22) |
-| `SSH_USER` | Usuário SSH com acesso ao repositório em `/var/www/ticket-triage` |
+| `SSH_USER` | Usuário SSH com acesso ao repositório em `/var/www/app/ticket-triage` |
 | `SSH_PRIVATE_KEY` | Chave privada (ed25519) cadastrada no `authorized_keys` da VPS |
 
 A partir daí, todo push em `main` publica automaticamente. Deploys manuais: aba **Actions → Deploy → Run workflow**.
@@ -74,6 +74,6 @@ A partir daí, todo push em `main` publica automaticamente. Deploys manuais: aba
 
 - **Logs**: `pm2 logs ticket-triage-api` · arquivos em `backend/logs/`
 - **Status**: `pm2 status`
-- **Rollback**: `cd /var/www/ticket-triage && git checkout -f main && git reset --hard <sha-anterior> && bash scripts/deploy.sh <sha-anterior>`
+- **Rollback**: `cd /var/www/app/ticket-triage && git checkout -f main && git reset --hard <sha-anterior> && bash scripts/deploy.sh <sha-anterior>`
 - **Deploy travou no health check**: ver `pm2 logs` — causas comuns: `.env` inválido, senha do MariaDB errada, porta ocupada
 - **Migrations novas falharam**: rode `npm run migration:run` manualmente na VPS para ver o erro completo

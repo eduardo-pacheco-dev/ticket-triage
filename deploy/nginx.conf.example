@@ -1,15 +1,14 @@
 # Exemplo de site Nginx para o Ticket Triage.
-# Copie para /etc/nginx/sites-available/ticket-triage, ajuste server_name
-# e crie o link: sudo ln -s /etc/nginx/sites-available/ticket-triage /etc/nginx/sites-enabled/
+# Copie para /etc/nginx/sites-available/ticket-triage e crie o link: sudo ln -s /etc/nginx/sites-available/ticket-triage /etc/nginx/sites-enabled/
 #
 # Frontend: arquivos estáticos de frontend/dist (SPA com fallback para index.html).
 # API: proxy para PM2 em 127.0.0.1:3000, com ajustes para SSE (/api/queue/events).
 
 server {
     listen 80;
-    server_name _;  # troque pelo seu domínio, ex.: triagem.seudominio.com
+    server_name afl.vps-kinghost.net;
 
-    root /var/www/ticket-triage/frontend/dist;
+    root /var/www/app/ticket-triage/frontend/dist;
     index index.html;
 
     gzip on;

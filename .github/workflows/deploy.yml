@@ -47,7 +47,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            APP_DIR=/var/www/ticket-triage bash /var/www/ticket-triage/scripts/deploy.sh ${{ github.sha }}
+            APP_DIR=/var/www/app/ticket-triage bash /var/www/app/ticket-triage/scripts/deploy.sh ${{ github.sha }}
 
       - name: Notificar falha
         if: failure()
