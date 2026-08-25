@@ -16,6 +16,7 @@ const ArchivedPage = lazy(() => import('./pages/ArchivedPage'));
 const ConfigPage = lazy(() => import('./pages/ConfigPage'));
 const UsersPage = lazy(() => import('./pages/UsersPage'));
 const ServiceOrdersPage = lazy(() => import('./pages/ServiceOrdersPage'));
+const StationsPage = lazy(() => import('./pages/StationsPage'));
 
 function RouteFallback() {
   return (
@@ -49,6 +50,7 @@ export default function App() {
               <Route path="configuracoes" element={<ConfigPage />} />
               <Route path="usuarios" element={<UsersPage />} />
               <Route path="ordens-de-servico" element={<ServiceOrdersPage />} />
+              <Route path="estacoes" element={<StationsPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

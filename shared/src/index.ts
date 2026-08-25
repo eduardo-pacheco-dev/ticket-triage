@@ -156,6 +156,54 @@ export type ServiceOrderStatus = z.infer<typeof serviceOrderStatusSchema>;
 export type ServiceOrderPriority = z.infer<typeof serviceOrderPrioritySchema>;
 export type CreateServiceOrderInput = z.infer<typeof createServiceOrderSchema>;
 export type UpdateServiceOrderInput = z.infer<typeof updateServiceOrderSchema>;
+export const createStationSchema = z.object({
+  name: z.string().trim().min(1, 'Nome é obrigatório.').max(200, 'Máximo de 200 caracteres.'),
+  code: z
+    .string()
+    .trim()
+    .min(1, 'Código é obrigatório.')
+    .max(100, 'Máximo de 100 caracteres.')
+    .transform((v) => v.toUpperCase()),
+  address: z.string().trim().max(300, 'Máximo de 300 caracteres.').optional(),
+  city: z.string().trim().max(150, 'Máximo de 150 caracteres.').optional(),
+  state: z.string().trim().max(2, 'Máximo de 2 caracteres.').optional(),
+  phone: z.string().trim().max(30, 'Máximo de 30 caracteres.').optional(),
+  email: z
+    .string()
+    .trim()
+    .email('E-mail inválido.')
+    .max(200, 'Máximo de 200 caracteres.')
+    .optional(),
+  responsible: z.string().trim().max(200, 'Máximo de 200 caracteres.').optional(),
+  notes: z.string().trim().max(2000, 'Máximo de 2000 caracteres.').optional(),
+});
+
+export const updateStationSchema = z
+  .object({
+    name: z.string().trim().min(1, 'Nome é obrigatório.').max(200, 'Máximo de 200 caracteres.'),
+    code: z
+      .string()
+      .trim()
+      .min(1, 'Código é obrigatório.')
+      .max(100, 'Máximo de 100 caracteres.')
+      .transform((v) => v.toUpperCase()),
+    address: z.string().trim().max(300, 'Máximo de 300 caracteres.').optional(),
+    city: z.string().trim().max(150, 'Máximo de 150 caracteres.').optional(),
+    state: z.string().trim().max(2, 'Máximo de 2 caracteres.').optional(),
+    phone: z.string().trim().max(30, 'Máximo de 30 caracteres.').optional(),
+    email: z
+      .string()
+      .trim()
+      .email('E-mail inválido.')
+      .max(200, 'Máximo de 200 caracteres.')
+      .optional(),
+    responsible: z.string().trim().max(200, 'Máximo de 200 caracteres.').optional(),
+    notes: z.string().trim().max(2000, 'Máximo de 2000 caracteres.').optional(),
+  })
+  .partial();
+
+export type CreateStationInput = z.infer<typeof createStationSchema>;
+export type UpdateStationInput = z.infer<typeof updateStationSchema>;
 export type CreateCheckInInput = z.infer<typeof createCheckInSchema>;
 export type UpdateStatusInput = z.infer<typeof updateStatusSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;

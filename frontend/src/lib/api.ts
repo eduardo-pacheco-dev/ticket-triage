@@ -8,6 +8,7 @@ import type {
   QueueStatus,
   RequestType,
   ServiceOrder,
+  Station,
   SlaConfig,
   SafeUser,
 } from './types';
@@ -290,4 +291,54 @@ export function updateServiceOrder(id: string, data: UpdateServiceOrderInput) {
 
 export function deleteServiceOrder(id: string) {
   return request<void>(`/service-orders/${id}`, { method: 'DELETE' });
+}
+
+export function fetchStations() {
+  return request<Station[]>('/stations');
+}
+
+export function fetchStation(id: string) {
+  return request<Station>(`/stations/${id}`);
+}
+
+export interface CreateStationInput {
+  name: string;
+  code: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  phone?: string;
+  email?: string;
+  responsible?: string;
+  notes?: string;
+}
+
+export interface UpdateStationInput {
+  name?: string;
+  code?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  phone?: string;
+  email?: string;
+  responsible?: string;
+  notes?: string;
+}
+
+export function createStation(data: CreateStationInput) {
+  return request<Station>('/stations', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateStation(id: string, data: UpdateStationInput) {
+  return request<Station>(`/stations/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteStation(id: string) {
+  return request<void>(`/stations/${id}`, { method: 'DELETE' });
 }
