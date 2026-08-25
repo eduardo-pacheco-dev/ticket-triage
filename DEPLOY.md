@@ -14,20 +14,24 @@ Nginx :80 ──▶ frontend/dist (estático) + proxy /api → 127.0.0.1:3000
 
 ## 1. Preparar a VPS (uma vez)
 
-```bash
-# Node 20.19.2
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs git nginx mariadb-server
-sudo npm install -g pm2
+O `scripts/bootstrap-vps.sh` instala tudo automaticamente (idempotente):
 
-# MariaDB
-sudo mysql_secure_installation
-# O banco e o usuário são criados automaticamente pelo scripts/deploy.sh
-# (usa sudo mysql + as credenciais de backend/.env). Comando manual, se preferir:
-#   sudo mysql -e "CREATE DATABASE ticket_triage CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-#   sudo mysql -e "CREATE USER 'app'@'localhost' IDENTIFIED BY 'SENHA_FORTE';"
-#   sudo mysql -e "GRANT ALL PRIVILEGES ON ticket_triage.* TO 'app'@'localhost'; FLUSH PRIVILEGES;"
+```bash
+bash scripts/bootstrap-vps.sh            # git, Node 20 (NodeSource), pm2, MariaDB, nginx
+ENABLE_UFW=1 bash scripts/bootstrap-vps.sh   # idem, liberando SSH/80/443 no ufw
 ```
+
+O que ele faz:
+
+- **Node v20** via NodeSource (falha se houver outra série instalada)
+- **pm2** global + unidade `systemd` (`pm2-<usuário>`) para a API subir no boot
+- **MariaDB** com endurecimento não interativo (root via unix_socket; sem anônimos/test)
+- **nginx** habilitado (o site em si é publicado pelo `deploy.sh` a cada deploy)
+- Diretório `/var/www/app/ticket-triage/backend/logs` e `backend/.env` inicial a partir do exemplo
+
+Variáveis opcionais: `APP_DIR` (diretório da aplicação), `NODE_MAJOR` (série do Node) e
+`ENABLE_UFW` (`1` libera SSH/HTTP/HTTPS no firewall). O banco de dados e o usuário do app são
+criados depois, pelo `scripts/deploy.sh`, a partir das credenciais do `backend/.env`.
 
 ## 2. Configurar o `.env` na VPS
 
