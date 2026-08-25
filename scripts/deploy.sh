@@ -104,6 +104,10 @@ else
   step_done
 fi
 
+step "Build do shared"
+npm run build --workspace shared
+step_done
+
 step "Build do backend"
 npm run build --workspace backend
 step_done
