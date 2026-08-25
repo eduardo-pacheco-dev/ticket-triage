@@ -70,6 +70,14 @@ git reset --hard "$SHA"
 echo "HEAD agora em: $(git rev-parse --short HEAD) — $(git log -1 --format=%s)"
 step_done
 
+# Se o deploy.sh foi atualizado pelo git reset, re-executa a si mesmo
+# para garantir que o script em memória reflita o novo código.
+if [ "${_REDEPLOY:-}" != "1" ]; then
+  echo "==> deploy.sh atualizado; reiniciando script..."
+  export _REDEPLOY=1
+  exec bash "$0" "$SHA"
+fi
+
 step "Instalando dependências"
 # Pula o npm ci quando o package-lock.json não mudou desde o deploy anterior:
 # reinstallar tudo pela rede da VPS é o passo mais lento do deploy. Para forçar
