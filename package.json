@@ -25,9 +25,24 @@
     "db:down": "docker compose down",
     "db:init": "npm run db:init --workspace backend",
     "db:migrate": "npm run migration:run --workspace backend",
-    "db:seed": "npm run db:seed --workspace backend"
+    "db:seed": "npm run db:seed --workspace backend",
+    "prepare": "husky"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --max-warnings=0"
+    ],
+    "*.{json,md,yml,yaml,css,html}": [
+      "prettier --write"
+    ],
+    "backend/**/*.ts": "bash -c 'npx tsc --noEmit --project backend/tsconfig.json'",
+    "frontend/**/*.{ts,tsx}": "bash -c 'npx tsc --noEmit --project frontend/tsconfig.app.json'",
+    "shared/**/*.ts": "bash -c 'cd shared && npx tsc --noEmit'"
   }
 }
