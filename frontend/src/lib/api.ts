@@ -7,6 +7,7 @@ import type {
   QueueEntry,
   QueueStatus,
   RequestType,
+  ServiceOrder,
   SlaConfig,
   SafeUser,
 } from './types';
@@ -240,4 +241,53 @@ export function updateUser(id: string, data: UpdateUserInput) {
 
 export function deleteUser(id: string) {
   return request<void>(`/users/${id}`, { method: 'DELETE' });
+}
+
+export function fetchServiceOrders() {
+  return request<ServiceOrder[]>('/service-orders');
+}
+
+export function fetchServiceOrder(id: string) {
+  return request<ServiceOrder>(`/service-orders/${id}`);
+}
+
+export interface CreateServiceOrderInput {
+  clientName: string;
+  clientContact?: string;
+  siteId?: string;
+  description: string;
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
+  assignedTo?: string;
+  scheduledDate?: string;
+  notes?: string;
+}
+
+export interface UpdateServiceOrderInput {
+  clientName?: string;
+  clientContact?: string;
+  siteId?: string;
+  description?: string;
+  status?: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
+  assignedTo?: string;
+  scheduledDate?: string;
+  notes?: string;
+}
+
+export function createServiceOrder(data: CreateServiceOrderInput) {
+  return request<ServiceOrder>('/service-orders', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateServiceOrder(id: string, data: UpdateServiceOrderInput) {
+  return request<ServiceOrder>(`/service-orders/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteServiceOrder(id: string) {
+  return request<void>(`/service-orders/${id}`, { method: 'DELETE' });
 }

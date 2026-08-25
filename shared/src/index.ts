@@ -103,6 +103,59 @@ export const paginationSchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 });
 
+export const serviceOrderStatusSchema = z.enum([
+  'pending',
+  'in_progress',
+  'completed',
+  'cancelled',
+]);
+export const serviceOrderPrioritySchema = z.enum(['low', 'medium', 'high', 'urgent']);
+
+export const createServiceOrderSchema = z.object({
+  clientName: z
+    .string()
+    .trim()
+    .min(1, 'Nome do cliente é obrigatório.')
+    .max(200, 'Máximo de 200 caracteres.'),
+  clientContact: z.string().trim().max(200, 'Máximo de 200 caracteres.').optional(),
+  siteId: z.string().trim().max(100, 'Máximo de 100 caracteres.').optional(),
+  description: z
+    .string()
+    .trim()
+    .min(1, 'Descrição é obrigatória.')
+    .max(2000, 'Máximo de 2000 caracteres.'),
+  priority: serviceOrderPrioritySchema.default('medium'),
+  assignedTo: z.string().trim().max(200, 'Máximo de 200 caracteres.').optional(),
+  scheduledDate: z.string().optional(),
+  notes: z.string().trim().max(2000, 'Máximo de 2000 caracteres.').optional(),
+});
+
+export const updateServiceOrderSchema = z
+  .object({
+    clientName: z
+      .string()
+      .trim()
+      .min(1, 'Nome do cliente é obrigatório.')
+      .max(200, 'Máximo de 200 caracteres.'),
+    clientContact: z.string().trim().max(200, 'Máximo de 200 caracteres.').optional(),
+    siteId: z.string().trim().max(100, 'Máximo de 100 caracteres.').optional(),
+    description: z
+      .string()
+      .trim()
+      .min(1, 'Descrição é obrigatória.')
+      .max(2000, 'Máximo de 2000 caracteres.'),
+    status: serviceOrderStatusSchema,
+    priority: serviceOrderPrioritySchema,
+    assignedTo: z.string().trim().max(200, 'Máximo de 200 caracteres.').optional(),
+    scheduledDate: z.string().optional(),
+    notes: z.string().trim().max(2000, 'Máximo de 2000 caracteres.').optional(),
+  })
+  .partial();
+
+export type ServiceOrderStatus = z.infer<typeof serviceOrderStatusSchema>;
+export type ServiceOrderPriority = z.infer<typeof serviceOrderPrioritySchema>;
+export type CreateServiceOrderInput = z.infer<typeof createServiceOrderSchema>;
+export type UpdateServiceOrderInput = z.infer<typeof updateServiceOrderSchema>;
 export type CreateCheckInInput = z.infer<typeof createCheckInSchema>;
 export type UpdateStatusInput = z.infer<typeof updateStatusSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
