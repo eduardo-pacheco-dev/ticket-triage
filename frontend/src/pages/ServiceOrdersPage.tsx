@@ -406,6 +406,12 @@ export default function ServiceOrdersPage() {
         </Alert>
       )}
 
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
+          Nova ordem
+        </Button>
+      </div>
+
       <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
           <TextField
@@ -466,12 +472,6 @@ export default function ServiceOrdersPage() {
           )}
         </Stack>
       </Paper>
-
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
-          Nova ordem
-        </Button>
-      </div>
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: 200 }}>
