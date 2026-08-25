@@ -34,15 +34,23 @@
     "lint-staged": "^16.4.0"
   },
   "lint-staged": {
-    "*.{ts,tsx}": [
+    "backend/**/*.ts": [
       "prettier --write",
-      "eslint --max-warnings=0"
+      "eslint --config backend/eslint.config.mjs --max-warnings=0",
+      "bash -c 'npx tsc --noEmit --project backend/tsconfig.json'"
+    ],
+    "frontend/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --config frontend/eslint.config.mjs --max-warnings=0",
+      "bash -c 'npx tsc --noEmit --project frontend/tsconfig.app.json'"
+    ],
+    "shared/**/*.ts": [
+      "prettier --write",
+      "eslint --config shared/eslint.config.mjs --max-warnings=0",
+      "bash -c 'cd shared && npx tsc --noEmit'"
     ],
     "*.{json,md,yml,yaml,css,html}": [
       "prettier --write"
-    ],
-    "backend/**/*.ts": "bash -c 'npx tsc --noEmit --project backend/tsconfig.json'",
-    "frontend/**/*.{ts,tsx}": "bash -c 'npx tsc --noEmit --project frontend/tsconfig.app.json'",
-    "shared/**/*.ts": "bash -c 'cd shared && npx tsc --noEmit'"
+    ]
   }
 }
