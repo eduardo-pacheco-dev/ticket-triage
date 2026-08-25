@@ -129,7 +129,7 @@ else
 fi
 
 step "Migrations do banco"
-npm run migration:run
+npm run db:migrate
 step_done
 
 step "Build do frontend"

@@ -6,7 +6,7 @@ Fluxo: push/merge em `main` → workflow roda lint, testes e builds → SSH na V
 GitHub Actions ──ssh──▶ VPS
                          ├─ git reset --hard <sha>
                          ├─ npm ci + build backend/frontend
-                         ├─ npm run migration:run   (MariaDB)
+                         ├─ npm run db:migrate      (MariaDB)
                          ├─ pm2 startOrReload       (API :3000)
                          └─ curl /api/health
 Nginx :80 ──▶ frontend/dist (estático) + proxy /api → 127.0.0.1:3000
@@ -82,7 +82,7 @@ A partir daí, todo push em `main` publica automaticamente. Deploys manuais: aba
 - **Status**: `pm2 status`
 - **Rollback**: `cd /var/www/app/ticket-triage && git checkout -f main && git reset --hard <sha-anterior> && bash scripts/deploy.sh <sha-anterior>`
 - **Deploy travou no health check**: ver `pm2 logs` — causas comuns: `.env` inválido, senha do MariaDB errada, porta ocupada
-- **Migrations novas falharam**: rode `npm run migration:run` manualmente na VPS para ver o erro completo
+- **Migrations novas falharam**: rode `npm run db:migrate` manualmente na VPS para ver o erro completo
 - **Downloads do npm morrem com ETIMEDOUT**: payloads grandes estagnam na rede da VPS (MTU). Diagnóstico:
   `curl -fL -o /tmp/plex.tgz https://registry.npmjs.org/@ibm/plex/-/plex-6.4.1.tgz`. Correção:
   `sudo ip link set dev <iface> mtu 1400` e persistir em `/etc/network/interfaces`
