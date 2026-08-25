@@ -119,8 +119,10 @@ if [ "$DB_HOST_ENV" = "localhost" ] || [ "$DB_HOST_ENV" = "127.0.0.1" ]; then
   PASS_ESCAPED=${DB_PASS_ENV//\\/\\\\}
   PASS_ESCAPED=${PASS_ESCAPED//\"/\\\"}
   printf 'CREATE DATABASE IF NOT EXISTS `%s` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\n' "$DB_NAME_ENV" | sudo mysql
-  printf 'CREATE USER IF NOT EXISTS `%s`@`localhost` IDENTIFIED BY "%s";\nGRANT ALL PRIVILEGES ON `%s`.* TO `%s`@`localhost`;\nFLUSH PRIVILEGES;\n' \
-    "$DB_USER_ENV" "$PASS_ESCAPED" "$DB_NAME_ENV" "$DB_USER_ENV" | sudo mysql
+  # CREATE USER IF NOT EXISTS NÃO atualiza a senha de um usuário pré-existente;
+  # o ALTER USER garante que a senha convirja sempre com o backend/.env.
+  printf 'CREATE USER IF NOT EXISTS `%s`@`localhost` IDENTIFIED BY "%s";\nALTER USER `%s`@`localhost` IDENTIFIED BY "%s";\nGRANT ALL PRIVILEGES ON `%s`.* TO `%s`@`localhost`;\nFLUSH PRIVILEGES;\n' \
+    "$DB_USER_ENV" "$PASS_ESCAPED" "$DB_USER_ENV" "$PASS_ESCAPED" "$DB_NAME_ENV" "$DB_USER_ENV" | sudo mysql
   echo "    banco '$DB_NAME_ENV' e usuário '$DB_USER_ENV' garantidos"
   step_done
 else
