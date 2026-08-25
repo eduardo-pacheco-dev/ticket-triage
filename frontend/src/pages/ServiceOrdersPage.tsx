@@ -21,13 +21,17 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TableSortLabel from '@mui/material/TableSortLabel';
+import TablePagination from '@mui/material/TablePagination';
 import TextField from '@mui/material/TextField';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
+import InputAdornment from '@mui/material/InputAdornment';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowLeftIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import TrashCanIcon from '@mui/icons-material/DeleteOutlined';
+import SearchIcon from '@mui/icons-material/Search';
+import ClearIcon from '@mui/icons-material/Clear';
 import {
   createServiceOrder,
   deleteServiceOrder,
@@ -88,14 +92,23 @@ const emptyForm: FormState = {
   status: 'pending',
 };
 
+const ROWS_PER_PAGE_OPTIONS = [10, 25, 50];
+
 export default function ServiceOrdersPage() {
   const notify = useToastStore((s) => s.notify);
   const [orders, setOrders] = useState<ServiceOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<ServiceOrderStatus | ''>('');
+  const [priorityFilter, setPriorityFilter] = useState<ServiceOrderPriority | ''>('');
+
   const [sortKey, setSortKey] = useState<SortKey>('orderNumber');
   const [sortAsc, setSortAsc] = useState(false);
+
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState<FormState>(emptyForm);
@@ -220,37 +233,71 @@ export default function ServiceOrdersPage() {
     }
   }
 
-  const rows = useMemo(() => {
-    const mapped = orders.map((o) => ({
-      id: o.id,
-      orderNumber: o.orderNumber,
-      clientName: o.clientName,
-      status: serviceOrderStatusLabel[o.status],
-      statusRaw: o.status,
-      priority: serviceOrderPriorityLabel[o.priority],
-      priorityRaw: o.priority,
-      createdAt: new Date(o.createdAt).toLocaleDateString('pt-BR'),
-      createdAtValue: new Date(o.createdAt).getTime(),
-      order: o,
-    }));
-    return [...mapped].sort((a, b) => {
-      let va: string | number;
-      let vb: string | number;
-      if (sortKey === 'orderNumber') {
-        va = a.orderNumber;
-        vb = b.orderNumber;
-      } else if (sortKey === 'createdAt') {
-        va = a.createdAtValue;
-        vb = b.createdAtValue;
-      } else {
-        va = a[sortKey];
-        vb = b[sortKey];
+  function clearFilters() {
+    setSearchTerm('');
+    setStatusFilter('');
+    setPriorityFilter('');
+    setPage(0);
+  }
+
+  const filteredAndSortedRows = useMemo(() => {
+    const searchLower = searchTerm.toLowerCase().trim();
+
+    const filtered = orders.filter((o) => {
+      if (searchTerm) {
+        const matchesSearch =
+          o.clientName.toLowerCase().includes(searchLower) ||
+          o.description.toLowerCase().includes(searchLower) ||
+          (o.assignedTo && o.assignedTo.toLowerCase().includes(searchLower)) ||
+          (o.clientContact && o.clientContact.toLowerCase().includes(searchLower)) ||
+          (o.siteId && o.siteId.toLowerCase().includes(searchLower));
+        if (!matchesSearch) return false;
       }
-      if (va < vb) return sortAsc ? -1 : 1;
-      if (va > vb) return sortAsc ? 1 : -1;
-      return 0;
+
+      if (statusFilter && o.status !== statusFilter) return false;
+      if (priorityFilter && o.priority !== priorityFilter) return false;
+
+      return true;
     });
-  }, [orders, sortKey, sortAsc]);
+
+    return [...filtered]
+      .map((o) => ({
+        id: o.id,
+        orderNumber: o.orderNumber,
+        clientName: o.clientName,
+        status: serviceOrderStatusLabel[o.status],
+        statusRaw: o.status,
+        priority: serviceOrderPriorityLabel[o.priority],
+        priorityRaw: o.priority,
+        createdAt: new Date(o.createdAt).toLocaleDateString('pt-BR'),
+        createdAtValue: new Date(o.createdAt).getTime(),
+        order: o,
+      }))
+      .sort((a, b) => {
+        let va: string | number;
+        let vb: string | number;
+        if (sortKey === 'orderNumber') {
+          va = a.orderNumber;
+          vb = b.orderNumber;
+        } else if (sortKey === 'createdAt') {
+          va = a.createdAtValue;
+          vb = b.createdAtValue;
+        } else {
+          va = a[sortKey];
+          vb = b[sortKey];
+        }
+        if (va < vb) return sortAsc ? -1 : 1;
+        if (va > vb) return sortAsc ? 1 : -1;
+        return 0;
+      });
+  }, [orders, searchTerm, statusFilter, priorityFilter, sortKey, sortAsc]);
+
+  const paginatedRows = useMemo(() => {
+    const start = page * rowsPerPage;
+    return filteredAndSortedRows.slice(start, start + rowsPerPage);
+  }, [filteredAndSortedRows, page, rowsPerPage]);
+
+  const hasActiveFilters = searchTerm || statusFilter || priorityFilter;
 
   function renderFormFields(
     form: FormState,
@@ -359,6 +406,67 @@ export default function ServiceOrdersPage() {
         </Alert>
       )}
 
+      <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
+          <TextField
+            placeholder="Buscar por cliente, descrição, responsável..."
+            value={searchTerm}
+            onChange={(e) => { setSearchTerm(e.target.value); setPage(0); }}
+            size="small"
+            sx={{ flexGrow: 1, minWidth: 250 }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+                endAdornment: searchTerm ? (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={() => { setSearchTerm(''); setPage(0); }} title="Limpar busca">
+                      <ClearIcon fontSize="small" />
+                    </IconButton>
+                  </InputAdornment>
+                ) : null,
+              },
+            }}
+          />
+          <TextField
+            select
+            label="Status"
+            value={statusFilter}
+            onChange={(e) => { setStatusFilter(e.target.value as ServiceOrderStatus | ''); setPage(0); }}
+            size="small"
+            sx={{ minWidth: 150 }}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            <MenuItem value="pending">Pendente</MenuItem>
+            <MenuItem value="in_progress">Em Andamento</MenuItem>
+            <MenuItem value="completed">Concluída</MenuItem>
+            <MenuItem value="cancelled">Cancelada</MenuItem>
+          </TextField>
+          <TextField
+            select
+            label="Prioridade"
+            value={priorityFilter}
+            onChange={(e) => { setPriorityFilter(e.target.value as ServiceOrderPriority | ''); setPage(0); }}
+            size="small"
+            sx={{ minWidth: 150 }}
+          >
+            <MenuItem value="">Todas</MenuItem>
+            <MenuItem value="low">Baixa</MenuItem>
+            <MenuItem value="medium">Média</MenuItem>
+            <MenuItem value="high">Alta</MenuItem>
+            <MenuItem value="urgent">Urgente</MenuItem>
+          </TextField>
+          {hasActiveFilters && (
+            <Button size="small" onClick={clearFilters} startIcon={<ClearIcon />}>
+              Limpar
+            </Button>
+          )}
+        </Stack>
+      </Paper>
+
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
         <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
           Nova ordem
@@ -377,7 +485,7 @@ export default function ServiceOrdersPage() {
                 Ordens cadastradas
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {orders.length} ordem(ns)
+                {filteredAndSortedRows.length} de {orders.length} ordem(ns)
               </Typography>
             </Stack>
           </Toolbar>
@@ -410,43 +518,71 @@ export default function ServiceOrdersPage() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows.map((row) => (
-                <TableRow key={row.id} hover>
-                  <TableCell>
-                    <span className="mono">#{row.orderNumber}</span>
-                  </TableCell>
-                  <TableCell>{row.clientName}</TableCell>
-                  <TableCell>
-                    <Chip size="small" color={statusColors[row.statusRaw]} label={row.status} />
-                  </TableCell>
-                  <TableCell>
-                    <Chip size="small" color={priorityColors[row.priorityRaw]} label={row.priority} />
-                  </TableCell>
-                  <TableCell>{row.createdAt}</TableCell>
-                  <TableCell align="right">
-                    <Box sx={{ display: 'flex', gap: 0.25, justifyContent: 'flex-end' }}>
-                      <IconButton
-                        size="small"
-                        aria-label={`Editar ordem #${row.orderNumber}`}
-                        title={`Editar ordem #${row.orderNumber}`}
-                        onClick={() => openEdit(row.order)}
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        aria-label={`Remover ordem #${row.orderNumber}`}
-                        title={`Remover ordem #${row.orderNumber}`}
-                        onClick={() => setPendingDelete(row.order)}
-                      >
-                        <TrashCanIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
+              {paginatedRows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                    <Typography color="text.secondary">
+                      {hasActiveFilters ? 'Nenhuma ordem encontrada com os filtros aplicados.' : 'Nenhuma ordem cadastrada.'}
+                    </Typography>
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                paginatedRows.map((row) => (
+                  <TableRow key={row.id} hover>
+                    <TableCell>
+                      <span className="mono">#{row.orderNumber}</span>
+                    </TableCell>
+                    <TableCell>{row.clientName}</TableCell>
+                    <TableCell>
+                      <Chip size="small" color={statusColors[row.statusRaw]} label={row.status} />
+                    </TableCell>
+                    <TableCell>
+                      <Chip size="small" color={priorityColors[row.priorityRaw]} label={row.priority} />
+                    </TableCell>
+                    <TableCell>{row.createdAt}</TableCell>
+                    <TableCell align="right">
+                      <Box sx={{ display: 'flex', gap: 0.25, justifyContent: 'flex-end' }}>
+                        <IconButton
+                          size="small"
+                          aria-label={`Editar ordem #${row.orderNumber}`}
+                          title={`Editar ordem #${row.orderNumber}`}
+                          onClick={() => openEdit(row.order)}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          aria-label={`Remover ordem #${row.orderNumber}`}
+                          title={`Remover ordem #${row.orderNumber}`}
+                          onClick={() => setPendingDelete(row.order)}
+                        >
+                          <TrashCanIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
+          {filteredAndSortedRows.length > 0 && (
+            <TablePagination
+              component="div"
+              count={filteredAndSortedRows.length}
+              page={page}
+              onPageChange={(_, newPage) => setPage(newPage)}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(e) => {
+                setRowsPerPage(parseInt(e.target.value, 10));
+                setPage(0);
+              }}
+              rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
+              labelRowsPerPage="Linhas por página:"
+              labelDisplayedRows={({ from, to, count }) =>
+                `${from}–${to} de ${count !== -1 ? count : `mais de ${to}`}`
+              }
+            />
+          )}
         </TableContainer>
       )}
 
