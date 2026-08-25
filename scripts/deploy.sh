@@ -109,10 +109,11 @@ npm run build --workspace backend
 step_done
 
 step "Garantindo banco de dados"
-DB_NAME_ENV=$(grep -E '^DB_NAME=' backend/.env | cut -d= -f2- || true)
-DB_USER_ENV=$(grep -E '^DB_USER=' backend/.env | cut -d= -f2- || true)
-DB_PASS_ENV=$(grep -E '^DB_PASSWORD=' backend/.env | cut -d= -f2- || true)
-DB_HOST_ENV=$(grep -E '^DB_HOST=' backend/.env | cut -d= -f2- || true)
+# tr -d '\r': tolera .env salvo com quebras CRLF (editado fora da VPS).
+DB_NAME_ENV=$(grep -E '^DB_NAME=' backend/.env | cut -d= -f2- | tr -d '\r' || true)
+DB_USER_ENV=$(grep -E '^DB_USER=' backend/.env | cut -d= -f2- | tr -d '\r' || true)
+DB_PASS_ENV=$(grep -E '^DB_PASSWORD=' backend/.env | cut -d= -f2- | tr -d '\r' || true)
+DB_HOST_ENV=$(grep -E '^DB_HOST=' backend/.env | cut -d= -f2- | tr -d '\r' || true)
 DB_HOST_ENV=${DB_HOST_ENV:-localhost}
 
 if [ "$DB_HOST_ENV" = "localhost" ] || [ "$DB_HOST_ENV" = "127.0.0.1" ]; then
@@ -145,7 +146,7 @@ if ! command -v nginx > /dev/null 2>&1; then
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq nginx
 fi
 
-PORT=$(grep -E '^PORT=' backend/.env | cut -d= -f2 || true)
+PORT=$(grep -E '^PORT=' backend/.env | cut -d= -f2- | tr -d '\r' || true)
 PORT=${PORT:-3000}
 SITE_FILE=afl.brazil.vps-kinghost.net
 
@@ -169,17 +170,28 @@ pm2 status
 step_done
 
 step "Health check (http://127.0.0.1:$PORT/api/health)"
+# Usa o fetch nativo do Node (≥18): não depende de curl/wget instalados na VPS.
+HEALTH_OK=0
 for i in $(seq 1 30); do
-  if curl -fsS "http://127.0.0.1:$PORT/api/health" > /dev/null 2>&1; then
+  if node -e "fetch('http://127.0.0.1:$PORT/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"; then
     echo "    resposta saudável na tentativa $i"
-    printf '::notice::Deploy concluído com sucesso em %ss.\n' "$((SECONDS - START))"
-    pm2 status
-    exit 0
+    HEALTH_OK=1
+    break
   fi
   sleep 1
 done
 
-echo "::error::Health check falhou após 30 tentativas."
-echo "Últimos 50 linhas de log do PM2:"
-pm2 logs ticket-triage-api --lines 50 --nostream || true
-exit 1
+if [ "$HEALTH_OK" -ne 1 ]; then
+  echo "::error::Health check falhou após 30 tentativas."
+  echo "Portas em escuta (procura $PORT):"
+  ss -ltn 2> /dev/null | grep -E "(State|:$PORT\b)" || echo "    NADA escutando em $PORT — a API não subiu ou caiu na porta errada"
+  echo "Últimas 30 linhas do log de ERRO do PM2:"
+  tail -n 30 backend/logs/pm2-error.log 2> /dev/null || true
+  echo "Últimas 30 linhas do log de saída do PM2:"
+  tail -n 30 backend/logs/pm2-out.log 2> /dev/null || true
+  exit 1
+fi
+
+printf '::notice::Deploy concluído com sucesso em %ss.\n' "$((SECONDS - START))"
+pm2 status
+exit 0
