@@ -95,6 +95,21 @@ export interface ServiceOrder {
   completedAt: Date | string | null;
 }
 
+export interface Station {
+  id: string;
+  name: string;
+  code: string;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  phone: string | null;
+  email: string | null;
+  responsible: string | null;
+  notes: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
 export const serviceOrderStatusLabel: Record<ServiceOrderStatus, string> = {
   pending: 'Pendente',
   in_progress: 'Em Andamento',
