@@ -162,16 +162,20 @@ PORT=$(grep -E '^PORT=' backend/.env | cut -d= -f2- | tr -d '\r' || true)
 PORT=${PORT:-3000}
 SITE_FILE=afl.brazil.vps-kinghost.net
 
-sed -e "s|__APP_DIR__|$APP_DIR|g" -e "s|__API_PORT__|$PORT|g" \
-  deploy/nginx.conf.example | sudo tee "/etc/nginx/sites-available/$SITE_FILE" > /dev/null
-sudo ln -sfn "/etc/nginx/sites-available/$SITE_FILE" "/etc/nginx/sites-enabled/$SITE_FILE"
-sudo rm -f /etc/nginx/sites-enabled/default
-if sudo nginx -t; then
-  sudo systemctl reload nginx 2> /dev/null || sudo service nginx reload 2> /dev/null || sudo nginx -s reload
-  echo "    site '$SITE_FILE' publicado (estático + proxy /api → 127.0.0.1:$PORT)"
+if [ -f "/etc/nginx/sites-available/$SITE_FILE" ]; then
+  echo "    configuração nginx já existe; ignorando para preservar certificado SSL"
 else
-  echo "::error::nginx -t falhou; nova configuração não foi aplicada."
-  exit 1
+  sed -e "s|__APP_DIR__|$APP_DIR|g" -e "s|__API_PORT__|$PORT|g" \
+    deploy/nginx.conf.example | sudo tee "/etc/nginx/sites-available/$SITE_FILE" > /dev/null
+  sudo ln -sfn "/etc/nginx/sites-available/$SITE_FILE" "/etc/nginx/sites-enabled/$SITE_FILE"
+  sudo rm -f /etc/nginx/sites-enabled/default
+  if sudo nginx -t; then
+    sudo systemctl reload nginx 2> /dev/null || sudo service nginx reload 2> /dev/null || sudo nginx -s reload
+    echo "    site '$SITE_FILE' publicado (estático + proxy /api → 127.0.0.1:$PORT)"
+  else
+    echo "::error::nginx -t falhou; nova configuração não foi aplicada."
+    exit 1
+  fi
 fi
 step_done
 
