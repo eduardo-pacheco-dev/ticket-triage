@@ -3,6 +3,7 @@ import { DataSource } from 'typeorm';
 import type { LogLevel } from 'typeorm';
 import { QueueEntry } from './queue/queue-entry.entity';
 import { RequestType } from './request-types/request-type.entity';
+import { ServiceOrder } from './service-orders/service-order.entity';
 import { SlaConfig } from './sla/sla-config.entity';
 import { User } from './auth/user.entity';
 import { InitSchema1756000000000 } from './migrations/1756000000000-InitSchema';
@@ -40,7 +41,7 @@ export const appDataSourceOptions = {
   // igual ao CURRENT_TIMESTAMP usado pelos defaults do banco. Isso mantém
   // todas as colunas datetime na mesma convenção (misturar UTC e local fazia
   // as durações aparecerem deslocadas pelo offset do fuso).
-  entities: [QueueEntry, RequestType, SlaConfig, User],
+  entities: [QueueEntry, RequestType, SlaConfig, User, ServiceOrder],
   autoLoadEntities: true,
   synchronize: process.env.DB_SYNC === 'false' ? false : true,
   logging: dbLogging,

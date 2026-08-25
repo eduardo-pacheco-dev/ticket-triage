@@ -15,6 +15,9 @@ import { AdminController } from './queue/admin.controller';
 import { QueueService } from './queue/queue.service';
 import { RequestTypesController } from './request-types/request-types.controller';
 import { RequestTypesService } from './request-types/request-types.service';
+import { ServiceOrder } from './service-orders/service-order.entity';
+import { ServiceOrdersController } from './service-orders/service-orders.controller';
+import { ServiceOrdersService } from './service-orders/service-orders.service';
 import { SlaController } from './sla/sla.controller';
 import { SlaService } from './sla/sla.service';
 import { HealthController } from './health/health.controller';
@@ -31,6 +34,7 @@ import { TelegramModule } from './telegram/telegram.module';
     TypeOrmModule.forFeature([User]),
     TypeOrmModule.forFeature([Notification]),
     TypeOrmModule.forFeature([NotificationRead]),
+    TypeOrmModule.forFeature([ServiceOrder]),
     CommonModule,
     AuthModule,
     UsersModule,
@@ -43,7 +47,14 @@ import { TelegramModule } from './telegram/telegram.module';
     SlaController,
     HealthController,
     NotificationsController,
+    ServiceOrdersController,
   ],
-  providers: [QueueService, RequestTypesService, SlaService, NotificationsService],
+  providers: [
+    QueueService,
+    RequestTypesService,
+    SlaService,
+    NotificationsService,
+    ServiceOrdersService,
+  ],
 })
 export class AppModule {}

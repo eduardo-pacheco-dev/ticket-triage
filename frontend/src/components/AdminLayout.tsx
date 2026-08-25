@@ -14,6 +14,7 @@ import Typography from '@mui/material/Typography';
 import DashboardIcon from '@mui/icons-material/DashboardOutlined';
 import ArchiveIcon from '@mui/icons-material/Inventory2Outlined';
 import QueueIcon from '@mui/icons-material/ListAltOutlined';
+import ServiceOrderIcon from '@mui/icons-material/AssignmentOutlined';
 import SettingsIcon from '@mui/icons-material/SettingsOutlined';
 import UsersIcon from '@mui/icons-material/ManageAccountsOutlined';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -49,6 +50,12 @@ function getNavItems(pathname: string): NavItem[] {
       to: '/admin/arquivados',
       active: pathname.startsWith('/admin/arquivados'),
       icon: <ArchiveIcon />,
+    },
+    {
+      label: 'Ordens de Serviço',
+      to: '/admin/ordens-de-servico',
+      active: pathname.startsWith('/admin/ordens-de-servico'),
+      icon: <ServiceOrderIcon />,
     },
     {
       label: 'Usuários',

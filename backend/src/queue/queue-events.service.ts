@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Observable, Subject } from 'rxjs';
 
 export interface QueueEventPayload {
-  type: 'queue' | 'request_types' | 'notification';
+  type: 'queue' | 'request_types' | 'notification' | 'service_orders';
   action?: string;
   site_id?: string;
   protocol?: string;

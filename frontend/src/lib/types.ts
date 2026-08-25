@@ -1,6 +1,8 @@
 export type QueueStatus = 'waiting' | 'in_review' | 'approved' | 'rejected';
 export type UserRole = 'admin' | 'user';
 export type UserStatus = 'active' | 'inactive';
+export type ServiceOrderStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+export type ServiceOrderPriority = 'low' | 'medium' | 'high' | 'urgent';
 
 export interface QueueEntry {
   id: string;
@@ -75,6 +77,37 @@ export interface NotificationsList {
   items: AppNotification[];
   unreadCount: number;
 }
+
+export interface ServiceOrder {
+  id: string;
+  orderNumber: number;
+  clientName: string;
+  clientContact: string | null;
+  siteId: string | null;
+  description: string;
+  status: ServiceOrderStatus;
+  priority: ServiceOrderPriority;
+  assignedTo: string | null;
+  scheduledDate: Date | string | null;
+  notes: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  completedAt: Date | string | null;
+}
+
+export const serviceOrderStatusLabel: Record<ServiceOrderStatus, string> = {
+  pending: 'Pendente',
+  in_progress: 'Em Andamento',
+  completed: 'Concluída',
+  cancelled: 'Cancelada',
+};
+
+export const serviceOrderPriorityLabel: Record<ServiceOrderPriority, string> = {
+  low: 'Baixa',
+  medium: 'Média',
+  high: 'Alta',
+  urgent: 'Urgente',
+};
 
 export const statusLabel: Record<QueueStatus, string> = {
   waiting: 'Aguardando Análise',
