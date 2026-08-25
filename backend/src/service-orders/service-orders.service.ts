@@ -4,10 +4,7 @@ import { Repository } from 'typeorm';
 import { ServiceOrder } from './service-order.entity';
 import { RateLimitService } from '../common/rate-limit.service';
 import { QueueEventsService } from '../queue/queue-events.service';
-import type {
-  CreateServiceOrderInput,
-  UpdateServiceOrderInput,
-} from '@ticket-triage/shared';
+import type { CreateServiceOrderInput, UpdateServiceOrderInput } from '@ticket-triage/shared';
 
 @Injectable()
 export class ServiceOrdersService {

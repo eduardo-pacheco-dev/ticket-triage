@@ -42,15 +42,8 @@ import {
 import { createServiceOrderSchema, updateServiceOrderSchema } from '@ticket-triage/shared';
 import { zodFieldErrors } from '../lib/schemas';
 import { useToastStore } from '../stores/toast';
-import type {
-  ServiceOrder,
-  ServiceOrderStatus,
-  ServiceOrderPriority,
-} from '../lib/types';
-import {
-  serviceOrderStatusLabel,
-  serviceOrderPriorityLabel,
-} from '../lib/types';
+import type { ServiceOrder, ServiceOrderStatus, ServiceOrderPriority } from '../lib/types';
+import { serviceOrderStatusLabel, serviceOrderPriorityLabel } from '../lib/types';
 
 type SortKey = 'orderNumber' | 'clientName' | 'status' | 'priority' | 'createdAt';
 
@@ -406,7 +399,14 @@ export default function ServiceOrdersPage() {
         </Alert>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1rem',
+        }}
+      >
         <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
           Nova ordem
         </Button>
@@ -417,7 +417,10 @@ export default function ServiceOrdersPage() {
           <TextField
             placeholder="Buscar por cliente, descrição, responsável..."
             value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setPage(0); }}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setPage(0);
+            }}
             size="small"
             sx={{ flexGrow: 1, minWidth: 250 }}
             slotProps={{
@@ -429,7 +432,14 @@ export default function ServiceOrdersPage() {
                 ),
                 endAdornment: searchTerm ? (
                   <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => { setSearchTerm(''); setPage(0); }} title="Limpar busca">
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        setSearchTerm('');
+                        setPage(0);
+                      }}
+                      title="Limpar busca"
+                    >
                       <ClearIcon fontSize="small" />
                     </IconButton>
                   </InputAdornment>
@@ -441,7 +451,10 @@ export default function ServiceOrdersPage() {
             select
             label="Status"
             value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value as ServiceOrderStatus | ''); setPage(0); }}
+            onChange={(e) => {
+              setStatusFilter(e.target.value as ServiceOrderStatus | '');
+              setPage(0);
+            }}
             size="small"
             sx={{ minWidth: 150 }}
           >
@@ -455,7 +468,10 @@ export default function ServiceOrdersPage() {
             select
             label="Prioridade"
             value={priorityFilter}
-            onChange={(e) => { setPriorityFilter(e.target.value as ServiceOrderPriority | ''); setPage(0); }}
+            onChange={(e) => {
+              setPriorityFilter(e.target.value as ServiceOrderPriority | '');
+              setPage(0);
+            }}
             size="small"
             sx={{ minWidth: 150 }}
           >
@@ -522,7 +538,9 @@ export default function ServiceOrdersPage() {
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                     <Typography color="text.secondary">
-                      {hasActiveFilters ? 'Nenhuma ordem encontrada com os filtros aplicados.' : 'Nenhuma ordem cadastrada.'}
+                      {hasActiveFilters
+                        ? 'Nenhuma ordem encontrada com os filtros aplicados.'
+                        : 'Nenhuma ordem cadastrada.'}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -537,7 +555,11 @@ export default function ServiceOrdersPage() {
                       <Chip size="small" color={statusColors[row.statusRaw]} label={row.status} />
                     </TableCell>
                     <TableCell>
-                      <Chip size="small" color={priorityColors[row.priorityRaw]} label={row.priority} />
+                      <Chip
+                        size="small"
+                        color={priorityColors[row.priorityRaw]}
+                        label={row.priority}
+                      />
                     </TableCell>
                     <TableCell>{row.createdAt}</TableCell>
                     <TableCell align="right">
@@ -603,19 +625,28 @@ export default function ServiceOrdersPage() {
 
       <Dialog open={!!editForm} onClose={() => setEditForm(null)} maxWidth="sm" fullWidth>
         <DialogTitle>
-          {editForm ? `Editar ordem #${orders.find((o) => o.id === editForm.id)?.orderNumber ?? ''}` : ''}
+          {editForm
+            ? `Editar ordem #${orders.find((o) => o.id === editForm.id)?.orderNumber ?? ''}`
+            : ''}
         </DialogTitle>
         <DialogContent>
           {editForm && (
             <Box component="form" noValidate sx={{ mt: 1 }}>
               <Stack spacing={2.5}>
-                {renderFormFields(editForm, setEditForm as (f: FormState) => void, editErrors, 'edit')}
+                {renderFormFields(
+                  editForm,
+                  setEditForm as (f: FormState) => void,
+                  editErrors,
+                  'edit',
+                )}
                 <TextField
                   id="edit_status"
                   select
                   label="Status"
                   value={editForm.status}
-                  onChange={(e) => setEditForm({ ...editForm, status: e.target.value as ServiceOrderStatus })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, status: e.target.value as ServiceOrderStatus })
+                  }
                   fullWidth
                 >
                   <MenuItem value="pending">Pendente</MenuItem>
@@ -639,8 +670,7 @@ export default function ServiceOrdersPage() {
         <DialogTitle>Remover ordem de serviço</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Tem certeza que deseja remover a ordem{' '}
-            <strong>#{pendingDelete?.orderNumber}</strong>?
+            Tem certeza que deseja remover a ordem <strong>#{pendingDelete?.orderNumber}</strong>?
             Esta ação não pode ser desfeita.
           </DialogContentText>
         </DialogContent>

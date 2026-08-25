@@ -49,6 +49,12 @@ import { TelegramModule } from './telegram/telegram.module';
     NotificationsController,
     ServiceOrdersController,
   ],
-  providers: [QueueService, RequestTypesService, SlaService, NotificationsService, ServiceOrdersService],
+  providers: [
+    QueueService,
+    RequestTypesService,
+    SlaService,
+    NotificationsService,
+    ServiceOrdersService,
+  ],
 })
 export class AppModule {}
