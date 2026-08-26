@@ -11,6 +11,8 @@ import 'leaflet/dist/leaflet.css';
 // @ts-expect-error no type declarations for CSS
 import 'react-leaflet-markercluster/styles';
 
+const BRAZIL_BOUNDS = { south: -34.0, north: 5.0, west: -74.0, east: -34.0 };
+
 function parseCoord(v: string): number {
   const cleaned = v.replace(',', '.').trim();
   const n = Number(cleaned);
@@ -52,15 +54,6 @@ function ViewportFetcher({
   debounceRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>;
 }) {
   const map = useMap();
-  useEffect(() => {
-    const b = map.getBounds();
-    onBounds({
-      south: b.getSouth(),
-      north: b.getNorth(),
-      west: b.getWest(),
-      east: b.getEast(),
-    });
-  }, [map, onBounds]);
   useMapEvents({
     moveend() {
       if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -87,57 +80,39 @@ export default function StationMap({ stateFilter, searchTerm }: StationMapProps)
   const [points, setPoints] = useState<StationMapPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const initialBoundsRef = useRef(true);
+  const isFirstLoadRef = useRef(true);
 
   const parsedCoords = useParsedCoords(points);
-
   const coords = useMemo(() => Array.from(parsedCoords.values()), [parsedCoords]);
 
   const handleBounds = useCallback(
     async (bounds: { south: number; north: number; west: number; east: number }) => {
       try {
-        if (!initialBoundsRef.current) setLoadingMore(true);
+        if (!isFirstLoadRef.current) setLoadingMore(true);
         const data = await fetchStationsMap(stateFilter, bounds, searchTerm);
         setPoints(data);
-        setError(null);
       } catch {
-        setError('Erro ao carregar pontos no mapa.');
+        setPoints([]);
       } finally {
         setLoading(false);
         setLoadingMore(false);
-        initialBoundsRef.current = false;
+        isFirstLoadRef.current = false;
       }
     },
     [stateFilter, searchTerm],
   );
 
   useEffect(() => {
-    initialBoundsRef.current = true;
+    isFirstLoadRef.current = true;
     setLoading(true);
-  }, [stateFilter, searchTerm]);
+    void handleBounds(BRAZIL_BOUNDS);
+  }, [stateFilter, searchTerm, handleBounds]);
 
   const center = useMemo((): [number, number] => {
     if (coords.length === 0) return [-14.235, -51.925];
     return coords[0];
   }, [coords]);
-
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: 400, alignItems: 'center' }}>
-        <CircularProgress size={32} />
-      </Box>
-    );
-  }
-
-  if (error && points.length === 0) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: 400, alignItems: 'center' }}>
-        <Typography color="error">{error}</Typography>
-      </Box>
-    );
-  }
 
   return (
     <Box
@@ -151,29 +126,23 @@ export default function StationMap({ stateFilter, searchTerm }: StationMapProps)
         position: 'relative',
       }}
     >
-      {loadingMore && (
+      {loading && (
         <Box
           sx={{
             position: 'absolute',
-            top: 8,
-            right: 8,
+            inset: 0,
             zIndex: 1000,
             bgcolor: 'background.paper',
-            borderRadius: 1,
-            px: 1.5,
-            py: 0.5,
-            boxShadow: 1,
             display: 'flex',
+            justifyContent: 'center',
             alignItems: 'center',
-            gap: 1,
           }}
         >
-          <CircularProgress size={14} />
-          <Typography variant="caption">Carregando...</Typography>
+          <CircularProgress size={32} />
         </Box>
       )}
 
-      {points.length === 0 && !loadingMore ? (
+      {!loading && points.length === 0 && !loadingMore ? (
         <Box
           sx={{ display: 'flex', justifyContent: 'center', minHeight: 400, alignItems: 'center' }}
         >
@@ -182,43 +151,66 @@ export default function StationMap({ stateFilter, searchTerm }: StationMapProps)
           </Typography>
         </Box>
       ) : (
-        <MapContainer
-          center={center}
-          zoom={5}
-          style={{ height: '100%', width: '100%' }}
-          scrollWheelZoom
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <ViewportFetcher onBounds={handleBounds} debounceRef={debounceRef} />
-          <FitBounds coords={coords} />
-          <MarkerClusterGroup chunkedLoading maxClusterRadius={50}>
-            {Array.from(parsedCoords.entries()).map(([point, [lat, lng]]) => (
-              <Marker key={point.id} position={[lat, lng]}>
-                <Popup>
-                  <div style={{ minWidth: 160 }}>
-                    <Link
-                      to={`/admin/estacoes/${point.id}`}
-                      style={{ fontWeight: 600, textDecoration: 'none', color: '#1976d2' }}
-                    >
-                      {point.name}
-                    </Link>
-                    <div style={{ fontSize: '0.8rem', color: '#666', marginTop: 2 }}>
-                      <span style={{ fontFamily: 'monospace' }}>{point.code}</span>
-                    </div>
-                    {(point.city || point.state) && (
+        <>
+          {loadingMore && (
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                zIndex: 1000,
+                bgcolor: 'background.paper',
+                borderRadius: 1,
+                px: 1.5,
+                py: 0.5,
+                boxShadow: 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
+            >
+              <CircularProgress size={14} />
+              <Typography variant="caption">Carregando...</Typography>
+            </Box>
+          )}
+          <MapContainer
+            center={center}
+            zoom={5}
+            style={{ height: '100%', width: '100%' }}
+            scrollWheelZoom
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <ViewportFetcher onBounds={handleBounds} debounceRef={debounceRef} />
+            <FitBounds coords={coords} />
+            <MarkerClusterGroup chunkedLoading maxClusterRadius={50}>
+              {Array.from(parsedCoords.entries()).map(([point, [lat, lng]]) => (
+                <Marker key={point.id} position={[lat, lng]}>
+                  <Popup>
+                    <div style={{ minWidth: 160 }}>
+                      <Link
+                        to={`/admin/estacoes/${point.id}`}
+                        style={{ fontWeight: 600, textDecoration: 'none', color: '#1976d2' }}
+                      >
+                        {point.name}
+                      </Link>
                       <div style={{ fontSize: '0.8rem', color: '#666', marginTop: 2 }}>
-                        {[point.city, point.state].filter(Boolean).join(' - ')}
+                        <span style={{ fontFamily: 'monospace' }}>{point.code}</span>
                       </div>
-                    )}
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
-          </MarkerClusterGroup>
-        </MapContainer>
+                      {(point.city || point.state) && (
+                        <div style={{ fontSize: '0.8rem', color: '#666', marginTop: 2 }}>
+                          {[point.city, point.state].filter(Boolean).join(' - ')}
+                        </div>
+                      )}
+                    </div>
+                  </Popup>
+                </Marker>
+              ))}
+            </MarkerClusterGroup>
+          </MapContainer>
+        </>
       )}
     </Box>
   );
