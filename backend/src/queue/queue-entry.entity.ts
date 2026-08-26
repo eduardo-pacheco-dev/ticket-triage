@@ -33,6 +33,9 @@ export class QueueEntry {
   @Column({ name: 'request_type', type: 'varchar', length: 200 })
   requestType: string;
 
+  @Column({ type: 'varchar', length: 200, nullable: true })
+  project: string | null;
+
   @Column({ type: 'varchar', length: 20, default: 'waiting' })
   status: QueueStatus;
 

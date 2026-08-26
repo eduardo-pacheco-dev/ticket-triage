@@ -17,6 +17,7 @@ export interface QueueEntryDto {
   site_id: string;
   technician_name: string;
   request_type: string;
+  project: string | null;
   status: QueueStatus;
   created_at: Date;
   updated_at: Date;
@@ -63,6 +64,7 @@ function toDto(e: QueueEntry): QueueEntryDto {
     site_id: e.siteId,
     technician_name: e.technicianName,
     request_type: e.requestType,
+    project: e.project,
     status: e.status,
     created_at: e.createdAt,
     updated_at: e.updatedAt,

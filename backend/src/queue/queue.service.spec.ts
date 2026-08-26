@@ -41,6 +41,7 @@ function makeEntry(overrides: Partial<QueueEntry> = {}): QueueEntry {
     siteId: 'SITE-100',
     technicianName: 'Ana Souza',
     requestType: 'Instalação',
+    project: null,
     status: 'waiting',
     createdAt: new Date('2026-08-20T10:00:00Z'),
     updatedAt: new Date('2026-08-20T10:00:00Z'),

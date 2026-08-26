@@ -123,7 +123,15 @@ export class AnalyticsChecklistsService {
 
     if (decInputs.length === 0) return;
 
-    const siteIds = [...new Set(decInputs.map((i) => i.siteId!.toUpperCase()))];
+    const siteProjectMap = new Map<string, string | null>();
+    for (const input of decInputs) {
+      const siteId = input.siteId!.toUpperCase();
+      if (!siteProjectMap.has(siteId)) {
+        siteProjectMap.set(siteId, input.project ?? null);
+      }
+    }
+
+    const siteIds = [...siteProjectMap.keys()];
 
     const existing = await this.queueRepository.find({
       where: siteIds.map((siteId) => ({
@@ -147,6 +155,7 @@ export class AnalyticsChecklistsService {
         fullName: 'Sistema Analytics',
         technicianName: 'Sistema Analytics',
         requestType: 'DEC - Análise',
+        project: siteProjectMap.get(siteId) ?? null,
         status: 'waiting',
       });
 
