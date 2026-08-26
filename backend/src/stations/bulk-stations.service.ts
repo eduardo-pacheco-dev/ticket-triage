@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import ExcelJS from 'exceljs';
+import * as XLSX from 'xlsx';
 import { randomBytes } from 'node:crypto';
 import { writeFile, unlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -66,7 +66,7 @@ export class BulkStationsService {
     const jobId = crypto.randomUUID();
     const job: ImportJob = {
       id: jobId,
-      status: 'pending',
+      status: 'processing',
       total: 0,
       processed: 0,
       inserted: 0,
@@ -78,10 +78,10 @@ export class BulkStationsService {
     };
     this.jobs.set(jobId, job);
 
-    const tmpFile = join(tmpdir(), `bulk-stations-${randomBytes(8).toString('hex')}.xlsx`);
+    const tmpFile = join(tmpdir(), `bulk-stations-${randomBytes(8).toString('hex')}.xlsb`);
     await writeFile(tmpFile, buffer);
 
-    this.processWithStreaming(jobId, tmpFile).catch((err) => {
+    this.processInBackground(jobId, tmpFile).catch((err) => {
       this.logger.error(`Job ${jobId} falhou: ${String(err)}`);
       job.status = 'failed';
       job.completedAt = new Date();
@@ -92,43 +92,38 @@ export class BulkStationsService {
     return job;
   }
 
-  private async processWithStreaming(jobId: string, filePath: string): Promise<void> {
+  private async processInBackground(jobId: string, filePath: string): Promise<void> {
     const job = this.jobs.get(jobId);
     if (!job) return;
 
-    job.status = 'processing';
+    try {
+      this.logger.log(`Lendo arquivo: ${filePath}`);
+      const workbook = XLSX.readFile(filePath, { type: 'file' });
+      const sheetName = workbook.SheetNames[0];
+      if (!sheetName) {
+        job.status = 'failed';
+        job.completedAt = new Date();
+        job.errorMessages.push('Planilha vazia.');
+        return;
+      }
 
-    const workbook = new ExcelJS.stream.xlsx.WorkbookReader(filePath, {
-      entries: 'emit',
-      sharedStrings: 'cache',
-      styles: 'cache',
-    });
+      this.logger.log(`Processando planilha "${sheetName}"`);
 
-    let headers: string[] = [];
-    let batch: Record<string, unknown>[] = [];
+      const ws = workbook.Sheets[sheetName];
+      const allRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, {
+        raw: false,
+      } as XLSX.Sheet2JSONOpts);
 
-    for await (const worksheetReader of workbook) {
-      let rowIndex = 0;
-      for await (const row of worksheetReader) {
-        rowIndex++;
-        const values: unknown[] = [];
-        if ('values' in row && Symbol.iterator in Object(row.values)) {
-          for (const cell of row.values as Iterable<unknown>) {
-            values.push(cell);
-          }
-        }
+      this.logger.log(`${allRows.length} linhas lidas`);
 
-        if (rowIndex === 1) {
-          headers = values.map((v) => String(v ?? ''));
-          continue;
-        }
+      if (allRows.length > 0) {
+        this.logger.log(`Chaves: ${Object.keys(allRows[0]).slice(0, 6).join(', ')}`);
+      }
 
-        const rowObj: Record<string, unknown> = {};
-        for (let i = 0; i < headers.length; i++) {
-          rowObj[headers[i]] = values[i];
-        }
+      let batch: Record<string, unknown>[] = [];
 
-        const mapped = mapExcelRow(rowObj);
+      for (const row of allRows) {
+        const mapped = mapExcelRow(row);
         if (!mapped) continue;
 
         job.total++;
@@ -139,16 +134,25 @@ export class BulkStationsService {
           batch = [];
         }
       }
+
+      if (batch.length > 0) {
+        await this.flushBatch(job, batch);
+      }
+
+      this.logger.log(
+        `Importação concluída: ${job.inserted} inseridos, ${job.skipped} ignorados, ${job.errors} erros`,
+      );
+
+      job.status = job.errors > 0 && job.errors === job.total ? 'failed' : 'completed';
+      job.completedAt = new Date();
+    } catch (err) {
+      this.logger.error(`Job ${jobId} falhou: ${String(err)}`);
+      job.status = 'failed';
+      job.completedAt = new Date();
+      job.errorMessages.push(err instanceof Error ? err.message : 'Erro desconhecido.');
+    } finally {
+      unlink(filePath).catch(() => {});
     }
-
-    if (batch.length > 0) {
-      await this.flushBatch(job, batch);
-    }
-
-    job.status = job.errors > 0 && job.errors === job.total ? 'failed' : 'completed';
-    job.completedAt = new Date();
-
-    unlink(filePath).catch(() => {});
   }
 
   private async flushBatch(job: ImportJob, batch: Record<string, unknown>[]): Promise<void> {
