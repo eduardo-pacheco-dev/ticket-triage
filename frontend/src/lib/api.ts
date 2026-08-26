@@ -392,24 +392,31 @@ export function fetchImportJob(jobId: string) {
   return request<ImportJob>(`/analytics-checklists/jobs/${jobId}`);
 }
 
-export function downloadAnalyticsExcel() {
+export function downloadAnalyticsExcel(): Promise<void> {
   const token = getToken();
   const url = `${BASE}/analytics-checklists/export`;
 
-  const a = document.createElement('a');
-  a.href = url;
-  if (token) {
+  return new Promise<void>((resolve, reject) => {
+    if (!token) {
+      reject(new ApiError(401, 'Não autenticado.'));
+      return;
+    }
+
     fetch(url, { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => res.blob())
+      .then((res) => {
+        if (!res.ok) throw new ApiError(res.status, 'Erro ao exportar.');
+        return res.blob();
+      })
       .then((blob) => {
+        const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = `analytics_${new Date().toISOString().slice(0, 10)}.xlsx`;
         a.click();
         URL.revokeObjectURL(a.href);
-      });
-  } else {
-    a.click();
-  }
+        resolve();
+      })
+      .catch(reject);
+  });
 }
 
 export function deleteAnalyticsChecklist(id: string) {
