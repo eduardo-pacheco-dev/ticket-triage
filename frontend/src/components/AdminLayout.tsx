@@ -17,6 +17,7 @@ import QueueIcon from '@mui/icons-material/ListAltOutlined';
 import ServiceOrderIcon from '@mui/icons-material/AssignmentOutlined';
 import SettingsIcon from '@mui/icons-material/SettingsOutlined';
 import StationIcon from '@mui/icons-material/CellTowerOutlined';
+import AnalyticsIcon from '@mui/icons-material/BarChartOutlined';
 import UsersIcon from '@mui/icons-material/ManageAccountsOutlined';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -63,6 +64,12 @@ function getNavItems(pathname: string): NavItem[] {
       to: '/admin/estacoes',
       active: pathname.startsWith('/admin/estacoes'),
       icon: <StationIcon />,
+    },
+    {
+      label: 'Analytics',
+      to: '/admin/analytics',
+      active: pathname.startsWith('/admin/analytics'),
+      icon: <AnalyticsIcon />,
     },
     {
       label: 'Usuários',

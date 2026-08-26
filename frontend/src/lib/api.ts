@@ -1,6 +1,8 @@
 import { clearAuth, getToken } from './auth-store';
 import type {
+  AnalyticsChecklist,
   DashboardData,
+  ImportJob,
   NotificationsList,
   PaginatedQueue,
   PublicQueueEntry,
@@ -341,4 +343,79 @@ export function updateStation(id: string, data: UpdateStationInput) {
 
 export function deleteStation(id: string) {
   return request<void>(`/stations/${id}`, { method: 'DELETE' });
+}
+
+export function fetchAnalyticsChecklists() {
+  return request<AnalyticsChecklist[]>('/analytics-checklists');
+}
+
+export function fetchAnalyticsChecklist(id: string) {
+  return request<AnalyticsChecklist>(`/analytics-checklists/${id}`);
+}
+
+export function uploadAnalyticsExcel(file: File): Promise<ImportJob> {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return new Promise<ImportJob>((resolve, reject) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 60000);
+
+    fetch(`${BASE}/analytics-checklists/upload`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      body: formData,
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        clearTimeout(timer);
+        if (!res.ok) {
+          let message = `Erro ${res.status}`;
+          try {
+            const body = await res.json();
+            message = extractMessage(body) ?? message;
+          } catch {}
+          throw new ApiError(res.status, message);
+        }
+        resolve(await res.json());
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        if (err instanceof ApiError) reject(err);
+        else reject(new ApiError(0, 'Não foi possível conectar ao servidor.'));
+      });
+  });
+}
+
+export function fetchImportJob(jobId: string) {
+  return request<ImportJob>(`/analytics-checklists/jobs/${jobId}`);
+}
+
+export function downloadAnalyticsExcel() {
+  const token = getToken();
+  const url = `${BASE}/analytics-checklists/export`;
+
+  const a = document.createElement('a');
+  a.href = url;
+  if (token) {
+    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => res.blob())
+      .then((blob) => {
+        a.href = URL.createObjectURL(blob);
+        a.download = `analytics_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      });
+  } else {
+    a.click();
+  }
+}
+
+export function deleteAnalyticsChecklist(id: string) {
+  return request<void>(`/analytics-checklists/${id}`, { method: 'DELETE' });
+}
+
+export function deleteAllAnalyticsChecklists() {
+  return request<void>('/analytics-checklists', { method: 'DELETE' });
 }

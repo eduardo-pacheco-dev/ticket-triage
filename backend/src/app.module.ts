@@ -27,6 +27,9 @@ import { HealthController } from './health/health.controller';
 import { NotificationsController } from './notifications/notifications.controller';
 import { NotificationsService } from './notifications/notifications.service';
 import { TelegramModule } from './telegram/telegram.module';
+import { AnalyticsChecklist } from './analytics/analytics-checklist.entity';
+import { AnalyticsChecklistsController } from './analytics/analytics-checklists.controller';
+import { AnalyticsChecklistsService } from './analytics/analytics-checklists.service';
 
 @Module({
   imports: [
@@ -39,6 +42,7 @@ import { TelegramModule } from './telegram/telegram.module';
     TypeOrmModule.forFeature([NotificationRead]),
     TypeOrmModule.forFeature([ServiceOrder]),
     TypeOrmModule.forFeature([Station]),
+    TypeOrmModule.forFeature([AnalyticsChecklist]),
     CommonModule,
     AuthModule,
     UsersModule,
@@ -53,6 +57,7 @@ import { TelegramModule } from './telegram/telegram.module';
     NotificationsController,
     ServiceOrdersController,
     StationsController,
+    AnalyticsChecklistsController,
   ],
   providers: [
     QueueService,
@@ -61,6 +66,7 @@ import { TelegramModule } from './telegram/telegram.module';
     NotificationsService,
     ServiceOrdersService,
     StationsService,
+    AnalyticsChecklistsService,
   ],
 })
 export class AppModule {}

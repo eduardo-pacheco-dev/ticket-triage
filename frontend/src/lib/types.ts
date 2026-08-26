@@ -3,6 +3,7 @@ export type UserRole = 'admin' | 'user';
 export type UserStatus = 'active' | 'inactive';
 export type ServiceOrderStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 export type ServiceOrderPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type AnalyticsChecklistStatus = string;
 
 export interface QueueEntry {
   id: string;
@@ -95,6 +96,43 @@ export interface ServiceOrder {
   completedAt: Date | string | null;
 }
 
+export interface AnalyticsChecklist {
+  id: string;
+  project: string;
+  regional: string | null;
+  estado: string | null;
+  siteId: string | null;
+  oc: string | null;
+  smpName: string | null;
+  scope: string | null;
+  smpId: string | null;
+  module: string | null;
+  moduleId: string | null;
+  implementationVendor: string | null;
+  moduleStartDate: Date | string | null;
+  section: string | null;
+  checklistItem: string | null;
+  status: AnalyticsChecklistStatus;
+  rejectionComment: string | null;
+  rejectionDate: Date | string | null;
+  modifiedBy: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export type ImportJobStatus = 'pending' | 'processing' | 'completed' | 'failed';
+
+export interface ImportJob {
+  id: string;
+  status: ImportJobStatus;
+  total: number;
+  processed: number;
+  errors: number;
+  errorMessages: string[];
+  createdAt: Date | string;
+  completedAt: Date | string | null;
+}
+
 export interface Station {
   id: string;
   name: string;
@@ -123,6 +161,10 @@ export const serviceOrderPriorityLabel: Record<ServiceOrderPriority, string> = {
   high: 'Alta',
   urgent: 'Urgente',
 };
+
+export function analyticsChecklistStatusLabel(status: string): string {
+  return status;
+}
 
 export const statusLabel: Record<QueueStatus, string> = {
   waiting: 'Aguardando Análise',
