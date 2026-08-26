@@ -52,6 +52,15 @@ function ViewportFetcher({
   debounceRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>;
 }) {
   const map = useMap();
+  useEffect(() => {
+    const b = map.getBounds();
+    onBounds({
+      south: b.getSouth(),
+      north: b.getNorth(),
+      west: b.getWest(),
+      east: b.getEast(),
+    });
+  }, [map, onBounds]);
   useMapEvents({
     moveend() {
       if (debounceRef.current) clearTimeout(debounceRef.current);
