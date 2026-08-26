@@ -202,6 +202,40 @@ export const updateStationSchema = z
   })
   .partial();
 
+export const analyticsChecklistStatusSchema = z.enum([
+  'Aprovado',
+  'Rejeitado',
+  'Pendente',
+  'Em Andamento',
+]);
+
+export const createAnalyticsChecklistSchema = z.object({
+  project: z.string().trim().min(1, 'Projeto é obrigatório.').max(300, 'Máximo de 300 caracteres.'),
+  regional: z.string().trim().max(200, 'Máximo de 200 caracteres.').optional(),
+  estado: z.string().trim().max(2, 'Máximo de 2 caracteres.').optional(),
+  siteId: z.string().trim().max(100, 'Máximo de 100 caracteres.').optional(),
+  oc: z.string().trim().max(100, 'Máximo de 100 caracteres.').optional(),
+  smpName: z.string().trim().max(300, 'Máximo de 300 caracteres.').optional(),
+  scope: z.string().trim().max(300, 'Máximo de 300 caracteres.').optional(),
+  smpId: z.string().trim().max(100, 'Máximo de 100 caracteres.').optional(),
+  module: z.string().trim().max(200, 'Máximo de 200 caracteres.').optional(),
+  moduleId: z.string().trim().max(100, 'Máximo de 100 caracteres.').optional(),
+  implementationVendor: z.string().trim().max(200, 'Máximo de 200 caracteres.').optional(),
+  moduleStartDate: z.string().optional(),
+  section: z.string().trim().max(200, 'Máximo de 200 caracteres.').optional(),
+  checklistItem: z.string().trim().max(500, 'Máximo de 500 caracteres.').optional(),
+  status: analyticsChecklistStatusSchema.default('Pendente'),
+  rejectionComment: z.string().trim().max(2000, 'Máximo de 2000 caracteres.').optional(),
+  rejectionDate: z.string().optional(),
+  modifiedBy: z.string().trim().max(200, 'Máximo de 200 caracteres.').optional(),
+});
+
+export const updateAnalyticsChecklistSchema = createAnalyticsChecklistSchema.partial();
+
+export type AnalyticsChecklistStatus = z.infer<typeof analyticsChecklistStatusSchema>;
+export type CreateAnalyticsChecklistInput = z.infer<typeof createAnalyticsChecklistSchema>;
+export type UpdateAnalyticsChecklistInput = z.infer<typeof updateAnalyticsChecklistSchema>;
+
 export type CreateStationInput = z.infer<typeof createStationSchema>;
 export type UpdateStationInput = z.infer<typeof updateStationSchema>;
 export type CreateCheckInInput = z.infer<typeof createCheckInSchema>;
