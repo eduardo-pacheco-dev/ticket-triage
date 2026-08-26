@@ -479,7 +479,14 @@ export default function StationsPage() {
               ) : (
                 stations.map((row) => (
                   <TableRow key={row.id} hover>
-                    <TableCell>{row.name}</TableCell>
+                    <TableCell>
+                      <Link
+                        to={`/admin/estacoes/${row.id}`}
+                        style={{ color: 'inherit', textDecoration: 'none' }}
+                      >
+                        <span style={{ fontWeight: 500 }}>{row.name}</span>
+                      </Link>
+                    </TableCell>
                     <TableCell>
                       <span className="mono">{row.code}</span>
                     </TableCell>
