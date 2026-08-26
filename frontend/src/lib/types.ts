@@ -11,6 +11,7 @@ export interface QueueEntry {
   site_id: string;
   technician_name: string;
   request_type: string;
+  project: string | null;
   status: QueueStatus;
   created_at: Date | string;
   updated_at: Date | string;

@@ -9,6 +9,10 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
 import CheckCircleIcon from '@mui/icons-material/CheckCircleOutlined';
 import CancelIcon from '@mui/icons-material/CancelOutlined';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -35,6 +39,7 @@ export default function AdminQueuePage() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<Record<string, boolean>>({});
   const [rejectTarget, setRejectTarget] = useState<QueueEntry | null>(null);
+  const [projectFilter, setProjectFilter] = useState<string>('');
 
   const notify = useToastStore((s) => s.notify);
 
@@ -93,6 +98,16 @@ export default function AdminQueuePage() {
     [entries],
   );
 
+  const projects = useMemo(() => {
+    const set = new Set(entries.map((e) => e.project).filter(Boolean) as string[]);
+    return [...set].sort();
+  }, [entries]);
+
+  const filteredEntries = useMemo(() => {
+    if (!projectFilter) return entries;
+    return entries.filter((e) => e.project === projectFilter);
+  }, [entries, projectFilter]);
+
   const columns: AdminColumn<QueueEntry>[] = [
     {
       key: 'position',
@@ -107,6 +122,12 @@ export default function AdminQueuePage() {
       sortable: true,
       render: (row) => <span className="mono">{row.site_id}</span>,
       value: (row) => row.site_id,
+    },
+    {
+      key: 'project',
+      header: 'Projeto',
+      sortable: true,
+      value: (row) => row.project ?? '',
     },
     { key: 'technician_name', header: 'Nome do Técnico', sortable: true },
     { key: 'request_type', header: 'Tipo', sortable: true },
@@ -214,13 +235,38 @@ export default function AdminQueuePage() {
       ) : (
         <AdminTable
           title="Solicitações"
-          description={`${entries.length} solicitação(ões) na fila ativa`}
+          description={`${filteredEntries.length} solicitação(ões) na fila ativa`}
           columns={columns}
-          rows={entries}
+          rows={filteredEntries}
           getRowKey={(row) => row.id}
-          searchFields={(row) => [row.site_id, row.technician_name, row.protocol]}
-          searchPlaceholder="Buscar por SITE ID, técnico ou protocolo"
+          searchFields={(row) => [
+            row.site_id,
+            row.technician_name,
+            row.protocol,
+            row.project ?? '',
+          ]}
+          searchPlaceholder="Buscar por SITE ID, técnico, protocolo ou projeto"
           emptyMessage="Nenhuma solicitação na fila ainda."
+          toolbarExtra={
+            projects.length > 0 ? (
+              <FormControl size="small" sx={{ minWidth: 180 }}>
+                <InputLabel id="project-filter-label">Projeto</InputLabel>
+                <Select
+                  labelId="project-filter-label"
+                  value={projectFilter}
+                  label="Projeto"
+                  onChange={(e) => setProjectFilter(e.target.value)}
+                >
+                  <MenuItem value="">Todos</MenuItem>
+                  {projects.map((p) => (
+                    <MenuItem key={p} value={p}>
+                      {p}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            ) : undefined
+          }
         />
       )}
 

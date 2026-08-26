@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { AnalyticsChecklist } from './analytics-checklist.entity';
+import { QueueEntry } from '../queue/queue-entry.entity';
 import { RateLimitService } from '../common/rate-limit.service';
 import type { CreateAnalyticsChecklistInput } from '@ticket-triage/shared';
 
@@ -19,6 +20,7 @@ export interface ImportJob {
 }
 
 const BATCH_SIZE = 500;
+const ACTIVE_STATUSES = ['waiting', 'in_review'] as const;
 
 @Injectable()
 export class AnalyticsChecklistsService {
@@ -28,6 +30,8 @@ export class AnalyticsChecklistsService {
   constructor(
     @InjectRepository(AnalyticsChecklist)
     private readonly repository: Repository<AnalyticsChecklist>,
+    @InjectRepository(QueueEntry)
+    private readonly queueRepository: Repository<QueueEntry>,
     private readonly rateLimit: RateLimitService,
   ) {}
 
@@ -108,6 +112,64 @@ export class AnalyticsChecklistsService {
 
     job.status = job.errors > 0 && job.errors === job.total ? 'failed' : 'completed';
     job.completedAt = new Date();
+
+    await this.enqueueDecEntries(inputs);
+  }
+
+  private async enqueueDecEntries(inputs: CreateAnalyticsChecklistInput[]): Promise<void> {
+    const decInputs = inputs.filter(
+      (input) => input.siteId && input.status && input.status.toUpperCase().includes('DEC'),
+    );
+
+    if (decInputs.length === 0) return;
+
+    const siteProjectMap = new Map<string, string | null>();
+    for (const input of decInputs) {
+      const siteId = input.siteId!.toUpperCase();
+      if (!siteProjectMap.has(siteId)) {
+        siteProjectMap.set(siteId, input.project ?? null);
+      }
+    }
+
+    const siteIds = [...siteProjectMap.keys()];
+
+    const existing = await this.queueRepository.find({
+      where: siteIds.map((siteId) => ({
+        siteId,
+        status: In([...ACTIVE_STATUSES]),
+      })),
+      select: ['siteId'],
+    });
+
+    const existingSet = new Set(existing.map((e) => e.siteId.toUpperCase()));
+
+    let added = 0;
+    for (const siteId of siteIds) {
+      if (existingSet.has(siteId)) continue;
+
+      const protocol = `DOC-${crypto.randomUUID().slice(0, 10).toUpperCase()}`;
+      const entry = this.queueRepository.create({
+        protocol,
+        siteId,
+        identifier: siteId,
+        fullName: 'Sistema Analytics',
+        technicianName: 'Sistema Analytics',
+        requestType: 'DEC - Análise',
+        project: siteProjectMap.get(siteId) ?? null,
+        status: 'waiting',
+      });
+
+      try {
+        await this.queueRepository.save(entry);
+        added++;
+      } catch {
+        this.logger.warn(`Falha ao enfileirar site-id ${siteId} (pode ser duplicata)`);
+      }
+    }
+
+    this.logger.log(
+      `Fila DEC: ${added} entradas adicionadas, ${siteIds.length - added} ignoradas (duplicatas ou erro)`,
+    );
   }
 
   async remove(id: string): Promise<void> {
