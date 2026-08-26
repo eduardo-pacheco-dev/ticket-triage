@@ -14,6 +14,7 @@ import type {
   RequestType,
   ServiceOrder,
   Station,
+  StationStats,
   SlaConfig,
   SafeUser,
 } from './types';
@@ -315,6 +316,10 @@ export function fetchStations(params?: {
 
 export function fetchStation(id: string) {
   return request<Station>(`/stations/${id}`);
+}
+
+export function fetchStationStats(): Promise<StationStats> {
+  return request<StationStats>('/stations/stats');
 }
 
 export interface MapStationsResponse {

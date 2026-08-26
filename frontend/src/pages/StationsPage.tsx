@@ -13,6 +13,7 @@ import IconButton from '@mui/material/IconButton';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
+import Grid from '@mui/material/Grid';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import Table from '@mui/material/Table';
@@ -34,11 +35,19 @@ import ClearIcon from '@mui/icons-material/Clear';
 import TableChartIcon from '@mui/icons-material/TableChartOutlined';
 import MapIcon from '@mui/icons-material/MapOutlined';
 import UploadFileIcon from '@mui/icons-material/CloudUploadOutlined';
-import { createStation, deleteStation, fetchStations, updateStation, ApiError } from '../lib/api';
+import {
+  createStation,
+  deleteStation,
+  fetchStationStats,
+  fetchStations,
+  updateStation,
+  ApiError,
+} from '../lib/api';
 import { createStationSchema, updateStationSchema } from '@ticket-triage/shared';
 import { zodFieldErrors } from '../lib/schemas';
 import { useToastStore } from '../stores/toast';
-import type { Station } from '../lib/types';
+import type { Station, StationStats } from '../lib/types';
+import StatCard from '../components/StatCard';
 
 const StationMap = lazy(() => import('../components/StationMap'));
 const BulkStationsTab = lazy(() => import('../components/BulkStationsTab'));
@@ -106,6 +115,7 @@ export default function StationsPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<StationStats | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -150,6 +160,12 @@ export default function StationsPage() {
       void reload();
     }
   }, [reload, activeTab]);
+
+  useEffect(() => {
+    void fetchStationStats()
+      .then(setStats)
+      .catch(() => {});
+  }, []);
 
   function handleSearchChange(value: string) {
     setSearchTerm(value);
@@ -391,6 +407,28 @@ export default function StationsPage() {
           Nova estação
         </Button>
       </div>
+
+      {stats && (
+        <Grid container spacing={2} sx={{ mb: 2 }}>
+          <Grid size={{ xs: 6, sm: 4, md: 2 }}>
+            <StatCard label="Total" value={stats.total} />
+          </Grid>
+          {Object.entries(stats.byStatus).map(([key, val]) => (
+            <Grid key={key} size={{ xs: 6, sm: 4, md: 2 }}>
+              <StatCard
+                label={key}
+                value={val}
+                tone={key === 'Ativo' ? '#24a148' : key === 'Inativo' ? '#da1e28' : undefined}
+              />
+            </Grid>
+          ))}
+          {Object.entries(stats.byRegional).map(([key, val]) => (
+            <Grid key={key} size={{ xs: 6, sm: 4, md: 2 }}>
+              <StatCard label={key} value={val} tone="#0f62fe" />
+            </Grid>
+          ))}
+        </Grid>
+      )}
 
       <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>

@@ -20,6 +20,13 @@ export interface PaginatedStations {
   pageSize: number;
 }
 
+export interface StationStats {
+  total: number;
+  byStatus: Record<string, number>;
+  byRegional: Record<string, number>;
+  byTechnology: Record<string, number>;
+}
+
 @Injectable()
 export class StationsService {
   private readonly logger = new Logger(StationsService.name);
@@ -55,6 +62,46 @@ export class StationsService {
     const [items, total] = await qb.skip(skip).take(pageSize).getManyAndCount();
 
     return { items, total, page, pageSize };
+  }
+
+  async getStats(): Promise<StationStats> {
+    const total = await this.repository.count();
+
+    const statusRows = await this.repository
+      .createQueryBuilder('s')
+      .select('s.status', 'key')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('s.status')
+      .getRawMany<{ key: string | null; count: string }>();
+
+    const regionalRows = await this.repository
+      .createQueryBuilder('s')
+      .select('s.regional', 'key')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('s.regional')
+      .getRawMany<{ key: string | null; count: string }>();
+
+    const techRows = await this.repository
+      .createQueryBuilder('s')
+      .select('s.technology', 'key')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('s.technology')
+      .getRawMany<{ key: string | null; count: string }>();
+
+    const toMap = (rows: { key: string | null; count: string }[]): Record<string, number> => {
+      const map: Record<string, number> = {};
+      for (const row of rows) {
+        map[row.key ?? 'Não informado'] = Number(row.count);
+      }
+      return map;
+    };
+
+    return {
+      total,
+      byStatus: toMap(statusRows),
+      byRegional: toMap(regionalRows),
+      byTechnology: toMap(techRows),
+    };
   }
 
   async findOne(id: string): Promise<Station> {

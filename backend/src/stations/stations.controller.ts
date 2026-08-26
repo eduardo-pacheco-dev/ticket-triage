@@ -43,6 +43,11 @@ export class StationsController {
     });
   }
 
+  @Get('stats')
+  getStats() {
+    return this.stationsService.getStats();
+  }
+
   @Get('map')
   findForMap(
     @Query('state') state?: string,

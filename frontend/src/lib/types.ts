@@ -71,6 +71,13 @@ export interface PaginatedStations {
   pageSize: number;
 }
 
+export interface StationStats {
+  total: number;
+  byStatus: Record<string, number>;
+  byRegional: Record<string, number>;
+  byTechnology: Record<string, number>;
+}
+
 export interface AppNotification {
   id: string;
   title: string;
