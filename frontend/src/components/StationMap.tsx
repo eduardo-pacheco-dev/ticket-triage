@@ -88,6 +88,7 @@ export default function StationMap({ stateFilter, searchTerm }: StationMapProps)
 
   const handleBounds = useCallback(
     async (bounds: { south: number; north: number; west: number; east: number }) => {
+      if (!stateFilter) return;
       try {
         if (!isFirstLoadRef.current) setLoadingMore(true);
         const data = await fetchStationsMap(stateFilter, bounds, searchTerm);
@@ -104,6 +105,11 @@ export default function StationMap({ stateFilter, searchTerm }: StationMapProps)
   );
 
   useEffect(() => {
+    if (!stateFilter) {
+      setPoints([]);
+      setLoading(false);
+      return;
+    }
     isFirstLoadRef.current = true;
     setLoading(true);
     void handleBounds(BRAZIL_BOUNDS);
@@ -147,7 +153,9 @@ export default function StationMap({ stateFilter, searchTerm }: StationMapProps)
           sx={{ display: 'flex', justifyContent: 'center', minHeight: 400, alignItems: 'center' }}
         >
           <Typography color="text.secondary">
-            Nenhuma estação com coordenadas válidas nesta área.
+            {!stateFilter
+              ? 'Selecione um estado para visualizar as estações no mapa.'
+              : 'Nenhuma estação com coordenadas válidas encontrada.'}
           </Typography>
         </Box>
       ) : (
