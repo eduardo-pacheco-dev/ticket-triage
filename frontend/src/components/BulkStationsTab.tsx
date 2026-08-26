@@ -19,6 +19,7 @@ import {
   fetchBulkStationJob,
   uploadBulkStationsExcel,
   downloadBulkStationsExcel,
+  downloadBulkStationsTemplate,
   deleteAllBulkStations,
   ApiError,
 } from '../lib/api';
@@ -33,6 +34,7 @@ export default function BulkStationsTab() {
 
   const [uploading, setUploading] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [downloadingTemplate, setDownloadingTemplate] = useState(false);
   const [activeJob, setActiveJob] = useState<ImportJob | null>(null);
   const [pendingClear, setPendingClear] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -118,6 +120,17 @@ export default function BulkStationsTab() {
     }
   }
 
+  async function handleDownloadTemplate() {
+    setDownloadingTemplate(true);
+    try {
+      await downloadBulkStationsTemplate();
+    } catch {
+      setError('Erro ao baixar template.');
+    } finally {
+      setDownloadingTemplate(false);
+    }
+  }
+
   async function handleClearAll() {
     setError(null);
     try {
@@ -175,6 +188,14 @@ export default function BulkStationsTab() {
               onClick={() => void handleExport()}
             >
               {exporting ? 'Exportando...' : 'Exportar Excel'}
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={downloadingTemplate ? <CircularProgress size={16} /> : <DownloadIcon />}
+              disabled={downloadingTemplate}
+              onClick={() => void handleDownloadTemplate()}
+            >
+              {downloadingTemplate ? 'Baixando...' : 'Baixar template'}
             </Button>
             <Button
               variant="outlined"

@@ -542,6 +542,33 @@ export function downloadBulkStationsExcel(): Promise<void> {
   });
 }
 
+export function downloadBulkStationsTemplate(): Promise<void> {
+  const token = getToken();
+  const url = `${BASE}/bulk-stations/template`;
+
+  return new Promise<void>((resolve, reject) => {
+    if (!token) {
+      reject(new ApiError(401, 'Não autenticado.'));
+      return;
+    }
+
+    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => {
+        if (!res.ok) throw new ApiError(res.status, 'Erro ao baixar template.');
+        return res.blob();
+      })
+      .then((blob) => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'template_importacao_estacoes.xlsx';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        resolve();
+      })
+      .catch(reject);
+  });
+}
+
 export function deleteBulkStation(id: string) {
   return request<void>(`/bulk-stations/${id}`, { method: 'DELETE' });
 }

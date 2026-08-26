@@ -126,6 +126,25 @@ export class BulkStationsController {
     return { count: await this.service.count() };
   }
 
+  @Get('template')
+  downloadTemplate(@Res() res: Response) {
+    const ws = XLSX.utils.aoa_to_sheet([EXCEL_HEADERS]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Stations');
+
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="template_importacao_estacoes.xlsx"',
+    );
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.send(buffer);
+  }
+
   @Get('export')
   async exportExcel(@Res() res: Response) {
     const items = await this.service.findAll();
