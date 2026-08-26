@@ -66,7 +66,7 @@ export class BulkStationsService {
     const jobId = crypto.randomUUID();
     const job: ImportJob = {
       id: jobId,
-      status: 'pending',
+      status: 'processing',
       total: 0,
       processed: 0,
       inserted: 0,
@@ -78,10 +78,10 @@ export class BulkStationsService {
     };
     this.jobs.set(jobId, job);
 
-    const tmpFile = join(tmpdir(), `bulk-stations-${randomBytes(8).toString('hex')}.xlsx`);
+    const tmpFile = join(tmpdir(), `bulk-stations-${randomBytes(8).toString('hex')}.xlsb`);
     await writeFile(tmpFile, buffer);
 
-    this.processWithStreaming(jobId, tmpFile).catch((err) => {
+    this.processInBackground(jobId, tmpFile).catch((err) => {
       this.logger.error(`Job ${jobId} falhou: ${String(err)}`);
       job.status = 'failed';
       job.completedAt = new Date();
@@ -92,15 +92,13 @@ export class BulkStationsService {
     return job;
   }
 
-  private async processWithStreaming(jobId: string, filePath: string): Promise<void> {
+  private async processInBackground(jobId: string, filePath: string): Promise<void> {
     const job = this.jobs.get(jobId);
     if (!job) return;
 
-    job.status = 'processing';
-
     try {
       this.logger.log(`Lendo arquivo: ${filePath}`);
-      const workbook = XLSX.readFile(filePath);
+      const workbook = XLSX.readFile(filePath, { type: 'file' });
       const sheetName = workbook.SheetNames[0];
       if (!sheetName) {
         job.status = 'failed';
@@ -111,19 +109,20 @@ export class BulkStationsService {
 
       this.logger.log(`Processando planilha "${sheetName}"`);
 
-      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(workbook.Sheets[sheetName], {
+      const ws = workbook.Sheets[sheetName];
+      const allRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, {
         raw: false,
       } as XLSX.Sheet2JSONOpts);
 
-      this.logger.log(`${rows.length} linhas lidas do Excel`);
+      this.logger.log(`${allRows.length} linhas lidas`);
 
-      if (rows.length > 0) {
-        this.logger.log(`Primeiras chaves: ${Object.keys(rows[0]).slice(0, 5).join(', ')}`);
+      if (allRows.length > 0) {
+        this.logger.log(`Chaves: ${Object.keys(allRows[0]).slice(0, 6).join(', ')}`);
       }
 
       let batch: Record<string, unknown>[] = [];
 
-      for (const row of rows) {
+      for (const row of allRows) {
         const mapped = mapExcelRow(row);
         if (!mapped) continue;
 
@@ -146,6 +145,11 @@ export class BulkStationsService {
 
       job.status = job.errors > 0 && job.errors === job.total ? 'failed' : 'completed';
       job.completedAt = new Date();
+    } catch (err) {
+      this.logger.error(`Job ${jobId} falhou: ${String(err)}`);
+      job.status = 'failed';
+      job.completedAt = new Date();
+      job.errorMessages.push(err instanceof Error ? err.message : 'Erro desconhecido.');
     } finally {
       unlink(filePath).catch(() => {});
     }
