@@ -14,6 +14,7 @@ import type {
   RequestType,
   ServiceOrder,
   Station,
+  StationAttachment,
   StationStats,
   SlaConfig,
   SafeUser,
@@ -321,6 +322,52 @@ export function fetchStation(id: string) {
 export function fetchStationStats(): Promise<StationStats> {
   return request<StationStats>('/stations/stats');
 }
+
+export function fetchStationAttachments(stationId: string): Promise<StationAttachment[]> {
+  return request<StationAttachment[]>(`/stations/${stationId}/attachments`);
+}
+
+export function uploadStationAttachment(stationId: string, file: File): Promise<StationAttachment> {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return new Promise<StationAttachment>((resolve, reject) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 120_000);
+
+    fetch(`${BASE}/stations/${stationId}/attachments`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      body: formData,
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        clearTimeout(timer);
+        if (!res.ok) {
+          let message = `Erro ${res.status}`;
+          try {
+            const body = await res.json();
+            message = extractMessage(body) ?? message;
+          } catch {}
+          throw new ApiError(res.status, message);
+        }
+        resolve(await res.json());
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        if (err instanceof ApiError) reject(err);
+        else reject(new ApiError(0, 'Não foi possível conectar ao servidor.'));
+      });
+  });
+}
+
+export function deleteStationAttachment(id: string): Promise<void> {
+  return request<void>(`/stations/attachments/${id}`, { method: 'DELETE' });
+}
+
+export const stationAttachmentDownloadUrl = (id: string) =>
+  `${BASE}/stations/attachments/${id}/download`;
 
 export interface MapStationsResponse {
   items: StationMapPoint[];

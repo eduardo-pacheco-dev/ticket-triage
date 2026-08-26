@@ -3,9 +3,11 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { StationAttachment } from './station-attachment.entity';
 
 @Entity('stations')
 @Index('stations_code_idx', ['code'], { unique: true })
@@ -159,6 +161,9 @@ export class Station {
 
   @Column({ name: 'ots', type: 'varchar', length: 10, nullable: true })
   ots: string | null;
+
+  @OneToMany(() => StationAttachment, (a) => a.station)
+  attachments: StationAttachment[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

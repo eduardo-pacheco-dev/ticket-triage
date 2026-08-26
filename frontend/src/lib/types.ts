@@ -78,6 +78,16 @@ export interface StationStats {
   byTechnology: Record<string, number>;
 }
 
+export interface StationAttachment {
+  id: string;
+  stationId: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  storageKey: string;
+  createdAt: string;
+}
+
 export interface AppNotification {
   id: string;
   title: string;

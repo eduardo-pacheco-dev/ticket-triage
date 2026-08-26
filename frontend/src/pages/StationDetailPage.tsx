@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -6,13 +6,23 @@ import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
+import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import ArrowLeftIcon from '@mui/icons-material/ArrowBack';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
+import DownloadIcon from '@mui/icons-material/Download';
 import EditIcon from '@mui/icons-material/EditOutlined';
-import { fetchStation } from '../lib/api';
-import type { Station } from '../lib/types';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
+import {
+  fetchStation,
+  fetchStationAttachments,
+  uploadStationAttachment,
+  deleteStationAttachment,
+  stationAttachmentDownloadUrl,
+} from '../lib/api';
+import type { Station, StationAttachment } from '../lib/types';
 
 function fmtDate(v: Date | string | null): string {
   if (!v) return '—';
@@ -61,6 +71,10 @@ export default function StationDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [attachments, setAttachments] = useState<StationAttachment[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     setLoading(true);
     fetchStation(id)
@@ -68,6 +82,44 @@ export default function StationDetailPage() {
       .catch(() => setError('Erro ao carregar estação.'))
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      fetchStationAttachments(id)
+        .then(setAttachments)
+        .catch(() => {});
+    }
+  }, [id]);
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !id) return;
+    setUploading(true);
+    try {
+      const att = await uploadStationAttachment(id, file);
+      setAttachments((prev) => [att, ...prev]);
+    } catch {
+      setError('Erro ao enviar anexo.');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }
+
+  async function handleDeleteAttachment(attId: string) {
+    try {
+      await deleteStationAttachment(attId);
+      setAttachments((prev) => prev.filter((a) => a.id !== attId));
+    } catch {
+      setError('Erro ao remover anexo.');
+    }
+  }
+
+  function formatSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
 
   return (
     <>
@@ -239,6 +291,72 @@ export default function StationDetailPage() {
                   <Field label="Responsável" value={station.responsible} />
                 </Stack>
                 <Field label="Observações gerais" value={station.notes} />
+              </Section>
+
+              <Divider />
+
+              <Section title="Anexos">
+                <input ref={fileInputRef} type="file" hidden onChange={handleUpload} />
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={uploading ? <CircularProgress size={14} /> : <UploadFileIcon />}
+                  disabled={uploading}
+                  onClick={() => fileInputRef.current?.click()}
+                  sx={{ mb: 1 }}
+                >
+                  {uploading ? 'Enviando...' : 'Adicionar anexo'}
+                </Button>
+
+                {attachments.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary">
+                    Nenhum anexo adicionado.
+                  </Typography>
+                ) : (
+                  <Stack spacing={1}>
+                    {attachments.map((att) => (
+                      <Stack
+                        key={att.id}
+                        direction="row"
+                        alignItems="center"
+                        spacing={1}
+                        sx={{
+                          p: 1,
+                          borderRadius: 1,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                          <Typography variant="body2" noWrap fontWeight={500}>
+                            {att.filename}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {formatSize(att.size)} ·{' '}
+                            {new Date(att.createdAt).toLocaleDateString('pt-BR')}
+                          </Typography>
+                        </Box>
+                        <IconButton
+                          size="small"
+                          component="a"
+                          href={stationAttachmentDownloadUrl(att.id)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Baixar"
+                        >
+                          <DownloadIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          title="Remover"
+                          onClick={() => void handleDeleteAttachment(att.id)}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Stack>
+                    ))}
+                  </Stack>
+                )}
               </Section>
 
               <Divider />

@@ -77,6 +77,7 @@ function makeStation(overrides: Partial<Station> = {}): Station {
     ots: null,
     createdAt: new Date('2026-08-20T10:00:00Z'),
     updatedAt: new Date('2026-08-20T10:00:00Z'),
+    attachments: [],
   };
   return Object.assign(base, overrides);
 }

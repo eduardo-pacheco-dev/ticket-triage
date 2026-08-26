@@ -5,6 +5,7 @@ import { QueueEntry } from './queue/queue-entry.entity';
 import { RequestType } from './request-types/request-type.entity';
 import { ServiceOrder } from './service-orders/service-order.entity';
 import { Station } from './stations/station.entity';
+import { StationAttachment } from './stations/station-attachment.entity';
 import { SlaConfig } from './sla/sla-config.entity';
 import { User } from './auth/user.entity';
 import { InitSchema1756000000000 } from './migrations/1756000000000-InitSchema';
@@ -20,6 +21,7 @@ import { AnalyticsChecklists1756800000000 } from './migrations/1756800000000-Ana
 import { ExpandStations1756950000000 } from './migrations/1756950000000-ExpandStations';
 import { StationsIndexes1756960000000 } from './migrations/1756960000000-StationsIndexes';
 import { AddQueueProject1756970000000 } from './migrations/1756970000000-AddQueueProject';
+import { StationAttachments1756980000000 } from './migrations/1756980000000-StationAttachments';
 
 if (process.env.NODE_ENV === 'production' && process.env.DB_SYNC !== 'false') {
   throw new Error(
@@ -40,6 +42,7 @@ export const migrations = [
   ExpandStations1756950000000,
   StationsIndexes1756960000000,
   AddQueueProject1756970000000,
+  StationAttachments1756980000000,
 ];
 
 const dbLogging: LogLevel[] = process.env.DB_SYNC === 'false' ? ['error'] : ['error', 'schema'];
@@ -55,7 +58,16 @@ export const appDataSourceOptions = {
   // igual ao CURRENT_TIMESTAMP usado pelos defaults do banco. Isso mantém
   // todas as colunas datetime na mesma convenção (misturar UTC e local fazia
   // as durações aparecerem deslocadas pelo offset do fuso).
-  entities: [QueueEntry, RequestType, SlaConfig, User, ServiceOrder, Station, AnalyticsChecklist],
+  entities: [
+    QueueEntry,
+    RequestType,
+    SlaConfig,
+    User,
+    ServiceOrder,
+    Station,
+    StationAttachment,
+    AnalyticsChecklist,
+  ],
   autoLoadEntities: true,
   synchronize: process.env.DB_SYNC === 'false' ? false : true,
   logging: dbLogging,

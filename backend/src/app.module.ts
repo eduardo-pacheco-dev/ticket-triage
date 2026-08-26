@@ -32,6 +32,9 @@ import { AnalyticsChecklistsController } from './analytics/analytics-checklists.
 import { AnalyticsChecklistsService } from './analytics/analytics-checklists.service';
 import { BulkStationsController } from './stations/bulk-stations.controller';
 import { BulkStationsService } from './stations/bulk-stations.service';
+import { StationAttachment } from './stations/station-attachment.entity';
+import { StationAttachmentsController } from './stations/station-attachments.controller';
+import { StationAttachmentsService } from './stations/station-attachments.service';
 
 @Module({
   imports: [
@@ -44,6 +47,7 @@ import { BulkStationsService } from './stations/bulk-stations.service';
     TypeOrmModule.forFeature([NotificationRead]),
     TypeOrmModule.forFeature([ServiceOrder]),
     TypeOrmModule.forFeature([Station]),
+    TypeOrmModule.forFeature([StationAttachment]),
     TypeOrmModule.forFeature([AnalyticsChecklist]),
     CommonModule,
     AuthModule,
@@ -61,6 +65,7 @@ import { BulkStationsService } from './stations/bulk-stations.service';
     StationsController,
     AnalyticsChecklistsController,
     BulkStationsController,
+    StationAttachmentsController,
   ],
   providers: [
     QueueService,
@@ -71,6 +76,7 @@ import { BulkStationsService } from './stations/bulk-stations.service';
     StationsService,
     AnalyticsChecklistsService,
     BulkStationsService,
+    StationAttachmentsService,
   ],
 })
 export class AppModule {}
