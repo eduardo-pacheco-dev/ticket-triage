@@ -1,6 +1,7 @@
 import { clearAuth, getToken } from './auth-store';
 import type {
   AnalyticsChecklist,
+  BulkStation,
   DashboardData,
   ImportJob,
   NotificationsList,
@@ -425,4 +426,90 @@ export function deleteAnalyticsChecklist(id: string) {
 
 export function deleteAllAnalyticsChecklists() {
   return request<void>('/analytics-checklists', { method: 'DELETE' });
+}
+
+export function fetchBulkStations() {
+  return request<BulkStation[]>('/bulk-stations');
+}
+
+export function fetchBulkStationsCount() {
+  return request<{ count: number }>('/bulk-stations/count');
+}
+
+export function fetchBulkStation(id: string) {
+  return request<BulkStation>(`/bulk-stations/${id}`);
+}
+
+export function uploadBulkStationsExcel(file: File): Promise<ImportJob> {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return new Promise<ImportJob>((resolve, reject) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 120000);
+
+    fetch(`${BASE}/bulk-stations/upload`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      body: formData,
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        clearTimeout(timer);
+        if (!res.ok) {
+          let message = `Erro ${res.status}`;
+          try {
+            const body = await res.json();
+            message = extractMessage(body) ?? message;
+          } catch {}
+          throw new ApiError(res.status, message);
+        }
+        resolve(await res.json());
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        if (err instanceof ApiError) reject(err);
+        else reject(new ApiError(0, 'Não foi possível conectar ao servidor.'));
+      });
+  });
+}
+
+export function fetchBulkStationJob(jobId: string) {
+  return request<ImportJob>(`/bulk-stations/jobs/${jobId}`);
+}
+
+export function downloadBulkStationsExcel(): Promise<void> {
+  const token = getToken();
+  const url = `${BASE}/bulk-stations/export`;
+
+  return new Promise<void>((resolve, reject) => {
+    if (!token) {
+      reject(new ApiError(401, 'Não autenticado.'));
+      return;
+    }
+
+    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => {
+        if (!res.ok) throw new ApiError(res.status, 'Erro ao exportar.');
+        return res.blob();
+      })
+      .then((blob) => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `stations_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        resolve();
+      })
+      .catch(reject);
+  });
+}
+
+export function deleteBulkStation(id: string) {
+  return request<void>(`/bulk-stations/${id}`, { method: 'DELETE' });
+}
+
+export function deleteAllBulkStations() {
+  return request<void>('/bulk-stations', { method: 'DELETE' });
 }

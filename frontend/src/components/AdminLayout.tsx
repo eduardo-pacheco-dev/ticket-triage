@@ -18,6 +18,7 @@ import ServiceOrderIcon from '@mui/icons-material/AssignmentOutlined';
 import SettingsIcon from '@mui/icons-material/SettingsOutlined';
 import StationIcon from '@mui/icons-material/CellTowerOutlined';
 import AnalyticsIcon from '@mui/icons-material/BarChartOutlined';
+import BulkStationIcon from '@mui/icons-material/CloudUploadOutlined';
 import UsersIcon from '@mui/icons-material/ManageAccountsOutlined';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -70,6 +71,12 @@ function getNavItems(pathname: string): NavItem[] {
       to: '/admin/analytics',
       active: pathname.startsWith('/admin/analytics'),
       icon: <AnalyticsIcon />,
+    },
+    {
+      label: 'Estações (Massa)',
+      to: '/admin/bulk-stations',
+      active: pathname.startsWith('/admin/bulk-stations'),
+      icon: <BulkStationIcon />,
     },
     {
       label: 'Usuários',

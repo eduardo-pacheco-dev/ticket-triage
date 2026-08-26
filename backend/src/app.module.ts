@@ -30,6 +30,9 @@ import { TelegramModule } from './telegram/telegram.module';
 import { AnalyticsChecklist } from './analytics/analytics-checklist.entity';
 import { AnalyticsChecklistsController } from './analytics/analytics-checklists.controller';
 import { AnalyticsChecklistsService } from './analytics/analytics-checklists.service';
+import { BulkStation } from './stations/bulk-station.entity';
+import { BulkStationsController } from './stations/bulk-stations.controller';
+import { BulkStationsService } from './stations/bulk-stations.service';
 
 @Module({
   imports: [
@@ -43,6 +46,7 @@ import { AnalyticsChecklistsService } from './analytics/analytics-checklists.ser
     TypeOrmModule.forFeature([ServiceOrder]),
     TypeOrmModule.forFeature([Station]),
     TypeOrmModule.forFeature([AnalyticsChecklist]),
+    TypeOrmModule.forFeature([BulkStation]),
     CommonModule,
     AuthModule,
     UsersModule,
@@ -58,6 +62,7 @@ import { AnalyticsChecklistsService } from './analytics/analytics-checklists.ser
     ServiceOrdersController,
     StationsController,
     AnalyticsChecklistsController,
+    BulkStationsController,
   ],
   providers: [
     QueueService,
@@ -67,6 +72,7 @@ import { AnalyticsChecklistsService } from './analytics/analytics-checklists.ser
     ServiceOrdersService,
     StationsService,
     AnalyticsChecklistsService,
+    BulkStationsService,
   ],
 })
 export class AppModule {}
