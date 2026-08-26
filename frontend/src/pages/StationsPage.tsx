@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -13,13 +13,13 @@ import IconButton from '@mui/material/IconButton';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import TableSortLabel from '@mui/material/TableSortLabel';
 import TablePagination from '@mui/material/TablePagination';
 import TextField from '@mui/material/TextField';
 import Toolbar from '@mui/material/Toolbar';
@@ -31,13 +31,17 @@ import EditIcon from '@mui/icons-material/EditOutlined';
 import TrashCanIcon from '@mui/icons-material/DeleteOutlined';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
+import TableChartIcon from '@mui/icons-material/TableChartOutlined';
+import MapIcon from '@mui/icons-material/MapOutlined';
+import UploadFileIcon from '@mui/icons-material/CloudUploadOutlined';
 import { createStation, deleteStation, fetchStations, updateStation, ApiError } from '../lib/api';
 import { createStationSchema, updateStationSchema } from '@ticket-triage/shared';
 import { zodFieldErrors } from '../lib/schemas';
 import { useToastStore } from '../stores/toast';
 import type { Station } from '../lib/types';
 
-type SortKey = 'name' | 'code' | 'city' | 'state' | 'createdAt';
+const StationMap = lazy(() => import('../components/StationMap'));
+const BulkStationsTab = lazy(() => import('../components/BulkStationsTab'));
 
 const BRAZIL_STATES = [
   'AC',
@@ -97,15 +101,16 @@ const ROWS_PER_PAGE_OPTIONS = [10, 25, 50];
 
 export default function StationsPage() {
   const notify = useToastStore((s) => s.notify);
+  const [activeTab, setActiveTab] = useState('table');
   const [stations, setStations] = useState<Station[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [stateFilter, setStateFilter] = useState('');
-
-  const [sortKey, setSortKey] = useState<SortKey>('name');
-  const [sortAsc, setSortAsc] = useState(true);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
@@ -123,16 +128,49 @@ export default function StationsPage() {
 
   const reload = useCallback(async () => {
     try {
-      setStations(await fetchStations());
+      setLoading(true);
+      const result = await fetchStations({
+        page: page + 1,
+        pageSize: rowsPerPage,
+        search: debouncedSearch || undefined,
+        state: stateFilter || undefined,
+      });
+      setStations(result.items);
+      setTotal(result.total);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar estações.');
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  }, [page, rowsPerPage, debouncedSearch, stateFilter]);
 
   useEffect(() => {
-    void reload().finally(() => setLoading(false));
-  }, [reload]);
+    if (activeTab === 'table') {
+      void reload();
+    }
+  }, [reload, activeTab]);
+
+  function handleSearchChange(value: string) {
+    setSearchTerm(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(value);
+      setPage(0);
+    }, 400);
+  }
+
+  function handleStateFilterChange(value: string) {
+    setStateFilter(value);
+    setPage(0);
+  }
+
+  function clearFilters() {
+    setSearchTerm('');
+    setDebouncedSearch('');
+    setStateFilter('');
+    setPage(0);
+  }
 
   function openCreate() {
     setCreateForm(emptyForm);
@@ -221,63 +259,6 @@ export default function StationsPage() {
       setPendingDelete(null);
     }
   }
-
-  function toggleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortAsc((prev) => !prev);
-    } else {
-      setSortKey(key);
-      setSortAsc(true);
-    }
-  }
-
-  function clearFilters() {
-    setSearchTerm('');
-    setStateFilter('');
-    setPage(0);
-  }
-
-  const filteredAndSortedRows = useMemo(() => {
-    const searchLower = searchTerm.toLowerCase().trim();
-    const filtered = stations.filter((s) => {
-      if (searchTerm) {
-        const match =
-          s.name.toLowerCase().includes(searchLower) ||
-          s.code.toLowerCase().includes(searchLower) ||
-          (s.city && s.city.toLowerCase().includes(searchLower)) ||
-          (s.responsible && s.responsible.toLowerCase().includes(searchLower)) ||
-          (s.address && s.address.toLowerCase().includes(searchLower));
-        if (!match) return false;
-      }
-      if (stateFilter && s.state !== stateFilter) return false;
-      return true;
-    });
-
-    return [...filtered]
-      .map((s) => ({
-        ...s,
-        createdAtValue: new Date(s.createdAt).getTime(),
-      }))
-      .sort((a, b) => {
-        let va: string | number;
-        let vb: string | number;
-        if (sortKey === 'createdAt') {
-          va = a.createdAtValue;
-          vb = b.createdAtValue;
-        } else {
-          va = a[sortKey] ?? '';
-          vb = b[sortKey] ?? '';
-        }
-        if (va < vb) return sortAsc ? -1 : 1;
-        if (va > vb) return sortAsc ? 1 : -1;
-        return 0;
-      });
-  }, [stations, searchTerm, stateFilter, sortKey, sortAsc]);
-
-  const paginatedRows = useMemo(() => {
-    const start = page * rowsPerPage;
-    return filteredAndSortedRows.slice(start, start + rowsPerPage);
-  }, [filteredAndSortedRows, page, rowsPerPage]);
 
   const hasActiveFilters = searchTerm || stateFilter;
 
@@ -414,12 +395,9 @@ export default function StationsPage() {
       <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
           <TextField
-            placeholder="Buscar por nome, código, cidade, responsável..."
+            placeholder="Buscar por nome, código, cidade, responsável, site_id..."
             value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setPage(0);
-            }}
+            onChange={(e) => handleSearchChange(e.target.value)}
             size="small"
             sx={{ flexGrow: 1, minWidth: 250 }}
             slotProps={{
@@ -435,6 +413,7 @@ export default function StationsPage() {
                       size="small"
                       onClick={() => {
                         setSearchTerm('');
+                        setDebouncedSearch('');
                         setPage(0);
                       }}
                       title="Limpar busca"
@@ -450,10 +429,7 @@ export default function StationsPage() {
             select
             label="UF"
             value={stateFilter}
-            onChange={(e) => {
-              setStateFilter(e.target.value);
-              setPage(0);
-            }}
+            onChange={(e) => handleStateFilterChange(e.target.value)}
             size="small"
             sx={{ minWidth: 100 }}
           >
@@ -472,116 +448,151 @@ export default function StationsPage() {
         </Stack>
       </Paper>
 
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: 200 }}>
-          <CircularProgress size={32} />
+      <Paper variant="outlined" sx={{ mb: 2 }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}>
+          <Tabs value={activeTab} onChange={(_e: unknown, v: string) => setActiveTab(v)}>
+            <Tab label="Tabela" value="table" icon={<TableChartIcon />} iconPosition="start" />
+            <Tab label="Mapa" value="map" icon={<MapIcon />} iconPosition="start" />
+            <Tab label="Importação" value="import" icon={<UploadFileIcon />} iconPosition="start" />
+          </Tabs>
         </Box>
-      ) : (
-        <TableContainer component={Paper} variant="outlined">
-          <Toolbar sx={{ px: { xs: 2, sm: 3 }, py: 1.5 }}>
-            <Stack>
-              <Typography variant="h6" component="div" fontSize="1rem" fontWeight={600}>
-                Estações cadastradas
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {filteredAndSortedRows.length} de {stations.length} estação(ões)
-              </Typography>
-            </Stack>
-          </Toolbar>
-          <Table size="medium">
-            <TableHead>
-              <TableRow>
-                {(
-                  [
-                    ['name', 'Nome'],
-                    ['code', 'Código'],
-                    ['city', 'Cidade'],
-                    ['state', 'UF'],
-                    ['createdAt', 'Criado em'],
-                  ] as [SortKey, string][]
-                ).map(([key, label]) => (
-                  <TableCell
-                    key={key}
-                    sortDirection={sortKey === key ? (sortAsc ? 'asc' : 'desc') : false}
-                  >
-                    <TableSortLabel
-                      active={sortKey === key}
-                      direction={sortKey === key && !sortAsc ? 'desc' : 'asc'}
-                      onClick={() => toggleSort(key)}
-                    >
-                      {label}
-                    </TableSortLabel>
-                  </TableCell>
-                ))}
-                <TableCell />
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {paginatedRows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                    <Typography color="text.secondary">
-                      {hasActiveFilters
-                        ? 'Nenhuma estação encontrada com os filtros aplicados.'
-                        : 'Nenhuma estação cadastrada.'}
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paginatedRows.map((row) => (
-                  <TableRow key={row.id} hover>
-                    <TableCell>{row.name}</TableCell>
-                    <TableCell>
-                      <span className="mono">{row.code}</span>
-                    </TableCell>
-                    <TableCell>{row.city ?? '—'}</TableCell>
-                    <TableCell>{row.state ?? '—'}</TableCell>
-                    <TableCell>{new Date(row.createdAt).toLocaleDateString('pt-BR')}</TableCell>
-                    <TableCell align="right">
-                      <Box sx={{ display: 'flex', gap: 0.25, justifyContent: 'flex-end' }}>
-                        <IconButton
-                          size="small"
-                          aria-label={`Editar ${row.name}`}
-                          title={`Editar ${row.name}`}
-                          onClick={() => openEdit(row)}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          aria-label={`Remover ${row.name}`}
-                          title={`Remover ${row.name}`}
-                          onClick={() => setPendingDelete(row)}
-                        >
-                          <TrashCanIcon fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    </TableCell>
+
+        {activeTab === 'table' &&
+          (loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: 200 }}>
+              <CircularProgress size={32} />
+            </Box>
+          ) : (
+            <>
+              <Toolbar sx={{ px: { xs: 2, sm: 3 }, py: 1.5 }}>
+                <Stack>
+                  <Typography variant="h6" component="div" fontSize="1rem" fontWeight={600}>
+                    Estações cadastradas
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {total.toLocaleString('pt-BR')} estação(ões)
+                  </Typography>
+                </Stack>
+              </Toolbar>
+              <Table size="medium">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Nome</TableCell>
+                    <TableCell>Código</TableCell>
+                    <TableCell>Cidade</TableCell>
+                    <TableCell>UF</TableCell>
+                    <TableCell>Criado em</TableCell>
+                    <TableCell />
                   </TableRow>
-                ))
+                </TableHead>
+                <TableBody>
+                  {stations.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                        <Typography color="text.secondary">
+                          {hasActiveFilters
+                            ? 'Nenhuma estação encontrada com os filtros aplicados.'
+                            : 'Nenhuma estação cadastrada.'}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    stations.map((row) => (
+                      <TableRow key={row.id} hover>
+                        <TableCell>
+                          <Link
+                            to={`/admin/estacoes/${row.id}`}
+                            style={{ color: 'inherit', textDecoration: 'none' }}
+                          >
+                            <span style={{ fontWeight: 500 }}>{row.name}</span>
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <span className="mono">{row.code}</span>
+                        </TableCell>
+                        <TableCell>{row.city ?? '—'}</TableCell>
+                        <TableCell>{row.state ?? '—'}</TableCell>
+                        <TableCell>{new Date(row.createdAt).toLocaleDateString('pt-BR')}</TableCell>
+                        <TableCell align="right">
+                          <Box sx={{ display: 'flex', gap: 0.25, justifyContent: 'flex-end' }}>
+                            <IconButton
+                              size="small"
+                              aria-label={`Editar ${row.name}`}
+                              title={`Editar ${row.name}`}
+                              onClick={() => openEdit(row)}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              aria-label={`Remover ${row.name}`}
+                              title={`Remover ${row.name}`}
+                              onClick={() => setPendingDelete(row)}
+                            >
+                              <TrashCanIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+              {total > 0 && (
+                <TablePagination
+                  component="div"
+                  count={total}
+                  page={page}
+                  onPageChange={(_, newPage) => setPage(newPage)}
+                  rowsPerPage={rowsPerPage}
+                  onRowsPerPageChange={(e) => {
+                    setRowsPerPage(parseInt(e.target.value, 10));
+                    setPage(0);
+                  }}
+                  rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
+                  labelRowsPerPage="Linhas por página:"
+                  labelDisplayedRows={({ from, to, count }) =>
+                    `${from}–${to} de ${count !== -1 ? count : `mais de ${to}`}`
+                  }
+                />
               )}
-            </TableBody>
-          </Table>
-          {filteredAndSortedRows.length > 0 && (
-            <TablePagination
-              component="div"
-              count={filteredAndSortedRows.length}
-              page={page}
-              onPageChange={(_, newPage) => setPage(newPage)}
-              rowsPerPage={rowsPerPage}
-              onRowsPerPageChange={(e) => {
-                setRowsPerPage(parseInt(e.target.value, 10));
-                setPage(0);
-              }}
-              rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
-              labelRowsPerPage="Linhas por página:"
-              labelDisplayedRows={({ from, to, count }) =>
-                `${from}–${to} de ${count !== -1 ? count : `mais de ${to}`}`
-              }
+            </>
+          ))}
+
+        {activeTab === 'map' && (
+          <Suspense
+            fallback={
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  minHeight: 400,
+                  alignItems: 'center',
+                }}
+              >
+                <CircularProgress size={32} />
+              </Box>
+            }
+          >
+            <StationMap
+              stateFilter={stateFilter || undefined}
+              searchTerm={debouncedSearch || undefined}
             />
-          )}
-        </TableContainer>
-      )}
+          </Suspense>
+        )}
+
+        {activeTab === 'import' && (
+          <Suspense
+            fallback={
+              <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: 200 }}>
+                <CircularProgress size={32} />
+              </Box>
+            }
+          >
+            <BulkStationsTab />
+          </Suspense>
+        )}
+      </Paper>
 
       <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Nova estação</DialogTitle>

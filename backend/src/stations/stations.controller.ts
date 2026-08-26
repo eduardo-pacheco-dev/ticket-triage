@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -28,8 +29,40 @@ export class StationsController {
   constructor(private readonly stationsService: StationsService) {}
 
   @Get()
-  findAll() {
-    return this.stationsService.findAll();
+  findAll(
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('search') search?: string,
+    @Query('state') state?: string,
+  ) {
+    return this.stationsService.findAll({
+      page: page ? Number(page) : 1,
+      pageSize: pageSize ? Number(pageSize) : 25,
+      search: search || undefined,
+      state: state || undefined,
+    });
+  }
+
+  @Get('map')
+  findForMap(
+    @Query('state') state?: string,
+    @Query('south') south?: string,
+    @Query('north') north?: string,
+    @Query('west') west?: string,
+    @Query('east') east?: string,
+    @Query('search') search?: string,
+  ) {
+    if (south && north && west && east) {
+      return this.stationsService.findForMapBounds({
+        south: Number(south),
+        north: Number(north),
+        west: Number(west),
+        east: Number(east),
+        state: state || undefined,
+        search: search || undefined,
+      });
+    }
+    return this.stationsService.findForMap(state || undefined);
   }
 
   @Get(':id')

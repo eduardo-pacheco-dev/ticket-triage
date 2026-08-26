@@ -63,6 +63,13 @@ export interface PaginatedQueue {
   pageSize: number;
 }
 
+export interface PaginatedStations {
+  items: Station[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 export interface AppNotification {
   id: string;
   title: string;
@@ -127,10 +134,69 @@ export interface ImportJob {
   status: ImportJobStatus;
   total: number;
   processed: number;
+  inserted?: number;
+  skipped?: number;
   errors: number;
   errorMessages: string[];
   createdAt: Date | string;
   completedAt: Date | string | null;
+}
+
+export interface BulkStation {
+  id: string;
+  siteId: string;
+  elementType: string | null;
+  technology: string | null;
+  connectionType: string | null;
+  addressId: string | null;
+  classification: string | null;
+  acquisitionDate: Date | string | null;
+  constructionDate: Date | string | null;
+  activationDate: Date | string | null;
+  deactivationDate: Date | string | null;
+  cancellationDate: Date | string | null;
+  areaContractType: string | null;
+  areaHolder: string | null;
+  infraContractType: string | null;
+  infraHolder: string | null;
+  infraType: string | null;
+  evType: string | null;
+  evProvider: string | null;
+  observation: string | null;
+  justification: string | null;
+  streetType: string | null;
+  street: string | null;
+  number: string | null;
+  complement: string | null;
+  neighborhood: string | null;
+  city: string | null;
+  state: string | null;
+  zipCode: string | null;
+  regional: string | null;
+  latitude: string | null;
+  longitude: string | null;
+  status: string | null;
+  towerType: string | null;
+  aevNominal: string | null;
+  groundArea: string | null;
+  structureHeight: string | null;
+  stationId: string | null;
+  complexOrder: string | null;
+  thqObservation: string | null;
+  situation: string | null;
+  ots: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface StationMapPoint {
+  id: string;
+  name: string;
+  code: string;
+  city: string | null;
+  state: string | null;
+  latitude: string;
+  longitude: string;
 }
 
 export interface Station {
@@ -144,6 +210,45 @@ export interface Station {
   email: string | null;
   responsible: string | null;
   notes: string | null;
+  siteId: string | null;
+  elementType: string | null;
+  technology: string | null;
+  connectionType: string | null;
+  addressId: string | null;
+  classification: string | null;
+  acquisitionDate: Date | string | null;
+  constructionDate: Date | string | null;
+  activationDate: Date | string | null;
+  deactivationDate: Date | string | null;
+  cancellationDate: Date | string | null;
+  areaContractType: string | null;
+  areaHolder: string | null;
+  infraContractType: string | null;
+  infraHolder: string | null;
+  infraType: string | null;
+  evType: string | null;
+  evProvider: string | null;
+  observation: string | null;
+  justification: string | null;
+  streetType: string | null;
+  street: string | null;
+  number: string | null;
+  complement: string | null;
+  neighborhood: string | null;
+  zipCode: string | null;
+  regional: string | null;
+  latitude: string | null;
+  longitude: string | null;
+  status: string | null;
+  towerType: string | null;
+  aevNominal: string | null;
+  groundArea: string | null;
+  structureHeight: string | null;
+  stationId: string | null;
+  complexOrder: string | null;
+  thqObservation: string | null;
+  situation: string | null;
+  ots: string | null;
   createdAt: Date | string;
   updatedAt: Date | string;
 }
