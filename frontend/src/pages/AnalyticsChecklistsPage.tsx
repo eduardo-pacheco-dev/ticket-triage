@@ -74,6 +74,7 @@ export default function AnalyticsChecklistsPage() {
   const [rowsPerPage, setRowsPerPage] = useState(25);
 
   const [uploading, setUploading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [activeJob, setActiveJob] = useState<ImportJob | null>(null);
   const [pendingClear, setPendingClear] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -226,6 +227,17 @@ export default function AnalyticsChecklistsPage() {
     return [...set].sort();
   }, [items]);
 
+  async function handleExport() {
+    setExporting(true);
+    try {
+      await downloadAnalyticsExcel();
+    } catch {
+      setError('Erro ao exportar dados.');
+    } finally {
+      setExporting(false);
+    }
+  }
+
   const hasActiveFilters = searchTerm || statusFilter;
 
   return (
@@ -274,11 +286,11 @@ export default function AnalyticsChecklistsPage() {
         </Button>
         <Button
           variant="outlined"
-          startIcon={<DownloadIcon />}
-          disabled={items.length === 0}
-          onClick={downloadAnalyticsExcel}
+          startIcon={exporting ? <CircularProgress size={16} /> : <DownloadIcon />}
+          disabled={items.length === 0 || exporting}
+          onClick={() => void handleExport()}
         >
-          Exportar Excel
+          {exporting ? 'Exportando...' : 'Exportar Excel'}
         </Button>
       </Stack>
 
