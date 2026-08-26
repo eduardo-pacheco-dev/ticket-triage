@@ -8,7 +8,8 @@ import { Link } from 'react-router-dom';
 import { fetchStationsMap } from '../lib/api';
 import type { StationMapPoint } from '../lib/types';
 import 'leaflet/dist/leaflet.css';
-import 'react-leaflet-markercluster/dist/styles.min.css';
+// @ts-expect-error no type declarations for CSS
+import 'react-leaflet-markercluster/styles';
 
 function parseCoord(v: string): number {
   const cleaned = v.replace(',', '.').trim();
