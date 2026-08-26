@@ -317,9 +317,22 @@ export function fetchStation(id: string) {
   return request<Station>(`/stations/${id}`);
 }
 
-export function fetchStationsMap(state?: string): Promise<StationMapPoint[]> {
-  const qs = state ? `?state=${encodeURIComponent(state)}` : '';
-  return request<StationMapPoint[]>(`/stations/map${qs}`);
+export function fetchStationsMap(
+  state?: string,
+  bounds?: { south: number; north: number; west: number; east: number },
+  search?: string,
+): Promise<StationMapPoint[]> {
+  const params = new URLSearchParams();
+  if (state) params.set('state', state);
+  if (search) params.set('search', search);
+  if (bounds) {
+    params.set('south', String(bounds.south));
+    params.set('north', String(bounds.north));
+    params.set('west', String(bounds.west));
+    params.set('east', String(bounds.east));
+  }
+  const qs = params.toString();
+  return request<StationMapPoint[]>(`/stations/map${qs ? `?${qs}` : ''}`);
 }
 
 export interface CreateStationInput {

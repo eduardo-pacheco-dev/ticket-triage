@@ -133,6 +133,64 @@ export class StationsService {
     >;
   }
 
+  async findForMapBounds(params: {
+    south: number;
+    north: number;
+    west: number;
+    east: number;
+    state?: string;
+    search?: string;
+  }): Promise<
+    {
+      id: string;
+      name: string;
+      code: string;
+      city: string | null;
+      state: string | null;
+      latitude: string;
+      longitude: string;
+    }[]
+  > {
+    const qb = this.repository
+      .createQueryBuilder('s')
+      .select(['s.id', 's.name', 's.code', 's.city', 's.state', 's.latitude', 's.longitude'])
+      .where(`CAST(REPLACE(s.latitude, ',', '.') AS DECIMAL(10,6)) BETWEEN :south AND :north`, {
+        south: params.south,
+        north: params.north,
+      })
+      .andWhere(`CAST(REPLACE(s.longitude, ',', '.') AS DECIMAL(10,6)) BETWEEN :west AND :east`, {
+        west: params.west,
+        east: params.east,
+      })
+      .andWhere('s.latitude IS NOT NULL AND s.latitude != :empty', { empty: '' })
+      .andWhere('s.longitude IS NOT NULL AND s.longitude != :empty', { empty: '' });
+
+    if (params.state) {
+      qb.andWhere('s.state = :state', { state: params.state });
+    }
+
+    if (params.search) {
+      const term = `%${params.search}%`;
+      qb.andWhere('(s.name LIKE :t OR s.code LIKE :t OR s.city LIKE :t OR s.site_id LIKE :t)', {
+        t: term,
+      });
+    }
+
+    qb.limit(10000);
+
+    return qb.getMany() as Promise<
+      {
+        id: string;
+        name: string;
+        code: string;
+        city: string | null;
+        state: string | null;
+        latitude: string;
+        longitude: string;
+      }[]
+    >;
+  }
+
   async remove(id: string): Promise<void> {
     await this.findOne(id);
     await this.repository.delete(id);

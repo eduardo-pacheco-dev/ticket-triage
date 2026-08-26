@@ -44,7 +44,24 @@ export class StationsController {
   }
 
   @Get('map')
-  findForMap(@Query('state') state?: string) {
+  findForMap(
+    @Query('state') state?: string,
+    @Query('south') south?: string,
+    @Query('north') north?: string,
+    @Query('west') west?: string,
+    @Query('east') east?: string,
+    @Query('search') search?: string,
+  ) {
+    if (south && north && west && east) {
+      return this.stationsService.findForMapBounds({
+        south: Number(south),
+        north: Number(north),
+        west: Number(west),
+        east: Number(east),
+        state: state || undefined,
+        search: search || undefined,
+      });
+    }
     return this.stationsService.findForMap(state || undefined);
   }
 

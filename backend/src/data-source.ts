@@ -18,6 +18,7 @@ import { Stations1756700000000 } from './migrations/1756700000000-Stations';
 import { AnalyticsChecklist } from './analytics/analytics-checklist.entity';
 import { AnalyticsChecklists1756800000000 } from './migrations/1756800000000-AnalyticsChecklists';
 import { ExpandStations1756950000000 } from './migrations/1756950000000-ExpandStations';
+import { StationsIndexes1756960000000 } from './migrations/1756960000000-StationsIndexes';
 
 if (process.env.NODE_ENV === 'production' && process.env.DB_SYNC !== 'false') {
   throw new Error(
@@ -36,6 +37,7 @@ export const migrations = [
   Stations1756700000000,
   AnalyticsChecklists1756800000000,
   ExpandStations1756950000000,
+  StationsIndexes1756960000000,
 ];
 
 const dbLogging: LogLevel[] = process.env.DB_SYNC === 'false' ? ['error'] : ['error', 'schema'];

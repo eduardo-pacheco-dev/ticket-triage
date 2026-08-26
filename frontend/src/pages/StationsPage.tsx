@@ -571,7 +571,10 @@ export default function StationsPage() {
               </Box>
             }
           >
-            <StationMap stateFilter={stateFilter || undefined} />
+            <StationMap
+              stateFilter={stateFilter || undefined}
+              searchTerm={debouncedSearch || undefined}
+            />
           </Suspense>
         )}
       </Paper>
