@@ -6,6 +6,7 @@ import type {
   ImportJob,
   NotificationsList,
   PaginatedQueue,
+  PaginatedStations,
   PublicQueueEntry,
   QueueEntry,
   QueueStatus,
@@ -296,8 +297,19 @@ export function deleteServiceOrder(id: string) {
   return request<void>(`/service-orders/${id}`, { method: 'DELETE' });
 }
 
-export function fetchStations() {
-  return request<Station[]>('/stations');
+export function fetchStations(params?: {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  state?: string;
+}): Promise<PaginatedStations> {
+  const searchParams = new URLSearchParams();
+  if (params?.page) searchParams.set('page', String(params.page));
+  if (params?.pageSize) searchParams.set('pageSize', String(params.pageSize));
+  if (params?.search) searchParams.set('search', params.search);
+  if (params?.state) searchParams.set('state', params.state);
+  const qs = searchParams.toString();
+  return request<PaginatedStations>(`/stations${qs ? `?${qs}` : ''}`);
 }
 
 export function fetchStation(id: string) {

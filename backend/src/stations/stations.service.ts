@@ -6,6 +6,20 @@ import { RateLimitService } from '../common/rate-limit.service';
 import { QueueEventsService } from '../queue/queue-events.service';
 import type { CreateStationInput, UpdateStationInput } from '@ticket-triage/shared';
 
+export interface PaginationInput {
+  page: number;
+  pageSize: number;
+  search?: string;
+  state?: string;
+}
+
+export interface PaginatedStations {
+  items: Station[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 @Injectable()
 export class StationsService {
   private readonly logger = new Logger(StationsService.name);
@@ -17,8 +31,30 @@ export class StationsService {
     private readonly queueEvents: QueueEventsService,
   ) {}
 
-  findAll() {
-    return this.repository.find({ order: { name: 'ASC' } });
+  async findAll(input: PaginationInput): Promise<PaginatedStations> {
+    const page = Math.max(1, input.page || 1);
+    const pageSize = Math.min(Math.max(1, input.pageSize || 25), 100);
+    const skip = (page - 1) * pageSize;
+
+    const qb = this.repository.createQueryBuilder('s');
+
+    if (input.search) {
+      const term = `%${input.search}%`;
+      qb.andWhere(
+        '(s.name LIKE :t OR s.code LIKE :t OR s.city LIKE :t OR s.responsible LIKE :t OR s.address LIKE :t OR s.site_id LIKE :t)',
+        { t: term },
+      );
+    }
+
+    if (input.state) {
+      qb.andWhere('s.state = :state', { state: input.state });
+    }
+
+    qb.orderBy('s.name', 'ASC');
+
+    const [items, total] = await qb.skip(skip).take(pageSize).getManyAndCount();
+
+    return { items, total, page, pageSize };
   }
 
   async findOne(id: string): Promise<Station> {

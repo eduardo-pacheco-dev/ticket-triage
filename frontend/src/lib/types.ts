@@ -63,6 +63,13 @@ export interface PaginatedQueue {
   pageSize: number;
 }
 
+export interface PaginatedStations {
+  items: Station[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 export interface AppNotification {
   id: string;
   title: string;

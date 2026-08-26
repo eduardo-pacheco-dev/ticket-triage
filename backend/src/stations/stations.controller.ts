@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -28,8 +29,18 @@ export class StationsController {
   constructor(private readonly stationsService: StationsService) {}
 
   @Get()
-  findAll() {
-    return this.stationsService.findAll();
+  findAll(
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('search') search?: string,
+    @Query('state') state?: string,
+  ) {
+    return this.stationsService.findAll({
+      page: page ? Number(page) : 1,
+      pageSize: pageSize ? Number(pageSize) : 25,
+      search: search || undefined,
+      state: state || undefined,
+    });
   }
 
   @Get(':id')

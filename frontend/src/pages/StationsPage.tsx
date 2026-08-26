@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -19,7 +19,6 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import TableSortLabel from '@mui/material/TableSortLabel';
 import TablePagination from '@mui/material/TablePagination';
 import TextField from '@mui/material/TextField';
 import Toolbar from '@mui/material/Toolbar';
@@ -36,8 +35,6 @@ import { createStationSchema, updateStationSchema } from '@ticket-triage/shared'
 import { zodFieldErrors } from '../lib/schemas';
 import { useToastStore } from '../stores/toast';
 import type { Station } from '../lib/types';
-
-type SortKey = 'name' | 'code' | 'city' | 'state' | 'createdAt';
 
 const BRAZIL_STATES = [
   'AC',
@@ -98,14 +95,14 @@ const ROWS_PER_PAGE_OPTIONS = [10, 25, 50];
 export default function StationsPage() {
   const notify = useToastStore((s) => s.notify);
   const [stations, setStations] = useState<Station[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [stateFilter, setStateFilter] = useState('');
-
-  const [sortKey, setSortKey] = useState<SortKey>('name');
-  const [sortAsc, setSortAsc] = useState(true);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
@@ -123,16 +120,47 @@ export default function StationsPage() {
 
   const reload = useCallback(async () => {
     try {
-      setStations(await fetchStations());
+      setLoading(true);
+      const result = await fetchStations({
+        page: page + 1,
+        pageSize: rowsPerPage,
+        search: debouncedSearch || undefined,
+        state: stateFilter || undefined,
+      });
+      setStations(result.items);
+      setTotal(result.total);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar estações.');
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  }, [page, rowsPerPage, debouncedSearch, stateFilter]);
 
   useEffect(() => {
-    void reload().finally(() => setLoading(false));
+    void reload();
   }, [reload]);
+
+  function handleSearchChange(value: string) {
+    setSearchTerm(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(value);
+      setPage(0);
+    }, 400);
+  }
+
+  function handleStateFilterChange(value: string) {
+    setStateFilter(value);
+    setPage(0);
+  }
+
+  function clearFilters() {
+    setSearchTerm('');
+    setDebouncedSearch('');
+    setStateFilter('');
+    setPage(0);
+  }
 
   function openCreate() {
     setCreateForm(emptyForm);
@@ -221,63 +249,6 @@ export default function StationsPage() {
       setPendingDelete(null);
     }
   }
-
-  function toggleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortAsc((prev) => !prev);
-    } else {
-      setSortKey(key);
-      setSortAsc(true);
-    }
-  }
-
-  function clearFilters() {
-    setSearchTerm('');
-    setStateFilter('');
-    setPage(0);
-  }
-
-  const filteredAndSortedRows = useMemo(() => {
-    const searchLower = searchTerm.toLowerCase().trim();
-    const filtered = stations.filter((s) => {
-      if (searchTerm) {
-        const match =
-          s.name.toLowerCase().includes(searchLower) ||
-          s.code.toLowerCase().includes(searchLower) ||
-          (s.city && s.city.toLowerCase().includes(searchLower)) ||
-          (s.responsible && s.responsible.toLowerCase().includes(searchLower)) ||
-          (s.address && s.address.toLowerCase().includes(searchLower));
-        if (!match) return false;
-      }
-      if (stateFilter && s.state !== stateFilter) return false;
-      return true;
-    });
-
-    return [...filtered]
-      .map((s) => ({
-        ...s,
-        createdAtValue: new Date(s.createdAt).getTime(),
-      }))
-      .sort((a, b) => {
-        let va: string | number;
-        let vb: string | number;
-        if (sortKey === 'createdAt') {
-          va = a.createdAtValue;
-          vb = b.createdAtValue;
-        } else {
-          va = a[sortKey] ?? '';
-          vb = b[sortKey] ?? '';
-        }
-        if (va < vb) return sortAsc ? -1 : 1;
-        if (va > vb) return sortAsc ? 1 : -1;
-        return 0;
-      });
-  }, [stations, searchTerm, stateFilter, sortKey, sortAsc]);
-
-  const paginatedRows = useMemo(() => {
-    const start = page * rowsPerPage;
-    return filteredAndSortedRows.slice(start, start + rowsPerPage);
-  }, [filteredAndSortedRows, page, rowsPerPage]);
 
   const hasActiveFilters = searchTerm || stateFilter;
 
@@ -414,12 +385,9 @@ export default function StationsPage() {
       <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
           <TextField
-            placeholder="Buscar por nome, código, cidade, responsável..."
+            placeholder="Buscar por nome, código, cidade, responsável, site_id..."
             value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setPage(0);
-            }}
+            onChange={(e) => handleSearchChange(e.target.value)}
             size="small"
             sx={{ flexGrow: 1, minWidth: 250 }}
             slotProps={{
@@ -435,6 +403,7 @@ export default function StationsPage() {
                       size="small"
                       onClick={() => {
                         setSearchTerm('');
+                        setDebouncedSearch('');
                         setPage(0);
                       }}
                       title="Limpar busca"
@@ -450,10 +419,7 @@ export default function StationsPage() {
             select
             label="UF"
             value={stateFilter}
-            onChange={(e) => {
-              setStateFilter(e.target.value);
-              setPage(0);
-            }}
+            onChange={(e) => handleStateFilterChange(e.target.value)}
             size="small"
             sx={{ minWidth: 100 }}
           >
@@ -484,40 +450,23 @@ export default function StationsPage() {
                 Estações cadastradas
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {filteredAndSortedRows.length} de {stations.length} estação(ões)
+                {total.toLocaleString('pt-BR')} estação(ões)
               </Typography>
             </Stack>
           </Toolbar>
           <Table size="medium">
             <TableHead>
               <TableRow>
-                {(
-                  [
-                    ['name', 'Nome'],
-                    ['code', 'Código'],
-                    ['city', 'Cidade'],
-                    ['state', 'UF'],
-                    ['createdAt', 'Criado em'],
-                  ] as [SortKey, string][]
-                ).map(([key, label]) => (
-                  <TableCell
-                    key={key}
-                    sortDirection={sortKey === key ? (sortAsc ? 'asc' : 'desc') : false}
-                  >
-                    <TableSortLabel
-                      active={sortKey === key}
-                      direction={sortKey === key && !sortAsc ? 'desc' : 'asc'}
-                      onClick={() => toggleSort(key)}
-                    >
-                      {label}
-                    </TableSortLabel>
-                  </TableCell>
-                ))}
+                <TableCell>Nome</TableCell>
+                <TableCell>Código</TableCell>
+                <TableCell>Cidade</TableCell>
+                <TableCell>UF</TableCell>
+                <TableCell>Criado em</TableCell>
                 <TableCell />
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginatedRows.length === 0 ? (
+              {stations.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                     <Typography color="text.secondary">
@@ -528,7 +477,7 @@ export default function StationsPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                paginatedRows.map((row) => (
+                stations.map((row) => (
                   <TableRow key={row.id} hover>
                     <TableCell>{row.name}</TableCell>
                     <TableCell>
@@ -562,10 +511,10 @@ export default function StationsPage() {
               )}
             </TableBody>
           </Table>
-          {filteredAndSortedRows.length > 0 && (
+          {total > 0 && (
             <TablePagination
               component="div"
-              count={filteredAndSortedRows.length}
+              count={total}
               page={page}
               onPageChange={(_, newPage) => setPage(newPage)}
               rowsPerPage={rowsPerPage}
