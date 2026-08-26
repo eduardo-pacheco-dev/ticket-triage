@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { BulkStation } from './bulk-station.entity';
+import { Station } from './station.entity';
 import { RateLimitService } from '../common/rate-limit.service';
 
 export type JobStatus = 'pending' | 'processing' | 'completed' | 'failed';
@@ -27,8 +27,8 @@ export class BulkStationsService {
   private readonly jobs = new Map<string, ImportJob>();
 
   constructor(
-    @InjectRepository(BulkStation)
-    private readonly repository: Repository<BulkStation>,
+    @InjectRepository(Station)
+    private readonly repository: Repository<Station>,
     private readonly rateLimit: RateLimitService,
   ) {}
 
@@ -36,7 +36,7 @@ export class BulkStationsService {
     return this.repository.find({ order: { siteId: 'ASC' }, take: 5000 });
   }
 
-  async findOne(id: string): Promise<BulkStation> {
+  async findOne(id: string): Promise<Station> {
     const item = await this.repository.findOne({ where: { id } });
     if (!item) throw new NotFoundException('Estação não encontrada.');
     return item;
@@ -95,7 +95,14 @@ export class BulkStationsService {
       const batch = inputs.slice(i, i + BATCH_SIZE);
       const entities = batch.map((input) =>
         this.repository.create({
-          ...input,
+          name: String(input.siteId ?? input.code ?? 'SEM NOME'),
+          code: String(input.siteId ?? input.code ?? ''),
+          siteId: input.siteId ? String(input.siteId) : null,
+          elementType: input.elementType ? String(input.elementType) : null,
+          technology: input.technology ? String(input.technology) : null,
+          connectionType: input.connectionType ? String(input.connectionType) : null,
+          addressId: input.addressId ? String(input.addressId) : null,
+          classification: input.classification ? String(input.classification) : null,
           acquisitionDate: input.acquisitionDate ? new Date(String(input.acquisitionDate)) : null,
           constructionDate: input.constructionDate
             ? new Date(String(input.constructionDate))
@@ -107,6 +114,36 @@ export class BulkStationsService {
           cancellationDate: input.cancellationDate
             ? new Date(String(input.cancellationDate))
             : null,
+          areaContractType: input.areaContractType ? String(input.areaContractType) : null,
+          areaHolder: input.areaHolder ? String(input.areaHolder) : null,
+          infraContractType: input.infraContractType ? String(input.infraContractType) : null,
+          infraHolder: input.infraHolder ? String(input.infraHolder) : null,
+          infraType: input.infraType ? String(input.infraType) : null,
+          evType: input.evType ? String(input.evType) : null,
+          evProvider: input.evProvider ? String(input.evProvider) : null,
+          observation: input.observation ? String(input.observation) : null,
+          justification: input.justification ? String(input.justification) : null,
+          streetType: input.streetType ? String(input.streetType) : null,
+          street: input.street ? String(input.street) : null,
+          number: input.number ? String(input.number) : null,
+          complement: input.complement ? String(input.complement) : null,
+          neighborhood: input.neighborhood ? String(input.neighborhood) : null,
+          city: input.city ? String(input.city) : null,
+          state: input.state ? String(input.state) : null,
+          zipCode: input.zipCode ? String(input.zipCode) : null,
+          regional: input.regional ? String(input.regional) : null,
+          latitude: input.latitude ? String(input.latitude) : null,
+          longitude: input.longitude ? String(input.longitude) : null,
+          status: input.status ? String(input.status) : null,
+          towerType: input.towerType ? String(input.towerType) : null,
+          aevNominal: input.aevNominal ? String(input.aevNominal) : null,
+          groundArea: input.groundArea ? String(input.groundArea) : null,
+          structureHeight: input.structureHeight ? String(input.structureHeight) : null,
+          stationId: input.stationId ? String(input.stationId) : null,
+          complexOrder: input.complexOrder ? String(input.complexOrder) : null,
+          thqObservation: input.thqObservation ? String(input.thqObservation) : null,
+          situation: input.situation ? String(input.situation) : null,
+          ots: input.ots ? String(input.ots) : null,
         }),
       );
 
@@ -114,7 +151,7 @@ export class BulkStationsService {
         const result = await this.repository
           .createQueryBuilder()
           .insert()
-          .into(BulkStation)
+          .into(Station)
           .values(entities)
           .orIgnore()
           .execute();

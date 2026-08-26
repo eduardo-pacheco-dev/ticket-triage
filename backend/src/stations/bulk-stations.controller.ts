@@ -135,7 +135,7 @@ export class BulkStationsController {
     const items = await this.service.findAll();
 
     const data = items.map((item) => [
-      item.siteId,
+      item.siteId ?? item.code,
       item.elementType ?? '',
       item.technology ?? '',
       item.connectionType ?? '',
@@ -223,7 +223,7 @@ export class BulkStationsController {
       throw new BadRequestException('Nenhum registro válido encontrado na planilha.');
     }
 
-    return this.service.startImport(inputs as Record<string, string>[]);
+    return this.service.startImport(inputs);
   }
 
   @Delete(':id')

@@ -17,8 +17,7 @@ import { ServiceOrders1756600000000 } from './migrations/1756600000000-ServiceOr
 import { Stations1756700000000 } from './migrations/1756700000000-Stations';
 import { AnalyticsChecklist } from './analytics/analytics-checklist.entity';
 import { AnalyticsChecklists1756800000000 } from './migrations/1756800000000-AnalyticsChecklists';
-import { BulkStation } from './stations/bulk-station.entity';
-import { BulkStations1756900000000 } from './migrations/1756900000000-BulkStations';
+import { ExpandStations1756950000000 } from './migrations/1756950000000-ExpandStations';
 
 if (process.env.NODE_ENV === 'production' && process.env.DB_SYNC !== 'false') {
   throw new Error(
@@ -36,7 +35,7 @@ export const migrations = [
   ServiceOrders1756600000000,
   Stations1756700000000,
   AnalyticsChecklists1756800000000,
-  BulkStations1756900000000,
+  ExpandStations1756950000000,
 ];
 
 const dbLogging: LogLevel[] = process.env.DB_SYNC === 'false' ? ['error'] : ['error', 'schema'];
@@ -52,16 +51,7 @@ export const appDataSourceOptions = {
   // igual ao CURRENT_TIMESTAMP usado pelos defaults do banco. Isso mantém
   // todas as colunas datetime na mesma convenção (misturar UTC e local fazia
   // as durações aparecerem deslocadas pelo offset do fuso).
-  entities: [
-    QueueEntry,
-    RequestType,
-    SlaConfig,
-    User,
-    ServiceOrder,
-    Station,
-    AnalyticsChecklist,
-    BulkStation,
-  ],
+  entities: [QueueEntry, RequestType, SlaConfig, User, ServiceOrder, Station, AnalyticsChecklist],
   autoLoadEntities: true,
   synchronize: process.env.DB_SYNC === 'false' ? false : true,
   logging: dbLogging,
