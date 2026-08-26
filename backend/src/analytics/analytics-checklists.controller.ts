@@ -1,14 +1,17 @@
 import {
+  BadRequestException,
   Controller,
   Delete,
   Get,
   HttpCode,
   Param,
   Post,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as XLSX from 'xlsx';
 import { AnalyticsChecklistsService } from './analytics-checklists.service';
@@ -66,6 +69,7 @@ function toIsoDateStr(value: unknown): string | undefined {
 
 function parseExcelRows(rows: Record<string, unknown>[]): CreateAnalyticsChecklistInput[] {
   const DATE_FIELDS = new Set(['moduleStartDate', 'rejectionDate']);
+  const NULL_LITERALS = new Set(['null', 'NULL', 'Null', 'n/a', 'N/A', '-', '']);
 
   return rows
     .filter((row) => {
@@ -76,13 +80,16 @@ function parseExcelRows(rows: Record<string, unknown>[]): CreateAnalyticsCheckli
       const mapped: Record<string, unknown> = {};
       for (const [excelCol, entityField] of Object.entries(EXCEL_COLUMN_MAP)) {
         const value = row[excelCol];
-        if (value === undefined || value === null || String(value).trim() === '') continue;
+        if (value === undefined || value === null) continue;
+
+        const str = String(value).trim();
+        if (str === '' || NULL_LITERALS.has(str)) continue;
 
         if (DATE_FIELDS.has(entityField)) {
           const iso = toIsoDateStr(value);
           if (iso) mapped[entityField] = iso;
         } else {
-          mapped[entityField] = String(value).trim();
+          mapped[entityField] = str;
         }
       }
       return mapped as CreateAnalyticsChecklistInput;
@@ -99,22 +106,90 @@ export class AnalyticsChecklistsController {
     return this.service.findAll();
   }
 
+  @Get('export')
+  async exportExcel(@Res() res: Response) {
+    const items = await this.service.findAll();
+
+    const EXCEL_HEADERS = [
+      'Project',
+      'Regional',
+      'Estado',
+      'Site ID',
+      'OC',
+      'SMP Name',
+      'Scope',
+      'SMP_ID',
+      'Module',
+      'Module ID',
+      'Implementation Vendor',
+      'Data Início Módulo',
+      'Seção',
+      'Item Checklist',
+      'Status',
+      'Comentário Rejeição',
+      'Data Rejeição',
+      'Alterado por',
+    ];
+
+    const data = items.map((item) => [
+      item.project,
+      item.regional ?? '',
+      item.estado ?? '',
+      item.siteId ?? '',
+      item.oc ?? '',
+      item.smpName ?? '',
+      item.scope ?? '',
+      item.smpId ?? '',
+      item.module ?? '',
+      item.moduleId ?? '',
+      item.implementationVendor ?? '',
+      item.moduleStartDate ? new Date(item.moduleStartDate).toLocaleDateString('pt-BR') : '',
+      item.section ?? '',
+      item.checklistItem ?? '',
+      item.status,
+      item.rejectionComment ?? '',
+      item.rejectionDate ? new Date(item.rejectionDate).toLocaleDateString('pt-BR') : '',
+      item.modifiedBy ?? '',
+    ]);
+
+    const ws = XLSX.utils.aoa_to_sheet([EXCEL_HEADERS, ...data]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Analytics');
+
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="analytics_${new Date().toISOString().slice(0, 10)}.xlsx"`,
+    );
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.send(buffer);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
 
+  @Get('jobs/:jobId')
+  getJob(@Param('jobId') jobId: string) {
+    return this.service.getJob(jobId);
+  }
+
   @Post('upload')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 50 * 1024 * 1024 } }))
   async uploadExcel(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
-      throw new Error('Nenhum arquivo enviado.');
+      throw new BadRequestException('Nenhum arquivo enviado.');
     }
 
     const workbook = XLSX.read(file.buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
     if (!sheetName) {
-      throw new Error('Planilha vazia.');
+      throw new BadRequestException('Planilha vazia.');
     }
 
     const sheet = workbook.Sheets[sheetName];
@@ -124,10 +199,10 @@ export class AnalyticsChecklistsController {
     const inputs = parseExcelRows(rows);
 
     if (inputs.length === 0) {
-      throw new Error('Nenhum registro válido encontrado na planilha.');
+      throw new BadRequestException('Nenhum registro válido encontrado na planilha.');
     }
 
-    return this.service.createBatch(inputs);
+    return this.service.startImport(inputs);
   }
 
   @Delete(':id')

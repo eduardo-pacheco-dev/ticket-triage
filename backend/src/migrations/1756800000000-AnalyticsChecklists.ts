@@ -25,7 +25,7 @@ export class AnalyticsChecklists1756800000000 implements MigrationInterface {
           module_start_date datetime(6) NULL,
           section varchar(200) NULL,
           checklist_item varchar(500) NULL,
-          status varchar(20) NOT NULL DEFAULT 'Pendente',
+          status varchar(100) NOT NULL DEFAULT 'Pendente',
           rejection_comment text NULL,
           rejection_date datetime(6) NULL,
           modified_by varchar(200) NULL,
@@ -36,6 +36,16 @@ export class AnalyticsChecklists1756800000000 implements MigrationInterface {
           INDEX analytics_checklists_project_idx (project)
         ) ENGINE=InnoDB
       `);
+    } else {
+      const col = (await queryRunner.query(
+        `SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'analytics_checklists' AND COLUMN_NAME = 'status'`,
+      )) as { COLUMN_TYPE: string }[];
+      if (col.length > 0 && col[0].COLUMN_TYPE === 'varchar(20)') {
+        await queryRunner.query(
+          `ALTER TABLE analytics_checklists MODIFY COLUMN status varchar(100) NOT NULL DEFAULT 'Pendente'`,
+        );
+      }
     }
   }
 

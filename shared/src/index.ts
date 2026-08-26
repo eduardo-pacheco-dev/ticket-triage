@@ -202,12 +202,10 @@ export const updateStationSchema = z
   })
   .partial();
 
-export const analyticsChecklistStatusSchema = z.enum([
-  'Aprovado',
-  'Rejeitado',
-  'Pendente',
-  'Em Andamento',
-]);
+export const analyticsChecklistStatusSchema = z
+  .string()
+  .trim()
+  .max(100, 'Máximo de 100 caracteres.');
 
 export const createAnalyticsChecklistSchema = z.object({
   project: z.string().trim().min(1, 'Projeto é obrigatório.').max(300, 'Máximo de 300 caracteres.'),

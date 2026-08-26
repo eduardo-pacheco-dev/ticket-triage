@@ -5,9 +5,25 @@ import { AnalyticsChecklist } from './analytics-checklist.entity';
 import { RateLimitService } from '../common/rate-limit.service';
 import type { CreateAnalyticsChecklistInput } from '@ticket-triage/shared';
 
+export type JobStatus = 'pending' | 'processing' | 'completed' | 'failed';
+
+export interface ImportJob {
+  id: string;
+  status: JobStatus;
+  total: number;
+  processed: number;
+  errors: number;
+  errorMessages: string[];
+  createdAt: Date;
+  completedAt: Date | null;
+}
+
+const BATCH_SIZE = 500;
+
 @Injectable()
 export class AnalyticsChecklistsService {
   private readonly logger = new Logger(AnalyticsChecklistsService.name);
+  private readonly jobs = new Map<string, ImportJob>();
 
   constructor(
     @InjectRepository(AnalyticsChecklist)
@@ -25,41 +41,73 @@ export class AnalyticsChecklistsService {
     return item;
   }
 
-  async create(input: CreateAnalyticsChecklistInput): Promise<AnalyticsChecklist> {
-    const item = this.repository.create({
-      ...input,
-      moduleStartDate: input.moduleStartDate ? new Date(input.moduleStartDate) : null,
-      rejectionDate: input.rejectionDate ? new Date(input.rejectionDate) : null,
-    });
-
-    try {
-      return await this.repository.save(item);
-    } catch (error) {
-      this.logger.error(`Falha ao criar registro de analytics: ${String(error)}`);
-      throw new BadRequestException('Erro ao criar registro de analytics.');
-    }
+  getJob(jobId: string): ImportJob {
+    const job = this.jobs.get(jobId);
+    if (!job) throw new NotFoundException('Job não encontrado.');
+    return job;
   }
 
-  async createBatch(inputs: CreateAnalyticsChecklistInput[]): Promise<{ count: number }> {
+  startImport(inputs: CreateAnalyticsChecklistInput[]): ImportJob {
     if (!this.rateLimit.check('analyticsBatchUpload')) {
       throw new BadRequestException('Muitas solicitações. Aguarde um minuto.');
     }
 
-    const entities = inputs.map((input) =>
-      this.repository.create({
-        ...input,
-        moduleStartDate: input.moduleStartDate ? new Date(input.moduleStartDate) : null,
-        rejectionDate: input.rejectionDate ? new Date(input.rejectionDate) : null,
-      }),
-    );
+    const jobId = crypto.randomUUID();
+    const job: ImportJob = {
+      id: jobId,
+      status: 'pending',
+      total: inputs.length,
+      processed: 0,
+      errors: 0,
+      errorMessages: [],
+      createdAt: new Date(),
+      completedAt: null,
+    };
+    this.jobs.set(jobId, job);
 
-    try {
-      await this.repository.save(entities);
-      return { count: entities.length };
-    } catch (error) {
-      this.logger.error(`Falha ao criar registros de analytics em lote: ${String(error)}`);
-      throw new BadRequestException('Erro ao salvar registros de analytics.');
+    this.processInBackground(jobId, inputs).catch((err) => {
+      this.logger.error(`Job ${jobId} falhou inesperadamente: ${String(err)}`);
+      job.status = 'failed';
+      job.completedAt = new Date();
+      job.errorMessages.push('Erro interno no processamento.');
+    });
+
+    return job;
+  }
+
+  private async processInBackground(
+    jobId: string,
+    inputs: CreateAnalyticsChecklistInput[],
+  ): Promise<void> {
+    const job = this.jobs.get(jobId);
+    if (!job) return;
+
+    job.status = 'processing';
+
+    for (let i = 0; i < inputs.length; i += BATCH_SIZE) {
+      const batch = inputs.slice(i, i + BATCH_SIZE);
+      const entities = batch.map((input) =>
+        this.repository.create({
+          ...input,
+          moduleStartDate: input.moduleStartDate ? new Date(input.moduleStartDate) : null,
+          rejectionDate: input.rejectionDate ? new Date(input.rejectionDate) : null,
+        }),
+      );
+
+      try {
+        await this.repository.save(entities);
+        job.processed += entities.length;
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        this.logger.error(`Batch ${i / BATCH_SIZE + 1} falhou: ${msg}`);
+        job.errors += entities.length;
+        job.errorMessages.push(`Lote ${i / BATCH_SIZE + 1}: ${msg.slice(0, 200)}`);
+        job.processed += entities.length;
+      }
     }
+
+    job.status = job.errors > 0 && job.errors === job.total ? 'failed' : 'completed';
+    job.completedAt = new Date();
   }
 
   async remove(id: string): Promise<void> {

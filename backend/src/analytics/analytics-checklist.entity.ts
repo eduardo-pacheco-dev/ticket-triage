@@ -7,7 +7,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-export type AnalyticsChecklistStatus = 'Aprovado' | 'Rejeitado' | 'Pendente' | 'Em Andamento';
+export type AnalyticsChecklistStatus = string;
 
 @Entity('analytics_checklists')
 @Index('analytics_checklists_status_idx', ['status'])
@@ -59,7 +59,7 @@ export class AnalyticsChecklist {
   @Column({ name: 'checklist_item', type: 'varchar', length: 500, nullable: true })
   checklistItem: string | null;
 
-  @Column({ name: 'status', type: 'varchar', length: 20, default: 'Pendente' })
+  @Column({ name: 'status', type: 'varchar', length: 100, default: 'Pendente' })
   status: AnalyticsChecklistStatus;
 
   @Column({ name: 'rejection_comment', type: 'text', nullable: true })
