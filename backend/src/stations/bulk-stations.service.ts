@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import ExcelJS from 'exceljs';
+import * as XLSX from 'xlsx';
 import { randomBytes } from 'node:crypto';
 import { writeFile, unlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -98,43 +98,33 @@ export class BulkStationsService {
 
     job.status = 'processing';
 
-    const workbook = new ExcelJS.stream.xlsx.WorkbookReader(filePath, {
-      entries: 'emit',
-      sharedStrings: 'cache',
-      styles: 'cache',
-    });
+    try {
+      this.logger.log(`Lendo arquivo: ${filePath}`);
+      const workbook = XLSX.readFile(filePath);
+      const sheetName = workbook.SheetNames[0];
+      if (!sheetName) {
+        job.status = 'failed';
+        job.completedAt = new Date();
+        job.errorMessages.push('Planilha vazia.');
+        return;
+      }
 
-    let headers: string[] = [];
-    let batch: Record<string, unknown>[] = [];
+      this.logger.log(`Processando planilha "${sheetName}"`);
 
-    for await (const worksheetReader of workbook) {
-      let rowIndex = 0;
-      for await (const row of worksheetReader) {
-        rowIndex++;
-        const rawValues = row.values as unknown;
-        let values: unknown[];
-        if (Array.isArray(rawValues)) {
-          values = rawValues.slice(1);
-        } else if (rawValues && typeof rawValues === 'object') {
-          values = Object.values(rawValues).slice(1);
-        } else {
-          values = [];
-        }
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(workbook.Sheets[sheetName], {
+        raw: false,
+      } as XLSX.Sheet2JSONOpts);
 
-        if (rowIndex === 1) {
-          headers = values.map((v) => String(v ?? '').trim());
-          this.logger.log(
-            `Excel headers (${headers.length}): ${headers.slice(0, 5).join(', ')}...`,
-          );
-          continue;
-        }
+      this.logger.log(`${rows.length} linhas lidas do Excel`);
 
-        const rowObj: Record<string, unknown> = {};
-        for (let i = 0; i < headers.length; i++) {
-          if (headers[i]) rowObj[headers[i]] = values[i];
-        }
+      if (rows.length > 0) {
+        this.logger.log(`Primeiras chaves: ${Object.keys(rows[0]).slice(0, 5).join(', ')}`);
+      }
 
-        const mapped = mapExcelRow(rowObj);
+      let batch: Record<string, unknown>[] = [];
+
+      for (const row of rows) {
+        const mapped = mapExcelRow(row);
         if (!mapped) continue;
 
         job.total++;
@@ -145,18 +135,20 @@ export class BulkStationsService {
           batch = [];
         }
       }
+
+      if (batch.length > 0) {
+        await this.flushBatch(job, batch);
+      }
+
+      this.logger.log(
+        `Importação concluída: ${job.inserted} inseridos, ${job.skipped} ignorados, ${job.errors} erros`,
+      );
+
+      job.status = job.errors > 0 && job.errors === job.total ? 'failed' : 'completed';
+      job.completedAt = new Date();
+    } finally {
+      unlink(filePath).catch(() => {});
     }
-
-    this.logger.log(`Excel streaming done: ${job.total} valid rows found`);
-
-    if (batch.length > 0) {
-      await this.flushBatch(job, batch);
-    }
-
-    job.status = job.errors > 0 && job.errors === job.total ? 'failed' : 'completed';
-    job.completedAt = new Date();
-
-    unlink(filePath).catch(() => {});
   }
 
   private async flushBatch(job: ImportJob, batch: Record<string, unknown>[]): Promise<void> {
