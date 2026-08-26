@@ -99,6 +99,40 @@ export class StationsService {
     }
   }
 
+  async findForMap(state?: string): Promise<
+    {
+      id: string;
+      name: string;
+      code: string;
+      city: string | null;
+      state: string | null;
+      latitude: string;
+      longitude: string;
+    }[]
+  > {
+    const qb = this.repository
+      .createQueryBuilder('s')
+      .select(['s.id', 's.name', 's.code', 's.city', 's.state', 's.latitude', 's.longitude'])
+      .where('s.latitude IS NOT NULL AND s.latitude != :empty', { empty: '' })
+      .andWhere('s.longitude IS NOT NULL AND s.longitude != :empty', { empty: '' });
+
+    if (state) {
+      qb.andWhere('s.state = :state', { state });
+    }
+
+    return qb.getMany() as Promise<
+      {
+        id: string;
+        name: string;
+        code: string;
+        city: string | null;
+        state: string | null;
+        latitude: string;
+        longitude: string;
+      }[]
+    >;
+  }
+
   async remove(id: string): Promise<void> {
     await this.findOne(id);
     await this.repository.delete(id);

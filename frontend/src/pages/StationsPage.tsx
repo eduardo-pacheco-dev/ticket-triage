@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -13,10 +13,11 @@ import IconButton from '@mui/material/IconButton';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TablePagination from '@mui/material/TablePagination';
@@ -30,11 +31,15 @@ import EditIcon from '@mui/icons-material/EditOutlined';
 import TrashCanIcon from '@mui/icons-material/DeleteOutlined';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
+import TableChartIcon from '@mui/icons-material/TableChartOutlined';
+import MapIcon from '@mui/icons-material/MapOutlined';
 import { createStation, deleteStation, fetchStations, updateStation, ApiError } from '../lib/api';
 import { createStationSchema, updateStationSchema } from '@ticket-triage/shared';
 import { zodFieldErrors } from '../lib/schemas';
 import { useToastStore } from '../stores/toast';
 import type { Station } from '../lib/types';
+
+const StationMap = lazy(() => import('../components/StationMap'));
 
 const BRAZIL_STATES = [
   'AC',
@@ -94,6 +99,7 @@ const ROWS_PER_PAGE_OPTIONS = [10, 25, 50];
 
 export default function StationsPage() {
   const notify = useToastStore((s) => s.notify);
+  const [activeTab, setActiveTab] = useState('table');
   const [stations, setStations] = useState<Station[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -138,8 +144,10 @@ export default function StationsPage() {
   }, [page, rowsPerPage, debouncedSearch, stateFilter]);
 
   useEffect(() => {
-    void reload();
-  }, [reload]);
+    if (activeTab === 'table') {
+      void reload();
+    }
+  }, [reload, activeTab]);
 
   function handleSearchChange(value: string) {
     setSearchTerm(value);
@@ -438,106 +446,135 @@ export default function StationsPage() {
         </Stack>
       </Paper>
 
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: 200 }}>
-          <CircularProgress size={32} />
+      <Paper variant="outlined" sx={{ mb: 2 }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}>
+          <Tabs value={activeTab} onChange={(_e: unknown, v: string) => setActiveTab(v)}>
+            <Tab label="Tabela" value="table" icon={<TableChartIcon />} iconPosition="start" />
+            <Tab label="Mapa" value="map" icon={<MapIcon />} iconPosition="start" />
+          </Tabs>
         </Box>
-      ) : (
-        <TableContainer component={Paper} variant="outlined">
-          <Toolbar sx={{ px: { xs: 2, sm: 3 }, py: 1.5 }}>
-            <Stack>
-              <Typography variant="h6" component="div" fontSize="1rem" fontWeight={600}>
-                Estações cadastradas
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {total.toLocaleString('pt-BR')} estação(ões)
-              </Typography>
-            </Stack>
-          </Toolbar>
-          <Table size="medium">
-            <TableHead>
-              <TableRow>
-                <TableCell>Nome</TableCell>
-                <TableCell>Código</TableCell>
-                <TableCell>Cidade</TableCell>
-                <TableCell>UF</TableCell>
-                <TableCell>Criado em</TableCell>
-                <TableCell />
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {stations.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                    <Typography color="text.secondary">
-                      {hasActiveFilters
-                        ? 'Nenhuma estação encontrada com os filtros aplicados.'
-                        : 'Nenhuma estação cadastrada.'}
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                stations.map((row) => (
-                  <TableRow key={row.id} hover>
-                    <TableCell>
-                      <Link
-                        to={`/admin/estacoes/${row.id}`}
-                        style={{ color: 'inherit', textDecoration: 'none' }}
-                      >
-                        <span style={{ fontWeight: 500 }}>{row.name}</span>
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      <span className="mono">{row.code}</span>
-                    </TableCell>
-                    <TableCell>{row.city ?? '—'}</TableCell>
-                    <TableCell>{row.state ?? '—'}</TableCell>
-                    <TableCell>{new Date(row.createdAt).toLocaleDateString('pt-BR')}</TableCell>
-                    <TableCell align="right">
-                      <Box sx={{ display: 'flex', gap: 0.25, justifyContent: 'flex-end' }}>
-                        <IconButton
-                          size="small"
-                          aria-label={`Editar ${row.name}`}
-                          title={`Editar ${row.name}`}
-                          onClick={() => openEdit(row)}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          aria-label={`Remover ${row.name}`}
-                          title={`Remover ${row.name}`}
-                          onClick={() => setPendingDelete(row)}
-                        >
-                          <TrashCanIcon fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    </TableCell>
+
+        {activeTab === 'table' &&
+          (loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: 200 }}>
+              <CircularProgress size={32} />
+            </Box>
+          ) : (
+            <>
+              <Toolbar sx={{ px: { xs: 2, sm: 3 }, py: 1.5 }}>
+                <Stack>
+                  <Typography variant="h6" component="div" fontSize="1rem" fontWeight={600}>
+                    Estações cadastradas
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {total.toLocaleString('pt-BR')} estação(ões)
+                  </Typography>
+                </Stack>
+              </Toolbar>
+              <Table size="medium">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Nome</TableCell>
+                    <TableCell>Código</TableCell>
+                    <TableCell>Cidade</TableCell>
+                    <TableCell>UF</TableCell>
+                    <TableCell>Criado em</TableCell>
+                    <TableCell />
                   </TableRow>
-                ))
+                </TableHead>
+                <TableBody>
+                  {stations.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                        <Typography color="text.secondary">
+                          {hasActiveFilters
+                            ? 'Nenhuma estação encontrada com os filtros aplicados.'
+                            : 'Nenhuma estação cadastrada.'}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    stations.map((row) => (
+                      <TableRow key={row.id} hover>
+                        <TableCell>
+                          <Link
+                            to={`/admin/estacoes/${row.id}`}
+                            style={{ color: 'inherit', textDecoration: 'none' }}
+                          >
+                            <span style={{ fontWeight: 500 }}>{row.name}</span>
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <span className="mono">{row.code}</span>
+                        </TableCell>
+                        <TableCell>{row.city ?? '—'}</TableCell>
+                        <TableCell>{row.state ?? '—'}</TableCell>
+                        <TableCell>{new Date(row.createdAt).toLocaleDateString('pt-BR')}</TableCell>
+                        <TableCell align="right">
+                          <Box sx={{ display: 'flex', gap: 0.25, justifyContent: 'flex-end' }}>
+                            <IconButton
+                              size="small"
+                              aria-label={`Editar ${row.name}`}
+                              title={`Editar ${row.name}`}
+                              onClick={() => openEdit(row)}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              aria-label={`Remover ${row.name}`}
+                              title={`Remover ${row.name}`}
+                              onClick={() => setPendingDelete(row)}
+                            >
+                              <TrashCanIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+              {total > 0 && (
+                <TablePagination
+                  component="div"
+                  count={total}
+                  page={page}
+                  onPageChange={(_, newPage) => setPage(newPage)}
+                  rowsPerPage={rowsPerPage}
+                  onRowsPerPageChange={(e) => {
+                    setRowsPerPage(parseInt(e.target.value, 10));
+                    setPage(0);
+                  }}
+                  rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
+                  labelRowsPerPage="Linhas por página:"
+                  labelDisplayedRows={({ from, to, count }) =>
+                    `${from}–${to} de ${count !== -1 ? count : `mais de ${to}`}`
+                  }
+                />
               )}
-            </TableBody>
-          </Table>
-          {total > 0 && (
-            <TablePagination
-              component="div"
-              count={total}
-              page={page}
-              onPageChange={(_, newPage) => setPage(newPage)}
-              rowsPerPage={rowsPerPage}
-              onRowsPerPageChange={(e) => {
-                setRowsPerPage(parseInt(e.target.value, 10));
-                setPage(0);
-              }}
-              rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
-              labelRowsPerPage="Linhas por página:"
-              labelDisplayedRows={({ from, to, count }) =>
-                `${from}–${to} de ${count !== -1 ? count : `mais de ${to}`}`
-              }
-            />
-          )}
-        </TableContainer>
-      )}
+            </>
+          ))}
+
+        {activeTab === 'map' && (
+          <Suspense
+            fallback={
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  minHeight: 400,
+                  alignItems: 'center',
+                }}
+              >
+                <CircularProgress size={32} />
+              </Box>
+            }
+          >
+            <StationMap stateFilter={stateFilter || undefined} />
+          </Suspense>
+        )}
+      </Paper>
 
       <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Nova estação</DialogTitle>

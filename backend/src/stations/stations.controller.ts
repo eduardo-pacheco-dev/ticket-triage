@@ -43,6 +43,11 @@ export class StationsController {
     });
   }
 
+  @Get('map')
+  findForMap(@Query('state') state?: string) {
+    return this.stationsService.findForMap(state || undefined);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.stationsService.findOne(id);

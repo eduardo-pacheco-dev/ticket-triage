@@ -189,6 +189,16 @@ export interface BulkStation {
   updatedAt: Date | string;
 }
 
+export interface StationMapPoint {
+  id: string;
+  name: string;
+  code: string;
+  city: string | null;
+  state: string | null;
+  latitude: string;
+  longitude: string;
+}
+
 export interface Station {
   id: string;
   name: string;

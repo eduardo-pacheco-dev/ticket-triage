@@ -8,6 +8,7 @@ import type {
   PaginatedQueue,
   PaginatedStations,
   PublicQueueEntry,
+  StationMapPoint,
   QueueEntry,
   QueueStatus,
   RequestType,
@@ -314,6 +315,11 @@ export function fetchStations(params?: {
 
 export function fetchStation(id: string) {
   return request<Station>(`/stations/${id}`);
+}
+
+export function fetchStationsMap(state?: string): Promise<StationMapPoint[]> {
+  const qs = state ? `?state=${encodeURIComponent(state)}` : '';
+  return request<StationMapPoint[]>(`/stations/map${qs}`);
 }
 
 export interface CreateStationInput {
