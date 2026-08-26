@@ -111,21 +111,27 @@ export class BulkStationsService {
       let rowIndex = 0;
       for await (const row of worksheetReader) {
         rowIndex++;
-        const values: unknown[] = [];
-        if ('values' in row && Symbol.iterator in Object(row.values)) {
-          for (const cell of row.values as Iterable<unknown>) {
-            values.push(cell);
-          }
+        const rawValues = row.values as unknown;
+        let values: unknown[];
+        if (Array.isArray(rawValues)) {
+          values = rawValues.slice(1);
+        } else if (rawValues && typeof rawValues === 'object') {
+          values = Object.values(rawValues).slice(1);
+        } else {
+          values = [];
         }
 
         if (rowIndex === 1) {
-          headers = values.map((v) => String(v ?? ''));
+          headers = values.map((v) => String(v ?? '').trim());
+          this.logger.log(
+            `Excel headers (${headers.length}): ${headers.slice(0, 5).join(', ')}...`,
+          );
           continue;
         }
 
         const rowObj: Record<string, unknown> = {};
         for (let i = 0; i < headers.length; i++) {
-          rowObj[headers[i]] = values[i];
+          if (headers[i]) rowObj[headers[i]] = values[i];
         }
 
         const mapped = mapExcelRow(rowObj);
@@ -140,6 +146,8 @@ export class BulkStationsService {
         }
       }
     }
+
+    this.logger.log(`Excel streaming done: ${job.total} valid rows found`);
 
     if (batch.length > 0) {
       await this.flushBatch(job, batch);
