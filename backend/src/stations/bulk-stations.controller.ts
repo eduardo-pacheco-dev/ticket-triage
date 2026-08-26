@@ -61,7 +61,7 @@ const EXCEL_COLUMN_MAP: Record<string, string> = {
   OTs: 'ots',
 };
 
-const EXCEL_HEADERS = Object.keys(EXCEL_COLUMN_MAP);
+export const EXCEL_HEADERS = Object.keys(EXCEL_COLUMN_MAP);
 
 const DATE_FIELDS = new Set([
   'acquisitionDate',
@@ -91,28 +91,24 @@ function toIsoDateStr(value: unknown): string | undefined {
   return undefined;
 }
 
-function parseExcelRows(rows: Record<string, unknown>[]): Record<string, unknown>[] {
-  return rows
-    .filter((row) => {
-      const siteId = row['Site ID'];
-      return typeof siteId === 'string' && siteId.trim().length > 0;
-    })
-    .map((row) => {
-      const mapped: Record<string, unknown> = {};
-      for (const [excelCol, entityField] of Object.entries(EXCEL_COLUMN_MAP)) {
-        const value = row[excelCol];
-        if (value === undefined || value === null) continue;
-        const str = String(value).trim();
-        if (str === '' || NULL_LITERALS.has(str)) continue;
-        if (DATE_FIELDS.has(entityField)) {
-          const iso = toIsoDateStr(value);
-          if (iso) mapped[entityField] = iso;
-        } else {
-          mapped[entityField] = str;
-        }
-      }
-      return mapped;
-    });
+export function mapExcelRow(row: Record<string, unknown>): Record<string, unknown> | null {
+  const siteId = row['Site ID'];
+  if (typeof siteId !== 'string' || siteId.trim().length === 0) return null;
+
+  const mapped: Record<string, unknown> = {};
+  for (const [excelCol, entityField] of Object.entries(EXCEL_COLUMN_MAP)) {
+    const value = row[excelCol];
+    if (value === undefined || value === null) continue;
+    const str = String(value).trim();
+    if (str === '' || NULL_LITERALS.has(str)) continue;
+    if (DATE_FIELDS.has(entityField)) {
+      const iso = toIsoDateStr(value);
+      if (iso) mapped[entityField] = iso;
+    } else {
+      mapped[entityField] = str;
+    }
+  }
+  return mapped;
 }
 
 @Controller('bulk-stations')
@@ -207,23 +203,8 @@ export class BulkStationsController {
       throw new BadRequestException('Nenhum arquivo enviado.');
     }
 
-    const workbook = XLSX.read(file.buffer, { type: 'buffer' });
-    const sheetName = workbook.SheetNames[0];
-    if (!sheetName) {
-      throw new BadRequestException('Planilha vazia.');
-    }
-
-    const sheet = workbook.Sheets[sheetName];
-    const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
-      cellDates: true,
-    } as XLSX.Sheet2JSONOpts);
-    const inputs = parseExcelRows(rows);
-
-    if (inputs.length === 0) {
-      throw new BadRequestException('Nenhum registro válido encontrado na planilha.');
-    }
-
-    return this.service.startImport(inputs);
+    const job = await this.service.startImportFromBuffer(file.buffer);
+    return job;
   }
 
   @Delete(':id')
