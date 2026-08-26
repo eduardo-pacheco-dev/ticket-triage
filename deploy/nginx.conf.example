@@ -4,6 +4,7 @@
 server {
     listen 80;
     server_name afl.brazil.vps-kinghost.net;
+    client_max_body_size 100M;
 
     root __APP_DIR__/frontend/dist;
     index index.html;
