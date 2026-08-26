@@ -33,6 +33,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 import TableChartIcon from '@mui/icons-material/TableChartOutlined';
 import MapIcon from '@mui/icons-material/MapOutlined';
+import UploadFileIcon from '@mui/icons-material/CloudUploadOutlined';
 import { createStation, deleteStation, fetchStations, updateStation, ApiError } from '../lib/api';
 import { createStationSchema, updateStationSchema } from '@ticket-triage/shared';
 import { zodFieldErrors } from '../lib/schemas';
@@ -40,6 +41,7 @@ import { useToastStore } from '../stores/toast';
 import type { Station } from '../lib/types';
 
 const StationMap = lazy(() => import('../components/StationMap'));
+const BulkStationsTab = lazy(() => import('../components/BulkStationsTab'));
 
 const BRAZIL_STATES = [
   'AC',
@@ -451,6 +453,7 @@ export default function StationsPage() {
           <Tabs value={activeTab} onChange={(_e: unknown, v: string) => setActiveTab(v)}>
             <Tab label="Tabela" value="table" icon={<TableChartIcon />} iconPosition="start" />
             <Tab label="Mapa" value="map" icon={<MapIcon />} iconPosition="start" />
+            <Tab label="Importação" value="import" icon={<UploadFileIcon />} iconPosition="start" />
           </Tabs>
         </Box>
 
@@ -575,6 +578,18 @@ export default function StationsPage() {
               stateFilter={stateFilter || undefined}
               searchTerm={debouncedSearch || undefined}
             />
+          </Suspense>
+        )}
+
+        {activeTab === 'import' && (
+          <Suspense
+            fallback={
+              <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: 200 }}>
+                <CircularProgress size={32} />
+              </Box>
+            }
+          >
+            <BulkStationsTab />
           </Suspense>
         )}
       </Paper>
