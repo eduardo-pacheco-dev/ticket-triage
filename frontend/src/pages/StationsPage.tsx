@@ -422,11 +422,6 @@ export default function StationsPage() {
               />
             </Grid>
           ))}
-          {Object.entries(stats.byRegional).map(([key, val]) => (
-            <Grid key={key} size={{ xs: 6, sm: 4, md: 2 }}>
-              <StatCard label={key} value={val} tone="#0f62fe" />
-            </Grid>
-          ))}
         </Grid>
       )}
 
