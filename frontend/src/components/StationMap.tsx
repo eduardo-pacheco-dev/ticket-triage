@@ -78,6 +78,7 @@ interface StationMapProps {
 
 export default function StationMap({ stateFilter, searchTerm }: StationMapProps) {
   const [points, setPoints] = useState<StationMapPoint[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -91,8 +92,9 @@ export default function StationMap({ stateFilter, searchTerm }: StationMapProps)
       if (!stateFilter) return;
       try {
         if (!isFirstLoadRef.current) setLoadingMore(true);
-        const data = await fetchStationsMap(stateFilter, bounds, searchTerm);
-        setPoints(data);
+        const result = await fetchStationsMap(stateFilter, bounds, searchTerm);
+        setPoints(result.items);
+        setTotal(result.total);
       } catch {
         setPoints([]);
       } finally {
@@ -160,27 +162,29 @@ export default function StationMap({ stateFilter, searchTerm }: StationMapProps)
         </Box>
       ) : (
         <>
-          {loadingMore && (
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 8,
-                right: 8,
-                zIndex: 1000,
-                bgcolor: 'background.paper',
-                borderRadius: 1,
-                px: 1.5,
-                py: 0.5,
-                boxShadow: 1,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-              }}
-            >
-              <CircularProgress size={14} />
-              <Typography variant="caption">Carregando...</Typography>
-            </Box>
-          )}
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              zIndex: 1000,
+              bgcolor: 'background.paper',
+              borderRadius: 1,
+              px: 1.5,
+              py: 0.5,
+              boxShadow: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+            }}
+          >
+            {loadingMore && <CircularProgress size={14} />}
+            <Typography variant="caption">
+              {points.length === total
+                ? `${total.toLocaleString('pt-BR')} estações`
+                : `Exibindo ${points.length.toLocaleString('pt-BR')} de ${total.toLocaleString('pt-BR')}`}
+            </Typography>
+          </Box>
           <MapContainer
             center={center}
             zoom={5}

@@ -140,8 +140,8 @@ export class StationsService {
     east: number;
     state?: string;
     search?: string;
-  }): Promise<
-    {
+  }): Promise<{
+    items: {
       id: string;
       name: string;
       code: string;
@@ -149,8 +149,9 @@ export class StationsService {
       state: string | null;
       latitude: string;
       longitude: string;
-    }[]
-  > {
+    }[];
+    total: number;
+  }> {
     const qb = this.repository
       .createQueryBuilder('s')
       .select(['s.id', 's.name', 's.code', 's.city', 's.state', 's.latitude', 's.longitude'])
@@ -176,10 +177,11 @@ export class StationsService {
       });
     }
 
-    qb.limit(10000);
+    const total = await qb.getCount();
+    const items = await qb.limit(2000).getMany();
 
-    return qb.getMany() as Promise<
-      {
+    return {
+      items: items as {
         id: string;
         name: string;
         code: string;
@@ -187,8 +189,9 @@ export class StationsService {
         state: string | null;
         latitude: string;
         longitude: string;
-      }[]
-    >;
+      }[],
+      total,
+    };
   }
 
   async remove(id: string): Promise<void> {
